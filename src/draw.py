@@ -4,9 +4,9 @@ from PySide.QtCore import *
 from PySide.QtGui import *
 
 import sys, os
-self_path=os.path.dirname(os.path.abspath(sys.argv[0]))
-sys.path.append(self_path+'/cython')
-import LF_DEM_posfile_reading
+#self_path=os.path.dirname(os.path.abspath(sys.argv[0]))
+#sys.path.append(self_path+'/cython')
+import pyLF_DEM_posfile_reading
 
 class drawConfiguration(QWidget):
     speed=10
