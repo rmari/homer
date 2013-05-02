@@ -6,17 +6,64 @@ import copy
 class Pos_Stream:
     
     
-    def __init__(self, input_stream, N, phi):
+    def __init__(self, input_stream):
 
         self.instream=input_stream
         try:
             self.instream.tell()
             self.is_file=True
         except IOError:
-            self.is_file=False
+            self.is_file=False # means that we deal with stdin
 
-        V=4.*math.acos(-1)*N/(3.*phi)
-        self.cell_size=math.pow(V, 1./3.)
+        
+        err_str = ' ERROR LF_DEM_posfile_reading : incorrect input file, '
+
+        # get N
+        input_line=self.instream.readline()
+        fields=split(input_line)
+        if fields[0] != 'np':
+            sys.stderr.write(err_str+'no particle number \n')
+        else:
+            self.N = int(fields[1])
+
+        # get VF
+        input_line=self.instream.readline()
+        fields=split(input_line)
+        if fields[0] != 'VF':
+            sys.stderr.write(err_str+'no volume fraction \n')
+        else:
+            self.phi = float(fields[1])
+
+        # get Lx
+        input_line=self.instream.readline()
+        fields=split(input_line)
+        if fields[0] != 'Lx':
+            sys.stderr.write(err_str+'no Lx \n')
+        else:
+            self.lx = float(fields[1])
+
+        # get Ly
+        input_line=self.instream.readline()
+        fields=split(input_line)
+        if fields[0] != 'Ly':
+            sys.stderr.write(err_str+'no Ly \n')
+        else:
+            self.ly = float(fields[1])
+
+        # get Lz
+        input_line=self.instream.readline()
+        fields=split(input_line)
+        if fields[0] != 'Lz':
+            sys.stderr.write(err_str+'no Lz \n')
+        else:
+            self.lz = float(fields[1])
+
+        if self.Ly() == 0.: # 2d case
+            self.V = self.Lx()*self.Lz()
+            self.dim=2
+        else:               # 3d case
+            self.V = self.Lx()*self.Ly()*self.Lz()
+            self.dim=3
 
         self.reset_members()
         
@@ -252,15 +299,27 @@ class Pos_Stream:
     def part_nb(self):
         return len(self.positions)
     
-    def rho(self):
-        return float(self.part_nb)/float(pow(self.cell_size,3))
+    def np(self):
+        return self.N
 
-    def cell_lin_size(self):
-        return self.cell_size
+    def rho(self):
+        return self.N/self.V
+
     def range(self, u=0):
         return range(u,self.part_nb())
 
     def is_present(self, i):
         return (i in self.positions)
 
+    def dimension(self):
+        return self.dim
+
     
+    def Lx(self):
+        return self.lx
+
+    def Ly(self):
+        return self.ly
+
+    def Lz(self):
+        return self.lz
