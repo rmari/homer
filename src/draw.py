@@ -2,17 +2,24 @@
 #coding=utf-8
 from PySide.QtCore import *
 from PySide.QtGui import *
+from PySide.QtOpenGL import *
 
 import sys, os
+import io
 #self_path=os.path.dirname(os.path.abspath(sys.argv[0]))
 #sys.path.append(self_path+'/cython')
 import pyLF_DEM_posfile_reading
 
-class drawConfiguration(QWidget):
+
+def rotateConfiguration(pos_array, angleX, angleY):
+
+    rotation
+
+class drawConfiguration(QGLWidget):
     speed=10
 
     def __init__(self, stream, parent=None):
-        QWidget.__init__(self, parent)
+        QGLWidget.__init__(self, parent)
         # setGeometry(x_pos, y_pos, width, height)
         
         self.setGeometry(400, 400, 850, 850)
@@ -20,13 +27,22 @@ class drawConfiguration(QWidget):
 
         self.timer = QBasicTimer()
     
-        self.pos_stream=LF_DEM_posfile_reading.Pos_Stream(stream)
+        self.pos_stream=pyLF_DEM_posfile_reading.Pos_Stream(stream)
         Box=[self.pos_stream.Lx(),self.pos_stream.Ly(), self.pos_stream.Lz()]
         self.setBox(Box)
 
         self.positions=dict()
+
+        self.centerX = +0.5*self.L[0]
+        self.centerY = -0.5*self.L[2]
+        self.scaleX = self.width()/self.L[0]
+        self.scaleY = self.height()/self.L[2]
 #        self.connect(self.timer, SIGNAL("timeout()"), self.update)
 
+        self.transform = QTransform()
+        self.rotation = QGraphicsRotation()
+        
+        spheres = [ QGraphicsEllipseItem(0,0,50,50) ]
     def start(self):
         self.timer.start(drawConfiguration.speed,self)
 
@@ -43,36 +59,46 @@ class drawConfiguration(QWidget):
         if event.timerId() == self.timer.timerId():
             self.pos_stream.get_snapshot()
 #            self.setConfiguration(self.pos_stream.positions_copy(), self.pos_stream.radius_copy())
+            print self.pos_stream.time()
             self.update()
         else:
             QWidget.timerEvent(self, event)
 
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_R:
+            self.transform.rotate(45, Qt.YAxis)
+            self.update()
 
+    def mouseEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            
     def paintEvent(self, event):
 
         paint = QPainter()
         paint.begin(self)
 
         # optional
-        paint.setRenderHint(QPainter.Antialiasing)
-
+#        paint.setRenderHint(QPainter.Antialiasing)
+        paint.setTransform(self.transform)
         # make a white drawing background
         paint.setBrush(Qt.white)
         paint.drawRect(event.rect())
 
         # draw red circles
         paint.setPen(Qt.black)
+        paint.setBrush(Qt.yellow)
+        
+#        for i in self.pos_stream.range():
+        positions=self.pos_stream.positions
 
-        for i in self.pos_stream.range():
-            radx = self.pos_stream.rad(i)*self.width()/self.L[0]
+        for i in positions:
+            
+            radx = self.pos_stream.radius[i]*self.width()/self.L[0]
             rady = radx
-
-            pointX=int((self.pos_stream.pos(i)[0]+0.5*self.L[0])*self.width()/self.L[0])
-            pointY=int(-(self.pos_stream.pos(i)[2]-0.5*self.L[2])*self.height()/self.L[2])
+            pointX=(positions[i][0]+self.centerX)*self.scaleX
+            pointY=-(positions[i][2]+self.centerY)*self.scaleY
 
             center = QPoint(pointX, pointY)
-
-            paint.setBrush(Qt.yellow)
             paint.drawEllipse(center, radx, rady)
 
         paint.end()
@@ -84,7 +110,7 @@ def init():
         print "   Utilisation: ", sys.argv[0], "INPUT_FILE"
         exit(1)
         
-    input_stream=open(str(sys.argv[1]),"r")
+    input_stream=io.open(str(sys.argv[1]), 'r', buffering=1000000)
     return input_stream
 
 
