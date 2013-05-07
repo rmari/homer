@@ -69,9 +69,20 @@ class drawConfiguration(QGLWidget):
             self.transform.rotate(45, Qt.YAxis)
             self.update()
 
-    def mouseEvent(self, event):
+    def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
+            self.initial_point = event.posF()
+
+    def mouseMoveEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.previous_point = self.current_point
+            self.current_point = event.posF()
             
+            self.diff = current_point - self.previous_point
+            
+            
+            
+        
     def paintEvent(self, event):
 
         paint = QPainter()
