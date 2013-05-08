@@ -2,6 +2,8 @@ import math
 from string import *
 import sys
 import copy
+import numpy as np
+
 
 class Pos_Stream:
     
@@ -65,6 +67,7 @@ class Pos_Stream:
             self.V = self.Lx()*self.Ly()*self.Lz()
             self.dim=3
 
+
         self.reset_members()
         
     def __iter__(self):
@@ -77,14 +80,12 @@ class Pos_Stream:
         self.GUc_stress=dict()
         self.xFc_stress=dict()
         self.old_positions=dict()
-        self.last_read_time_label=[]
-        self.time_labels=[]
-        self.current_time_index=0
-        test_input=self.get_snapshot()
+        self.time_labels=dict()
+        input_line=self.instream.readline()
+        fields=split(input_line)
+        self.current_time=float(fields[1])
         self.first_time=self.time()
-        if test_input==False:
-            print "Invalid input "
-            sys.exit(1)
+
         
     def positions_copy(self):
         return self.positions.copy()
@@ -93,41 +94,22 @@ class Pos_Stream:
         return copy.deepcopy(self.positions)
 
 
-
-
-    def update_labels(self, tlabel):
-        if len(self.time_labels) > 0 :
-            self.current_time_index=self.time_labels.index(self.last_read_time_label)
-        self.last_read_time_label=list(tlabel)
-        if tlabel not in self.time_labels:
-            self.time_labels.append(tlabel)
-#                    self.time_labels.sort() # normally useless, as it should be already ordered
-            
-
     def convert_input_pos(self,line):
         values=split(line)
-        
-        switch=0
 
-        if(len(values)>0):
-            if(values[0] == '#'):
-                if self.is_file:
-                    tlabel=[float(values[1]),self.instream.tell()]
-                else:
-                    tlabel=[float(values[1]),0]
-
-                self.update_labels(tlabel)
-                switch=1
-                
-            if len(values) > 10 : # exact number to be fixed. Now it is different in 2d an 3d, due to different output of angular position
-                i=values[0]
+        if(values[0] == '#'):
+            self.current_time=float(values[1])
+            return 1
+        else:
+            i=values[0]
 #                self.positions[i]=[float(values[j])+0.5*self.cell_size for j in range(1,4)]
-                self.positions[i]=[float(values[j]) for j in range(2,5)]
-                self.radius[i]=float(values[1])
-                self.GUh_stress[i]=float(values[11])
-                self.xFc_stress[i]=float(values[12])
-                self.GUc_stress[i]=float(values[13])
-        return switch
+            self.positions[i]=np.array([float(values[j]) for j in range(2,5)])
+            self.radius[i]=float(values[1])
+            self.GUh_stress[i]=float(values[11])
+            self.xFc_stress[i]=float(values[12])
+            self.GUc_stress[i]=float(values[13])
+
+        return 0
             
 # end of convert_input(input_line)
 
@@ -140,19 +122,29 @@ class Pos_Stream:
         switch=0
         
         count=0
-        input_line='start'
-        while input_line!='':
 
-            input_line=self.instream.readline()
-            if verbose:
-                print input_line
+#        self.time_labels[self.current_time]=self.instream.tell()
+        self.time_labels[self.current_time]=-1
 
-            switch+=self.convert_input_pos(input_line)
+#        while True:
+ #           line=self.instream.readline()
+
+        for line in self.instream:
+            if len(line)==0:
+                return False # EOF
+            
+#            if verbose:
+#                print line
+
+            switch+=self.convert_input_pos(line)
 
             if switch==1:
-                return True
+                break
 
-        return False
+        if switch==1:
+            return True
+
+
 
     def periodize(self,delta):
 
@@ -268,13 +260,13 @@ class Pos_Stream:
         return [ dr[j]/dt for j in range(4) ]
 
 
-    def goto_time(self, time):
+    def goto_time(self, required_time):
         if self.is_file:
-            for tl in self.time_labels:
-                if tl[0]>=time:
-                    self.instream.seek(tl[1])
-                    self.current_time_index=self.time_labels.index(tl)
-                    self.last_read_time_label=tl
+            key_list=sorted(self.time_labels.keys())
+            for time in key_list:
+                if time >= required_time:
+                    self.instream.seek(self.time_labels[time])
+                    self.current_time=time
                     return
         else:
             sys.stderr.write("Cannot go to time %s".str(time))
@@ -293,8 +285,12 @@ class Pos_Stream:
 
 
     def time(self, t=0):
-        tl_loc=self.current_time_index+t
-        return self.time_labels[tl_loc][0]
+        if t==0:
+            return self.current_time
+        else:
+            key_list=sorted(self.time_labels.keys())
+            key_index=key_list.index(self.current_time)+t
+            return self.time_labels[key_list[key_index]]
 
     def part_nb(self):
         return len(self.positions)
