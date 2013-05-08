@@ -1,4 +1,4 @@
-#!/opt/local/bin/python
+#!/usr/bin/python
 #coding=utf-8
 from PySide.QtCore import *
 from PySide.QtGui import *
@@ -71,14 +71,16 @@ class drawConfiguration(QGLWidget):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self.initial_point = event.posF()
+            self.current_point = event.posF()
 
     def mouseMoveEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.previous_point = self.current_point
-            self.current_point = event.posF()
-            
-            self.diff = current_point - self.previous_point
+        self.previous_point = self.current_point
+        self.current_point = event.posF()
+        
+        self.angleY = self.current_point.x() - self.previous_point.x()
+        self.transform.rotate(self.angleY, Qt.YAxis)
+        
+        self.update()
             
             
             
