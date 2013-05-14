@@ -34,7 +34,7 @@ class omerViewer(QGLWidget):
 
         self.setGeometry(400, 400, sizeX, sizeY)
 
-        self.scale = self.width()/self.L[0]
+        self.scale = 0.7*self.width()/self.L[0]
 
         self.setWindowTitle('omer viewer')
 
@@ -46,6 +46,8 @@ class omerViewer(QGLWidget):
         spheres = [ QGraphicsEllipseItem(0,0,50,50) ]
 
         self.active_layer=1
+        self.bg_layer = omerLayer.omerBackgroundLayer(Box)
+
 
     def start(self):
         self.timer.start(self.speed,self)
@@ -61,8 +63,9 @@ class omerViewer(QGLWidget):
 
     def timerEvent(self, event):
         if event.timerId() == self.timer.timerId():
-            self.pos_stream.get_snapshot()
-#            self.setConfiguration(self.pos_stream.positions_copy(), self.pos_stream.radius_copy())
+            is_eof = self.pos_stream.get_snapshot()
+            if is_eof == 1:
+                return
             self.update()
         else:
             QWidget.timerEvent(self, event)
@@ -129,10 +132,11 @@ class omerViewer(QGLWidget):
             
         
     def catChoice(self, a):
-        if len(a) ==4:
+        if len(a) == 4:
             return a[-1]
         else:
             return np.concatenate([a[-2], a[-1]])
+
     def paintEvent(self, event):
 
         paint = QPainter()
@@ -144,62 +148,14 @@ class omerViewer(QGLWidget):
         paint.setBrush(Qt.white)
         paint.drawRect(event.rect())
 
-
-        objects_to_paint = []       
-
-        for layer in [self.layers[self.active_layer]]:
-
-            if len(layer.objects) > 0:
-                rotated_pos = np.concatenate([ self.catChoice(layer.objects[i])  for i in range(len(layer.objects))])*self.rotation
-
-                j=0
-                for i in range(len(layer.objects)):
-                    if layer.objects[i][0] == 'c':
-                        
-                        # draw yellow circles
-                        paint.setPen(Qt.black)
-                        paint.setBrush(Qt.yellow)
-                        radius = layer.objects[i][2]*self.scale
-                        
-                        pointX=rotated_pos[j].item(0)*self.scale
-                        pointY=-rotated_pos[j].item(2)*self.scale
-                        
-                        objectAttrs = QRectF(pointX, pointY, 2*radius, 2*radius)
-                        j = j+1
-                        
-                    elif layer.objects[i][0] == 'l':
-                        
-                        
-                        radius = layer.objects[i][2]*self.scale
-                        
-                    # draw Gray black
-                        pen = QPen(Qt.black)
-                        pen.setWidth(radius)
-                        paint.setPen(pen)
-                        
-                        point1X=rotated_pos[j].item(0)*self.scale
-                        point1Y=-rotated_pos[j].item(2)*self.scale
-                        point2X=rotated_pos[j+1].item(0)*self.scale
-                        point2Y=-rotated_pos[j+1].item(2)*self.scale
-                        
-                        
-                        objectAttrs = QLineF(point1X, point1Y, point2X, point2Y)
-                        
-                        j = j+2
-                        
-
-                    objects_to_paint.append([-rotated_pos[i].item(1), layer.objects[i][0], objectAttrs])
-            
-            print len(objects_to_paint)
-        objects_to_paint.sort(key=lambda obj: obj[0]) # draw objects in front last
-
         paint.setTransform(QTransform().translate(0.5*self.width(), 0.5*self.height()))
-        for obj in objects_to_paint:
-            if obj[1] == 'c':
-                paint.drawEllipse(obj[2])
-            elif obj[1] == 'l':
-                paint.drawLine(obj[2])
 
+        for layer in self.layers:
+            layer.rotate(self.rotation)
+            layer.paintObjects(paint, self.scale)
+
+        self.bg_layer.rotate(self.rotation)
+        self.bg_layer.paintObjects(paint, self.scale)
         paint.end()
 
 def init():
@@ -213,12 +169,12 @@ def init():
 
 
 
-
+#def main():
 app = QApplication([])    
 
 filename=init()
 SimuViewer=omerViewer(filename)
 SimuViewer.show()
 SimuViewer.start()
-
+    
 app.exec_()
