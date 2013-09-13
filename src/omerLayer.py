@@ -9,39 +9,38 @@ class omerLayer:
         self.objects = []
         self.rotated_objects = []
 
-        self.appendPosition = { "c":self.appendCirclePosition, "l":self.appendLinePosition }
+#        self.appendPosition = { "c":self.appendCirclePosition, "l":self.appendLinePosition }
         self.appendObject = { "c":self.appendCircleObject, "l":self.appendLineObject }
         self.bare_positions = np.array([])
 
-    def appendCirclePosition(self, objectAttrs):
+
+    # for circles: objectBackbone is [ position ]
+    #              objectAttrs is [ color, radius ]
+    def appendCircleObject(self, objectBackbone, objectAttrs):
         if len(self.objects)>0:
-            self.bare_positions = np.concatenate([self.bare_positions, objectAttrs[-1]])
+            self.bare_positions = np.concatenate([self.bare_positions, objectBackbone])
         else:
-            self.bare_positions = np.matrix(objectAttrs[-1])
+            self.bare_positions = np.matrix(objectBackbone)
 
-    def appendLinePosition(self, objectAttrs):
-#        print len(self.objects), len(self.bare_positions)
-        if len(self.objects)>0:
-            self.bare_positions = np.concatenate([self.bare_positions, objectAttrs[-2], objectAttrs[-1]])
-        else:
-            self.bare_positions = np.concatenate([objectAttrs[-2], objectAttrs[-1]])
-
-
-    # for circles: objectAttrs is [color, radius, position]
-    def appendCircleObject(self, objectAttrs):
-        self.appendCirclePosition(objectAttrs)
         self.objects.append([self.circlePaint, objectAttrs[0], objectAttrs[1], len(self.bare_positions)-1])
 
-    # for lines: objectAttrs is [color, radius, position1, position2]
-    def appendLineObject(self, objectAttrs):
-        self.appendLinePosition(objectAttrs)
+    # for lines: objectBackbone is [ position1, position2 ]
+    #            objectAttrs is [ color, radius ]
+    def appendLineObject(self, objectBackbone, objectAttrs):
+        if len(self.objects)>0:
+            self.bare_positions = np.concatenate([self.bare_positions, objectBackbone[0:2], objectBackbone[3:5]])
+        else:
+            self.bare_positions = np.concatenate([objectBackbone[0:2], objectBackbone[3:5]])
+
         self.objects.append([self.linePaint, objectAttrs[0], objectAttrs[1], len(self.bare_positions)-2, len(self.bare_positions)-1])
+
+
 
     def addObject(self, objectDefList):
         self.objects.append(objectDefList)
 
-    def addObject(self, objectType, objectAttrs):
-        self.appendObject[objectType](objectAttrs)
+    def addObject(self, objectType, objectBackbone, objectAttrs):
+        self.appendObject[objectType](objectBackbone, objectAttrs)
 
     def clear(self):
         del self.objects[:]
@@ -94,18 +93,18 @@ class omerBackgroundLayer(omerLayer):
         omerLayer.__init__(self)
         
         thickness=0.2
-        self.appendLineObject([Qt.black, thickness, np.matrix([-0.5*Box[0],-0.5*Box[1],-0.5*Box[2]]), np.matrix([0.5*Box[0],-0.5*Box[1],-0.5*Box[2]])])
-        self.appendLineObject([Qt.black, thickness, np.matrix([-0.5*Box[0],+0.5*Box[1],-0.5*Box[2]]), np.matrix([0.5*Box[0],+0.5*Box[1],-0.5*Box[2]])])
-        self.appendLineObject([Qt.black, thickness, np.matrix([-0.5*Box[0],-0.5*Box[1],+0.5*Box[2]]), np.matrix([0.5*Box[0],-0.5*Box[1],+0.5*Box[2]])])
-        self.appendLineObject([Qt.black, thickness, np.matrix([-0.5*Box[0],+0.5*Box[1],+0.5*Box[2]]), np.matrix([0.5*Box[0],+0.5*Box[1],+0.5*Box[2]])])
+        # self.appendLineObject([Qt.black, thickness, np.matrix([-0.5*Box[0],-0.5*Box[1],-0.5*Box[2]]), np.matrix([0.5*Box[0],-0.5*Box[1],-0.5*Box[2]])])
+        # self.appendLineObject([Qt.black, thickness, np.matrix([-0.5*Box[0],+0.5*Box[1],-0.5*Box[2]]), np.matrix([0.5*Box[0],+0.5*Box[1],-0.5*Box[2]])])
+        # self.appendLineObject([Qt.black, thickness, np.matrix([-0.5*Box[0],-0.5*Box[1],+0.5*Box[2]]), np.matrix([0.5*Box[0],-0.5*Box[1],+0.5*Box[2]])])
+        # self.appendLineObject([Qt.black, thickness, np.matrix([-0.5*Box[0],+0.5*Box[1],+0.5*Box[2]]), np.matrix([0.5*Box[0],+0.5*Box[1],+0.5*Box[2]])])
 
-        self.appendLineObject([Qt.black, thickness, np.matrix([-0.5*Box[0],-0.5*Box[1],-0.5*Box[2]]), np.matrix([-0.5*Box[0],+0.5*Box[1],-0.5*Box[2]])])
-        self.appendLineObject([Qt.black, thickness, np.matrix([+0.5*Box[0],-0.5*Box[1],-0.5*Box[2]]), np.matrix([+0.5*Box[0],+0.5*Box[1],-0.5*Box[2]])])
-        self.appendLineObject([Qt.black, thickness, np.matrix([-0.5*Box[0],-0.5*Box[1],+0.5*Box[2]]), np.matrix([-0.5*Box[0],+0.5*Box[1],+0.5*Box[2]])])
-        self.appendLineObject([Qt.black, thickness, np.matrix([+0.5*Box[0],-0.5*Box[1],+0.5*Box[2]]), np.matrix([+0.5*Box[0],+0.5*Box[1],+0.5*Box[2]])])
+        # self.appendLineObject([Qt.black, thickness, np.matrix([-0.5*Box[0],-0.5*Box[1],-0.5*Box[2]]), np.matrix([-0.5*Box[0],+0.5*Box[1],-0.5*Box[2]])])
+        # self.appendLineObject([Qt.black, thickness, np.matrix([+0.5*Box[0],-0.5*Box[1],-0.5*Box[2]]), np.matrix([+0.5*Box[0],+0.5*Box[1],-0.5*Box[2]])])
+        # self.appendLineObject([Qt.black, thickness, np.matrix([-0.5*Box[0],-0.5*Box[1],+0.5*Box[2]]), np.matrix([-0.5*Box[0],+0.5*Box[1],+0.5*Box[2]])])
+        # self.appendLineObject([Qt.black, thickness, np.matrix([+0.5*Box[0],-0.5*Box[1],+0.5*Box[2]]), np.matrix([+0.5*Box[0],+0.5*Box[1],+0.5*Box[2]])])
 
-        self.appendLineObject([Qt.black, thickness, np.matrix([-0.5*Box[0],-0.5*Box[1],-0.5*Box[2]]), np.matrix([-0.5*Box[0],-0.5*Box[1],+0.5*Box[2]])])
-        self.appendLineObject([Qt.black, thickness, np.matrix([+0.5*Box[0],-0.5*Box[1],-0.5*Box[2]]), np.matrix([+0.5*Box[0],-0.5*Box[1],+0.5*Box[2]])])
-        self.appendLineObject([Qt.black, thickness, np.matrix([-0.5*Box[0],+0.5*Box[1],-0.5*Box[2]]), np.matrix([-0.5*Box[0],+0.5*Box[1],+0.5*Box[2]])])
-        self.appendLineObject([Qt.black, thickness, np.matrix([+0.5*Box[0],+0.5*Box[1],-0.5*Box[2]]), np.matrix([+0.5*Box[0],+0.5*Box[1],+0.5*Box[2]])])
+        # self.appendLineObject([Qt.black, thickness, np.matrix([-0.5*Box[0],-0.5*Box[1],-0.5*Box[2]]), np.matrix([-0.5*Box[0],-0.5*Box[1],+0.5*Box[2]])])
+        # self.appendLineObject([Qt.black, thickness, np.matrix([+0.5*Box[0],-0.5*Box[1],-0.5*Box[2]]), np.matrix([+0.5*Box[0],-0.5*Box[1],+0.5*Box[2]])])
+        # self.appendLineObject([Qt.black, thickness, np.matrix([-0.5*Box[0],+0.5*Box[1],-0.5*Box[2]]), np.matrix([-0.5*Box[0],+0.5*Box[1],+0.5*Box[2]])])
+        # self.appendLineObject([Qt.black, thickness, np.matrix([+0.5*Box[0],+0.5*Box[1],-0.5*Box[2]]), np.matrix([+0.5*Box[0],+0.5*Box[1],+0.5*Box[2]])])
 

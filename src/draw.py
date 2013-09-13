@@ -63,7 +63,9 @@ class omerViewer(QGLWidget):
 
     def timerEvent(self, event):
         if event.timerId() == self.timer.timerId():
+            print "get snap"
             is_eof = self.pos_stream.get_snapshot()
+            print "got snap"
             if is_eof == 1:
                 return
             self.update()
@@ -151,15 +153,14 @@ class omerViewer(QGLWidget):
         paint.setTransform(QTransform().translate(0.5*self.width(), 0.5*self.height()))
 
         for layer in self.layers:
-            print "start to rotate "
             layer.rotate(self.rotation)
-            print "start to paint "
             layer.paintObjects(paint, self.scale)
 
         self.bg_layer.rotate(self.rotation)
         self.bg_layer.paintObjects(paint, self.scale)
-        print "paint.end"
+
         paint.end()
+
 
 def init():
     
