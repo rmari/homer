@@ -1,4 +1,5 @@
-#!/opt/local/bin/python
+##!/opt/local/bin/python
+#!/usr/bin/python
 #coding=utf-8
 from PySide.QtCore import *
 from PySide.QtGui import *
