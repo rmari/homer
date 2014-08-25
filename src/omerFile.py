@@ -1,13 +1,13 @@
 from string import *
 import sys
 import numpy as np
+import pandas as pd
 import io
 from PySide.QtCore import *
 from PySide.QtGui import *
 from PySide.QtOpenGL import *
 
 class omerFile:
-    
     def __init__(self, filename, layers):
         
         self.instream=io.open(str(filename), 'r')
@@ -18,13 +18,19 @@ class omerFile:
         self.layer=0
         self.color=0
         self.colordef = { '0': Qt.black, '1':Qt.gray, '2':Qt.blue, '3':Qt.red, '4':Qt.yellow, '5':Qt.green }
+        self.parser_dict = {'c': self.cparse,'l': self.lparse, 'r': self.rparse, 'y': self.yparse, '@': self.atparse }
 
-        self.max = [0.,0.,0.]
-        self.min = [0.,0.,0.]
+        self.max = [40.,0.,40.]
+        self.min = [-40.,0.,-40.]
         
+        self.chunksize = 100000
+
+        names = ['a', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6']
+
         while self.Lx() == 0.:
             self.get_snapshot()
     
+
 
         
     def Lx(self):
@@ -40,48 +46,33 @@ class omerFile:
     def __iter__(self):
         return self.positions.__iter__()
         
-        
-    def parse(self,line):
 
-        values=split(line)
-        try:
-            cmd = str(values[0])
-        except IndexError:
-            return 1
+    def cparse(self,values):
+        cattrs = np.asmatrix(values[1:], dtype=float)
+#        position = np.mat([float(values[j]) for j in range(1,4)])
+#        self.updateBoundaries(position)
+        self.layers[self.layer].addObject('c', cattrs, [self.color, self.radius])
 
-        if cmd == 'y':
-            self.layer = int(values[1])
-        elif cmd == '@':
-            col=int(values[1])
-            if col > 5:
-                col=0
-            self.color = self.colordef[str(col)]
+    def lparse(self,values):
+        lattrs = np.asmatrix(values[1:], dtype=float)
+#        position1 = np.mat([float(values[j]) for j in range(1,4)])
+#        position2 = np.mat([float(values[j]) for j in range(4,7)])
 
-        elif cmd == 'r':
-            self.radius = float(values[1])
-        elif cmd == 'c':
-            position = np.mat([float(values[j]) for j in range(1,4)])
-            self.updateBoundaries(position)
-            objectType = 'c'
-            objectColor = self.color
-            objectRadius = self.radius
-            self.layers[self.layer].addObject(objectType, [objectColor, objectRadius, position])
-        elif cmd == 'l':
-#            print values
-#            print len(values), range(4,7)
-            position1 = np.mat([float(values[j]) for j in range(1,4)])
-            position2 = np.mat([float(values[j]) for j in range(4,7)])
-            self.updateBoundaries(position1)
-            self.updateBoundaries(position2)
-            objectType = 'l'
-            objectColor = self.color
-            objectRadius = self.radius
-            self.layers[self.layer].addObject(objectType, [objectColor, objectRadius, position1, position2])
-            
-            
-        return 0
-        
-        
+#        self.layers[self.layer].addObject('l', lattrs, [self.color, self.radius])
+
+    def atparse(self,values):
+        col=int(values[1])
+        if col > 5:
+            col=0
+
+        self.color = self.colordef[str(col)]
+
+    def rparse(self,values):
+        self.radius = float(values[1]) 
+
+    def yparse(self,values):
+        self.layer = int(values[1])
+
     def updateBoundaries(self, pos):
         for i in range(3):
             if pos.item(i) > self.max[i]:
@@ -90,24 +81,36 @@ class omerFile:
                 self.min[i] = pos.item(i)
 
 
+
     def get_snapshot(self, verbose=False):
 
         for layer in self.layers:
             layer.clear()
 
-        switch=0
-        count=0
+
+#    def get_chunk(self):
+#       lines = self.instream.readlines()
+
         for line in self.instream:
-            switch+=self.parse(line)
+            values=split(line)
+            try:
+                self.parser_dict[values[0]](values)
+            except IndexError:
+                return 0
 
-            if switch==1:
-                break
 
+            
+        return 1 # eof
 
-        if switch == 0: # eof
-            return 1
+    def read(self):        
+
+        names = ['a', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6']
+        whole_array = np.array(pd.read_table('y_D2N1000VF0.7Poly1.4_0.5Square_19937_sr1.yap', sep=" ", names=names))
+
+        split_array = split(whole_array, nonzero(whole_array[:,0]== nan)[0])
         
-
+        
+        
     def rewind(self): # go to beginning of the file
         if self.is_file:
             self.instream.seek(0)

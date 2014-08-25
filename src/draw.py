@@ -1,5 +1,4 @@
-##!/opt/local/bin/python
-#!/usr/bin/python
+#!/Users/LevichFellow/anaconda/bin/python
 #coding=utf-8
 from PySide.QtCore import *
 from PySide.QtGui import *
@@ -20,7 +19,8 @@ class omerViewer(QGLWidget):
         QGLWidget.__init__(self, parent)
         # setGeometry(x_pos, y_pos, width, height)
         
-        self.layers=[omerLayer.omerLayer() for i in range(12)]
+        self.layers=[omerLayer.omerLayer() for i in range(layer_nb)]
+
         self.timer = QBasicTimer()
     
         self.pos_stream=omerFile.omerFile(filename, self.layers)
@@ -64,7 +64,9 @@ class omerViewer(QGLWidget):
 
     def timerEvent(self, event):
         if event.timerId() == self.timer.timerId():
+            print "get snap"
             is_eof = self.pos_stream.get_snapshot()
+            print "got snap"
             if is_eof == 1:
                 return
             self.update()
@@ -157,7 +159,9 @@ class omerViewer(QGLWidget):
 
         self.bg_layer.rotate(self.rotation)
         self.bg_layer.paintObjects(paint, self.scale)
+
         paint.end()
+
 
 def init():
     
