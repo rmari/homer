@@ -1,6 +1,7 @@
 from string import *
 import sys
 import numpy as np
+import pandas as pd
 import io
 from PySide.QtCore import *
 from PySide.QtGui import *
@@ -24,6 +25,8 @@ class omerFile:
         
         self.chunksize = 100000
 
+        names = ['a', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6']
+
         while self.Lx() == 0.:
             self.get_snapshot()
     
@@ -44,14 +47,12 @@ class omerFile:
         return self.positions.__iter__()
         
 
-    @profile    
     def cparse(self,values):
         cattrs = np.asmatrix(values[1:], dtype=float)
 #        position = np.mat([float(values[j]) for j in range(1,4)])
 #        self.updateBoundaries(position)
         self.layers[self.layer].addObject('c', cattrs, [self.color, self.radius])
 
-    @profile        
     def lparse(self,values):
         lattrs = np.asmatrix(values[1:], dtype=float)
 #        position1 = np.mat([float(values[j]) for j in range(1,4)])
@@ -81,7 +82,6 @@ class omerFile:
 
 
 
-    @profile
     def get_snapshot(self, verbose=False):
 
         for layer in self.layers:
@@ -101,8 +101,16 @@ class omerFile:
 
             
         return 1 # eof
-        
 
+    def read(self):        
+
+        names = ['a', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6']
+        whole_array = np.array(pd.read_table('y_D2N1000VF0.7Poly1.4_0.5Square_19937_sr1.yap', sep=" ", names=names))
+
+        split_array = split(whole_array, nonzero(whole_array[:,0]== nan)[0])
+        
+        
+        
     def rewind(self): # go to beginning of the file
         if self.is_file:
             self.instream.seek(0)

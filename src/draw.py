@@ -1,4 +1,4 @@
-#!/opt/local/bin/python
+#!/Users/LevichFellow/anaconda/bin/python
 #coding=utf-8
 from PySide.QtCore import *
 from PySide.QtGui import *
@@ -19,7 +19,8 @@ class omerViewer(QGLWidget):
         QGLWidget.__init__(self, parent)
         # setGeometry(x_pos, y_pos, width, height)
         
-        self.layers=[omerLayer.omerLayer() for i in range(12)]
+        self.layers=[omerLayer.omerLayer() for i in range(layer_nb)]
+
         self.timer = QBasicTimer()
     
         self.pos_stream=omerFile.omerFile(filename, self.layers)

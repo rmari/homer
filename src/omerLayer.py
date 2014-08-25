@@ -16,7 +16,9 @@ class omerLayer:
 
     # for circles: objectBackbone is [ position ]
     #              objectAttrs is [ color, radius ]
+
     def appendCircleObject(self, objectBackbone, objectAttrs):
+        
         if len(self.objects)>0:
             self.bare_positions = np.concatenate([self.bare_positions, objectBackbone])
         else:
