@@ -1,6 +1,7 @@
 from string import *
 import sys
 import numpy as np
+import pandas as pd
 import io
 
 class omerFile:
@@ -9,6 +10,8 @@ class omerFile:
         
         self.instream=io.open(str(filename), 'r')
         self.is_file=True
+
+
 
         #            self.is_file=False # means that we deal with stdin
         self.layers = layers
@@ -91,3 +94,10 @@ class omerFile:
             sys.stderr.write("Input is %s".str(instream))
             sys.exit(1)
 
+
+    def getData(self): # go to beginning of the file
+        my_cols=['object','f0','f1','f2','f3','f4','f5']
+        dattype = {'object': np.str, 'f0': np.float, 'f1': np.float, 'f2': np.float, 'f3': np.float, 'f4': np.float, 'f5': np.float}
+        self.in_table = pd.read_table('y_D3N512VF0.48Bidi1.4_0.5Cubic_1_fric1_tlub3_sr0.05.yap', sep=' ', names=my_cols, dtype=dattype)
+        
+        self.in_table[self.in_table['object']=='y']['f0'] == 1
