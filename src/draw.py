@@ -8,22 +8,22 @@ import numpy as np
 import sys, os
 
 import omerFile
-import omerLayer
+
 
 
 
 class omerViewer(QGLWidget):
-    speed=10
+    speed=1
 
     def __init__(self, filename, parent=None):
         QGLWidget.__init__(self, parent)
         # setGeometry(x_pos, y_pos, width, height)
         
-        self.layers=[omerLayer.omerLayer() for i in range(layer_nb)]
+#        self.layers=[omerLayer.omerLayer() for i in range(layer_nb)]
 
         self.timer = QBasicTimer()
     
-        self.pos_stream=omerFile.omerFile(filename, self.layers)
+        self.pos_stream=omerFile.omerFile(filename)
         Box=[self.pos_stream.Lx(),self.pos_stream.Ly(), self.pos_stream.Lz()]
         self.setBox(Box)
 
@@ -41,14 +41,15 @@ class omerViewer(QGLWidget):
 
         print self.width(), self.height()
 #        self.connect(self.timer, SIGNAL("timeout()"), self.update)
-
-        self.rotation = np.mat([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        
+        self.scale = 8
+        self.transform = self.scale*np.identity(3)
 
         spheres = [ QGraphicsEllipseItem(0,0,50,50) ]
 
-        self.active_layer=1
-        self.bg_layer = omerLayer.omerBackgroundLayer(Box)
-
+#        self.active_layer=1
+#        self.bg_layer = omerLayer.omerBackgroundLayer(Box)
+        self.frame_nb = -1
 
     def start(self):
         self.timer.start(self.speed,self)
@@ -64,19 +65,18 @@ class omerViewer(QGLWidget):
 
     def timerEvent(self, event):
         if event.timerId() == self.timer.timerId():
-            print "get snap"
-            is_eof = self.pos_stream.get_snapshot()
-            print "got snap"
-            if is_eof == 1:
+            if(self.frame_nb < len(self.pos_stream.frames)-1):
+                self.frame_nb = self.frame_nb+1
+                self.update()
+            else:
                 return
-            self.update()
         else:
             QWidget.timerEvent(self, event)
 
     def keyPressEvent(self, event):
         e = event.key()
-        if e == Qt.Key_R:
-            self.rotation = np.identity(3)
+        if e == Qt.Key_Tab:
+            self.transform = self.scale*np.identity(3)
         elif e == Qt.Key_F1:
             self.active_layer = 1
         elif e == Qt.Key_F2:
@@ -120,14 +120,14 @@ class omerViewer(QGLWidget):
         sinAngleY = np.sin(angleY)
         cosAngleY = np.cos(angleY)
         generator = np.mat([[cosAngleY, -sinAngleY, 0], [sinAngleY, cosAngleY, 0], [0, 0, 1]])
-        self.rotation = generator*self.rotation
+        self.transform = generator*self.transform
 
         angleX = -(self.current_point.y() - self.previous_point.y())/self.height()
         
         sinAngleX = np.sin(angleX)
         cosAngleX = np.cos(angleX)
         generator = np.mat([[1, 0, 0], [0, cosAngleX, -sinAngleX], [0, sinAngleX, cosAngleX]])
-        self.rotation = generator*self.rotation
+        self.transform = generator*self.transform
 
         self.update()
             
@@ -152,13 +152,12 @@ class omerViewer(QGLWidget):
         paint.drawRect(event.rect())
 
         paint.setTransform(QTransform().translate(0.5*self.width(), 0.5*self.height()))
+        
+        frame = self.pos_stream.frames[self.frame_nb]
+        frame.display(paint,self.transform, [])
 
-        for layer in self.layers:
-            layer.rotate(self.rotation)
-            layer.paintObjects(paint, self.scale)
-
-        self.bg_layer.rotate(self.rotation)
-        self.bg_layer.paintObjects(paint, self.scale)
+#        self.bg_layer.rotate(self.transform)
+#        self.bg_layer.paintObjects(paint, 1)
 
         paint.end()
 

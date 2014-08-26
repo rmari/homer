@@ -6,29 +6,20 @@ import io
 from PySide.QtCore import *
 from PySide.QtGui import *
 from PySide.QtOpenGL import *
+import omerFrame
 
 class omerFile:
-    def __init__(self, filename, layers):
+    def __init__(self, filename):
         
-        self.instream=io.open(str(filename), 'r')
         self.is_file=True
-
-        #            self.is_file=False # means that we deal with stdin
-        self.layers = layers
-        self.layer=0
-        self.color=0
-        self.colordef = { '0': Qt.black, '1':Qt.gray, '2':Qt.blue, '3':Qt.red, '4':Qt.yellow, '5':Qt.green }
-        self.parser_dict = {'c': self.cparse,'l': self.lparse, 'r': self.rparse, 'y': self.yparse, '@': self.atparse }
 
         self.max = [40.,0.,40.]
         self.min = [-40.,0.,-40.]
         
         self.chunksize = 100000
 
-        names = ['a', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6']
 
-        while self.Lx() == 0.:
-            self.get_snapshot()
+        self.read(filename)
     
 
 
@@ -43,22 +34,6 @@ class omerFile:
         return self.max[2]-self.min[2]
 
 
-    def __iter__(self):
-        return self.positions.__iter__()
-        
-
-    def cparse(self,values):
-        cattrs = np.asmatrix(values[1:], dtype=float)
-#        position = np.mat([float(values[j]) for j in range(1,4)])
-#        self.updateBoundaries(position)
-        self.layers[self.layer].addObject('c', cattrs, [self.color, self.radius])
-
-    def lparse(self,values):
-        lattrs = np.asmatrix(values[1:], dtype=float)
-#        position1 = np.mat([float(values[j]) for j in range(1,4)])
-#        position2 = np.mat([float(values[j]) for j in range(4,7)])
-
-#        self.layers[self.layer].addObject('l', lattrs, [self.color, self.radius])
 
     def atparse(self,values):
         col=int(values[1])
@@ -67,11 +42,6 @@ class omerFile:
 
         self.color = self.colordef[str(col)]
 
-    def rparse(self,values):
-        self.radius = float(values[1]) 
-
-    def yparse(self,values):
-        self.layer = int(values[1])
 
     def updateBoundaries(self, pos):
         for i in range(3):
@@ -80,44 +50,20 @@ class omerFile:
             if pos.item(i) < self.min[i]:
                 self.min[i] = pos.item(i)
 
+    def read(self, filename):        
 
-
-    def get_snapshot(self, verbose=False):
-
-        for layer in self.layers:
-            layer.clear()
-
-
-#    def get_chunk(self):
-#       lines = self.instream.readlines()
-
-        for line in self.instream:
-            values=split(line)
-            try:
-                self.parser_dict[values[0]](values)
-            except IndexError:
-                return 0
-
-
-            
-        return 1 # eof
-
-    def read(self):        
-
-        names = ['a', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6']
-        whole_array = np.array(pd.read_table('y_D2N1000VF0.7Poly1.4_0.5Square_19937_sr1.yap', sep=" ", names=names))
-
-        split_array = split(whole_array, nonzero(whole_array[:,0]== nan)[0])
+        names = ['a', 'r', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6']
+        myframe = pd.read_table(filename, sep=" ", names=names)
+        splitpoints = np.nonzero(np.array(pd.isnull(myframe['a'])))[0]
+        print splitpoints
+        whole_array = np.array(myframe)
+        print whole_array[:10,:]
+        split_array = np.split(whole_array, splitpoints)
         
-        
-        
-    def rewind(self): # go to beginning of the file
-        if self.is_file:
-            self.instream.seek(0)
-            self.reset_members()
-            return
-        else:
-            sys.stderr.write("Cannot rewind")
-            sys.stderr.write("Input is %s".str(instream))
-            sys.exit(1)
+        print "Got split array ", len(split_array)
+        exit 
+        self.frames = []
+        for frame in split_array:
+            self.frames.append(omerFrame.omerFrame(frame))
+
 

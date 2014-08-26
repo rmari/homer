@@ -51,7 +51,6 @@ class omerLayer:
 
     def rotate(self, rotation):
         if len(self.objects)>0:
-
             self.rotated_positions = self.bare_positions*rotation
 
     def circlePaint(self, painter, obj, scale):
