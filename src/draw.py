@@ -19,8 +19,6 @@ class omerViewer(QGLWidget):
         QGLWidget.__init__(self, parent)
         # setGeometry(x_pos, y_pos, width, height)
         
-#        self.layers=[omerLayer.omerLayer() for i in range(layer_nb)]
-
         self.timer = QBasicTimer()
     
         self.pos_stream=omerFile.omerFile(filename)
@@ -47,9 +45,22 @@ class omerViewer(QGLWidget):
 
         spheres = [ QGraphicsEllipseItem(0,0,50,50) ]
 
-#        self.active_layer=1
 #        self.bg_layer = omerLayer.omerBackgroundLayer(Box)
-        self.frame_nb = -1
+
+        self.frame_nb = 0
+
+        self.layer_nb=12
+        self.layer_activity = np.ones(self.layer_nb, dtype=np.bool)
+        self.layer_labels = [] 
+
+        for i in range(self.layer_nb):
+            label = "Layer "+str(i)
+            self.layer_labels.append(QLabel(label))
+            self.layer_labels[i].setAlignment(Qt.AlignBottom | Qt.AlignRight)            
+
+#            self.layer_labels[i].setText(label)
+#            self.layer_labels[i].show()
+
 
     def start(self):
         self.timer.start(self.speed,self)
@@ -63,6 +74,7 @@ class omerViewer(QGLWidget):
         self.positions=pos
         self.radius=radius
 
+
     def timerEvent(self, event):
         if event.timerId() == self.timer.timerId():
             if(self.frame_nb < len(self.pos_stream.frames)-1):
@@ -73,40 +85,55 @@ class omerViewer(QGLWidget):
         else:
             QWidget.timerEvent(self, event)
 
+    def layerSwitch(self,label):
+        self.layer_activity[label] = -self.layer_activity[label]
+        
+
     def keyPressEvent(self, event):
         e = event.key()
         if e == Qt.Key_Tab:
             self.transform = self.scale*np.identity(3)
         elif e == Qt.Key_F1:
-            self.active_layer = 1
+            self.layerSwitch(0)
         elif e == Qt.Key_F2:
-            self.active_layer = 2
+            self.layerSwitch(1)
         elif e == Qt.Key_F3:
-            self.active_layer = 3
+            self.layerSwitch(2)
         elif e == Qt.Key_F4:
-            self.active_layer = 4
+            self.layerSwitch(3)
         elif e == Qt.Key_F5:
-            self.active_layer = 5
+            self.layerSwitch(4)
         elif e == Qt.Key_F6:
-            self.active_layer = 7
+            self.layerSwitch(5)
         elif e == Qt.Key_F7:
-            self.active_layer = 7
+            self.layerSwitch(6)
         elif e == Qt.Key_F8:
-            self.active_layer = 8
+            self.layerSwitch(7)
         elif e == Qt.Key_F9:
-            self.active_layer = 9
+            self.layerSwitch(8)
         elif e == Qt.Key_F10:
-            self.active_layer = 10
+            self.layerSwitch(9)
         elif e == Qt.Key_F11:
-            self.active_layer = 11
+            self.layerSwitch(10)
         elif e == Qt.Key_F12:
-            self.active_layer = 12
-        elif e == Qt.Key_F13:
-            self.active_layer = 13
-
-
+            self.layerSwitch(11)
+        elif e == Qt.Key_N:
+            if(self.frame_nb < len(self.pos_stream.frames)-1):
+                self.frame_nb = self.frame_nb+1
+        elif e == Qt.Key_P:
+            if(self.frame_nb > 0):
+                self.frame_nb = self.frame_nb-1
+        elif e == Qt.Key_Asterisk:
+            factor = 1.05
+            self.scale *= factor
+            self.transform = factor*self.transform
+        elif e == Qt.Key_Slash:
+            factor = 1.05
+            self.scale /= factor
+            self.transform = self.transform/factor
 
         self.update()
+
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.current_point = event.posF()
@@ -115,14 +142,14 @@ class omerViewer(QGLWidget):
         self.previous_point = self.current_point
         self.current_point = event.posF()
         
-        angleY = -(self.current_point.x() - self.previous_point.x())/self.width()
+        angleY = -2*(self.current_point.x() - self.previous_point.x())/self.width()
         
         sinAngleY = np.sin(angleY)
         cosAngleY = np.cos(angleY)
         generator = np.mat([[cosAngleY, -sinAngleY, 0], [sinAngleY, cosAngleY, 0], [0, 0, 1]])
         self.transform = generator*self.transform
 
-        angleX = -(self.current_point.y() - self.previous_point.y())/self.height()
+        angleX = -2*(self.current_point.y() - self.previous_point.y())/self.height()
         
         sinAngleX = np.sin(angleX)
         cosAngleX = np.cos(angleX)
@@ -134,12 +161,6 @@ class omerViewer(QGLWidget):
             
             
         
-    def catChoice(self, a):
-        if len(a) == 4:
-            return a[-1]
-        else:
-            return np.concatenate([a[-2], a[-1]])
-
     def paintEvent(self, event):
 
         paint = QPainter()
@@ -154,10 +175,8 @@ class omerViewer(QGLWidget):
         paint.setTransform(QTransform().translate(0.5*self.width(), 0.5*self.height()))
         
         frame = self.pos_stream.frames[self.frame_nb]
-        frame.display(paint,self.transform, [])
+        frame.display(paint,self.transform, self.layer_activity)
 
-#        self.bg_layer.rotate(self.transform)
-#        self.bg_layer.paintObjects(paint, 1)
 
         paint.end()
 
@@ -179,6 +198,6 @@ app = QApplication([])
 filename=init()
 SimuViewer=omerViewer(filename)
 SimuViewer.show()
-SimuViewer.start()
+#SimuViewer.start()
     
-app.exec_()
+sys.exit(app.exec_())
