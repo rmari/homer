@@ -17,6 +17,7 @@ class omerLayer:
     # for circles: objectBackbone is [ position ]
     #              objectAttrs is [ color, radius ]
 
+
     def appendCircleObject(self, objectBackbone, objectAttrs):
         
         if len(self.objects)>0:
