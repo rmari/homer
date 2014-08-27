@@ -50,13 +50,6 @@ class omerViewer(QWidget):
 
         self.frame_nb = 0
 
-        labeltest = QLabel()
-        labeltest.setText('One two three')
-        labeltest.setAlignment(Qt.AlignRight)
-        vbox = QVBoxLayout()
-        vbox.addWidget(labeltest)
-        self.setLayout(vbox)
-
         self.layer_nb=12
         self.layer_activity = np.ones(self.layer_nb, dtype=np.bool)
         self.layer_labels = [] 
@@ -166,7 +159,7 @@ class omerViewer(QWidget):
             
         
     def paintEvent(self, event):
-
+        global paint
         paint = QPainter()
         paint.begin(self)
 
@@ -181,10 +174,10 @@ class omerViewer(QWidget):
         frame = self.pos_stream.frames[self.frame_nb]
         frame.display(paint,self.transform, self.layer_activity)
 
-        location_ratio = [ -0.45, -0.45 ] 
-        rsize = [ 60, 20 ]
+        location_ratio = [ -0.48, -0.48 ] 
+        rsize = [ 60, 15 ]
         
-        paint.setFont(QFont("Arial", 15, QFont.Bold))
+#        paint.setFont(QFont("Arial", 15, QFont.Bold))
         pen = QPen()
         
         for i in range(self.layer_nb):

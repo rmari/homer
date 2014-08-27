@@ -8,6 +8,8 @@ from PySide.QtGui import *
 from PySide.QtOpenGL import *
 import omerFrame
 
+command_coding = { 'y':0, '@':1, 'r':3, 'c':4, 'l':5, 's':6 }
+
 class omerFile:
     def __init__(self, filename):
         
@@ -47,6 +49,11 @@ class omerFile:
 
         names = ['a', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6']
         myframe = pd.read_table(filename, delim_whitespace=True, names=names)
+        for k in command_coding:
+            myframe.replace(to_replace=k,value=command_coding[k],inplace=True)
+
+        myframe.astype(np.float)
+
         splitpoints = np.nonzero(np.array(pd.isnull(myframe['a'])))[0]
 
         whole_array = np.array(myframe)
