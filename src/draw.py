@@ -1,5 +1,5 @@
-##!/Users/LevichFellow/anaconda/bin/python
-#!/usr/bin/python
+#!/Users/LevichFellow/anaconda/bin/python
+##!/usr/bin/python
 #coding=utf-8
 from PySide.QtCore import *
 from PySide.QtGui import *
@@ -29,19 +29,19 @@ class omerViewer(QGLWidget):
         self.positions=dict()
 
         ratio = self.L[2]/self.L[0]
-        sizeX = 800
-        sizeY = sizeX*ratio
+        self.windowSizeX = 800
+        self.windowSizeY = self.windowSizeX*ratio
+        self.windowLocationX = 400
+        self.windowLocationY = self.windowLocationX
 
-        self.setGeometry(400, 400, sizeX, sizeY)
+        self.setGeometry(self.windowLocationX, self.windowLocationY, self.windowSizeX, self.windowSizeY)
 
         self.scale = 0.7*self.width()/self.L[0]
 
         self.setWindowTitle('omer viewer')
 
-        print self.width(), self.height()
 #        self.connect(self.timer, SIGNAL("timeout()"), self.update)
         
-        self.scale = 8
         self.transform = self.scale*np.identity(3)
 
         spheres = [ QGraphicsEllipseItem(0,0,50,50) ]
@@ -50,17 +50,20 @@ class omerViewer(QGLWidget):
 
         self.frame_nb = 0
 
+        labeltest = QLabel()
+        labeltest.setText('One two three')
+        labeltest.setAlignment(Qt.AlignRight)
+        vbox = QVBoxLayout()
+        vbox.addWidget(labeltest)
+        self.setLayout(vbox)
+
         self.layer_nb=12
         self.layer_activity = np.ones(self.layer_nb, dtype=np.bool)
         self.layer_labels = [] 
 
         for i in range(self.layer_nb):
             label = "Layer "+str(i)
-            self.layer_labels.append(QLabel(label))
-            self.layer_labels[i].setAlignment(Qt.AlignBottom | Qt.AlignRight)            
-
-#            self.layer_labels[i].setText(label)
-#            self.layer_labels[i].show()
+            self.layer_labels.append(label)
 
 
     def start(self):
@@ -177,6 +180,24 @@ class omerViewer(QGLWidget):
         
         frame = self.pos_stream.frames[self.frame_nb]
         frame.display(paint,self.transform, self.layer_activity)
+
+        location_ratio = [ -0.45, -0.45 ] 
+        rsize = [ 60, 20 ]
+        
+        paint.setFont(QFont("Arial", 15, QFont.Bold))
+        pen = QPen()
+        
+        for i in range(self.layer_nb):
+            rect = QRectF(location_ratio[0]*self.width(), location_ratio[1]*self.height()+i*rsize[1], rsize[0], rsize[1])
+            if self.layer_activity[i] == True:
+                pen.setColor(Qt.black)
+            else:
+                pen.setColor(Qt.gray)
+            paint.setPen(pen)
+            paint.drawText(rect, Qt.AlignLeft, self.layer_labels[i])
+
+#            self.layer_labels[i].setText(label)
+#            self.layer_labels[i].show()
 
 
         paint.end()

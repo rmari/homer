@@ -13,15 +13,8 @@ class omerFile:
         
         self.is_file=True
 
-        self.max = [40.,0.,40.]
-        self.min = [-40.,0.,-40.]
-        
         self.chunksize = 100000
-
-
         self.read(filename)
-    
-
 
         
     def Lx(self):
@@ -64,4 +57,6 @@ class omerFile:
         for frame in split_array:
             self.frames.append(omerFrame.omerFrame(frame))
 
+        self.max = np.array([myframe['p1'].max(), myframe['p2'].max(), myframe['p3'].max()])
+        self.min = np.array([myframe['p1'].min(), myframe['p2'].min(), myframe['p3'].min()])
 

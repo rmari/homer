@@ -139,9 +139,10 @@ class omerFrame:
         self.painter_calls = np.empty((self.masked_objects.shape[0],4), dtype=np.object)
         
 
-        self.displaySticks(painter)
+
         self.displayCircles(painter)
         self.displayLines(painter)
+        self.displaySticks(painter)
 
         self.painter_calls = self.painter_calls[ np.nonzero(self.painter_calls[:,0]) ]
 
