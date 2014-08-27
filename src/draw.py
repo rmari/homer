@@ -13,11 +13,11 @@ import omerFile
 
 
 
-class omerViewer(QGLWidget):
+class omerViewer(QWidget):
     speed=1
 
     def __init__(self, filename, parent=None):
-        QGLWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
         # setGeometry(x_pos, y_pos, width, height)
         
         self.timer = QBasicTimer()

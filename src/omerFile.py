@@ -46,7 +46,7 @@ class omerFile:
     def read(self, filename):        
 
         names = ['a', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6']
-        myframe = pd.read_table(filename, sep=" ", names=names)
+        myframe = pd.read_table(filename, delim_whitespace=True, names=names)
         splitpoints = np.nonzero(np.array(pd.isnull(myframe['a'])))[0]
 
         whole_array = np.array(myframe)

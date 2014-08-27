@@ -62,12 +62,15 @@ class omerFrame:
         circles_labels = np.nonzero(self.masked_objects[:,0] == 'c')[0]
  
         brush = QBrush(Qt.SolidPattern)
+        pen = QPen()
+        pen.setColor(Qt.black)
+
         for i in circles_labels:
-            pen = QPen()
+
             c = self.masked_objects[i]
             color = self.colordef[c[self.color_ind]]
             
-            pen.setColor(Qt.black)
+
             brush.setColor(color)
             
             rad = c[self.size_ind]
@@ -80,11 +83,12 @@ class omerFrame:
     def displayLines(self, painter):
 
         lines_labels = np.nonzero(self.masked_objects[:,0] == 'l')[0]
-        brush = QBrush(Qt.SolidPattern)
+        pen = QPen()
+        brush = QBrush()
 
         for i in lines_labels:
             l = self.masked_objects[i]
-            pen = QPen()
+            print i, l
             color = self.colordef[l[self.color_ind]]
             pen.setColor(color)
 
@@ -96,12 +100,12 @@ class omerFrame:
     def displaySticks(self, painter):
 
         sticks_labels = np.nonzero(self.masked_objects[:,0] == 's')[0]
-        brush = QBrush(Qt.SolidPattern)
- #       print "sticks"
- #       print self.masked_objects[sticks_labels][:,self.pos1_ind+1]
+        pen = QPen()
+        brush = QBrush()
+
         for i in sticks_labels:
             s = self.masked_objects[i]
-            pen = QPen()
+
             thickness = s[self.size_ind]
             pen.setWidth(thickness)
             color = self.colordef[s[self.color_ind]]
@@ -116,10 +120,10 @@ class omerFrame:
 
         
     def display(self, painter, transform, layer_list):
-
+        print "a"
         self.applyTransform(transform)
         obj_nb = (self.objects[:,0].shape)[0]
-
+        print "b"
         displayed_obj = np.zeros(obj_nb, dtype=np.bool)
         displayed_nb = np.nonzero(layer_list)[0]
         for d in displayed_nb:
@@ -128,7 +132,7 @@ class omerFrame:
 #        print displayed_obj.shape
 
         displayed_obj = np.logical_and(displayed_obj, -np.isnan(self.bare_positions[:,2]) ) # remove color/layer/radius entries
-
+        print "c"
 #        print displayed_obj.shape
 #        print self.objects.shape
 
@@ -136,6 +140,9 @@ class omerFrame:
 
         self.masked_objects = self.masked_objects[np.argsort(self.masked_objects[:,self.pos1_ind+1])]
 #        print self.masked_objects[:,self.pos1_ind+1]
+
+        print "d"
+
         self.painter_calls = np.empty((self.masked_objects.shape[0],4), dtype=np.object)
         
 
@@ -143,10 +150,13 @@ class omerFrame:
         self.displayCircles(painter)
         self.displayLines(painter)
         self.displaySticks(painter)
-
+        print "e"
         self.painter_calls = self.painter_calls[ np.nonzero(self.painter_calls[:,0]) ]
 
         for [pen, brush, paintMethod, paintArgs] in self.painter_calls:
             painter.setPen(pen)
             painter.setBrush(brush)
             paintMethod(paintArgs)
+#            print paintMethod
+#            print paintArgs
+        print "f"
