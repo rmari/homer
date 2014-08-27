@@ -59,60 +59,64 @@ class omerFrame:
 
     def displayCircles(self, painter):
 
-        circles = self.masked_objects[ self.masked_objects[:,0] == 'c' ]
-        circles = circles[np.argsort(circles[:,3])] # sort according to z-coord
+        circles_labels = np.nonzero(self.masked_objects[:,0] == 'c')[0]
  
-        for c in circles:
+        brush = QBrush(Qt.SolidPattern)
+        for i in circles_labels:
+            pen = QPen()
+            c = self.masked_objects[i]
             color = self.colordef[c[self.color_ind]]
-            painter.setPen(Qt.black)
-            painter.setBrush(color)
-
+            
+            pen.setColor(Qt.black)
+            brush.setColor(color)
+            
             rad = c[self.size_ind]
             objectAttrs = QRectF(c[self.pos1_ind]-rad, -c[self.pos1_ind+2]-rad, 2*rad, 2*rad)
-            painter.drawEllipse(objectAttrs)
+            self.painter_calls[i] = np.array([pen,brush,painter.drawEllipse,objectAttrs])
+
+#            painter.drawEllipse(objectAttrs)
 
 
     def displayLines(self, painter):
-        pen = QPen()
 
+        lines_labels = np.nonzero(self.masked_objects[:,0] == 'l')[0]
+        brush = QBrush(Qt.SolidPattern)
 
-        lines = self.masked_objects[ self.masked_objects[:,0] == 'l' ]
-        lines = lines[np.argsort(lines[:,self.pos1_ind+1])] # sort according to z-coord
-
-
-        sqrt2 = np.sqrt(2) 
-        for l in lines:
+        for i in lines_labels:
+            l = self.masked_objects[i]
+            pen = QPen()
             color = self.colordef[l[self.color_ind]]
             pen.setColor(color)
-            painter.setPen(pen)
 
             objectAttrs = QLineF(l[self.pos1_ind], -l[self.pos1_ind+2], l[self.pos2_ind], -l[self.pos2_ind+2])
-            painter.drawLine(objectAttrs)
+            self.painter_calls[i] = np.array([pen,brush,painter.drawLine,objectAttrs])
+#            painter.drawLine(objectAttrs)
 
 
     def displaySticks(self, painter):
 
-        pen = QPen()
-
-
-        lines = self.masked_objects[ self.masked_objects[:,0] == 's' ]
-        lines = lines[np.argsort(lines[:,self.pos1_ind+1])] # sort according to z-coord
-
-        sqrt2 = np.sqrt(2) 
-        for l in lines:
-            thickness = l[self.size_ind]
+        sticks_labels = np.nonzero(self.masked_objects[:,0] == 's')[0]
+        brush = QBrush(Qt.SolidPattern)
+ #       print "sticks"
+ #       print self.masked_objects[sticks_labels][:,self.pos1_ind+1]
+        for i in sticks_labels:
+            s = self.masked_objects[i]
+            pen = QPen()
+            thickness = s[self.size_ind]
             pen.setWidth(thickness)
-            color = self.colordef[l[self.color_ind]]
+            color = self.colordef[s[self.color_ind]]
             pen.setColor(color)
 
-            painter.setPen(pen)
 
-            objectAttrs = QLineF(l[self.pos1_ind], -l[self.pos1_ind+2], l[self.pos2_ind], -l[self.pos2_ind+2])
-            painter.drawLine(objectAttrs)
+            objectAttrs = QLineF(s[self.pos1_ind], -s[self.pos1_ind+2], s[self.pos2_ind], -s[self.pos2_ind+2])
+            
+            self.painter_calls[i] = np.array([pen,brush,painter.drawLine,objectAttrs])
+
+#            painter.drawLine(objectAttrs)
 
         
     def display(self, painter, transform, layer_list):
-        
+
         self.applyTransform(transform)
         obj_nb = (self.objects[:,0].shape)[0]
 
@@ -121,15 +125,27 @@ class omerFrame:
         for d in displayed_nb:
             displayed_obj = np.logical_or(displayed_obj, self.objects[:,self.layer_ind] == d )
 
-        print displayed_nb
-        print displayed_obj.shape
-        print self.objects.shape
+#        print displayed_obj.shape
+
+        displayed_obj = np.logical_and(displayed_obj, -np.isnan(self.bare_positions[:,2]) ) # remove color/layer/radius entries
+
+#        print displayed_obj.shape
+#        print self.objects.shape
 
         self.masked_objects = self.objects[displayed_obj]
-        print self.masked_objects.shape
 
+        self.masked_objects = self.masked_objects[np.argsort(self.masked_objects[:,self.pos1_ind+1])]
+#        print self.masked_objects[:,self.pos1_ind+1]
+        self.painter_calls = np.empty((self.masked_objects.shape[0],4), dtype=np.object)
+        
+
+        self.displaySticks(painter)
         self.displayCircles(painter)
         self.displayLines(painter)
-        self.displaySticks(painter)
-        
-        
+
+        self.painter_calls = self.painter_calls[ np.nonzero(self.painter_calls[:,0]) ]
+
+        for [pen, brush, paintMethod, paintArgs] in self.painter_calls:
+            painter.setPen(pen)
+            painter.setBrush(brush)
+            paintMethod(paintArgs)

@@ -1,4 +1,5 @@
-#!/Users/LevichFellow/anaconda/bin/python
+##!/Users/LevichFellow/anaconda/bin/python
+#!/usr/bin/python
 #coding=utf-8
 from PySide.QtCore import *
 from PySide.QtGui import *
