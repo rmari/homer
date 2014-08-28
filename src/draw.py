@@ -66,6 +66,13 @@ class omerViewer(QWidget):
 
         self.installEventFilter(self)
 
+        pal = QPalette()
+        pal.setColor(QPalette.Window, Qt.gray)
+        self.setAutoFillBackground(True)
+        self.setPalette(pal)
+        
+        self.show()
+
     def start(self):
         self.timer.start(self.speed,self)
 
@@ -157,7 +164,6 @@ class omerViewer(QWidget):
                 self.timer.stop()
             if(self.frame_nb < len(self.pos_stream.frames)-1):
                 self.frame_nb = self.frame_nb+1
-                print self.frame_nb
             cached = True
         elif e == Qt.Key_P:
             if self.timer.isActive():
@@ -205,14 +211,14 @@ class omerViewer(QWidget):
         self.previous_point = self.current_point
         self.current_point = event.posF()
         
-        angleY = -2*(self.current_point.x() - self.previous_point.x())/self.width()
+        angleY = 4*(self.current_point.x() - self.previous_point.x())/self.width()
         
         sinAngleY = np.sin(angleY)
         cosAngleY = np.cos(angleY)
         generator = np.mat([[cosAngleY, -sinAngleY, 0], [sinAngleY, cosAngleY, 0], [0, 0, 1]])
         self.transform = generator*self.transform
 
-        angleX = -2*(self.current_point.y() - self.previous_point.y())/self.height()
+        angleX = -4*(self.current_point.y() - self.previous_point.y())/self.height()
         
         sinAngleX = np.sin(angleX)
         cosAngleX = np.cos(angleX)
@@ -232,7 +238,7 @@ class omerViewer(QWidget):
 
         paint.setRenderHint(QPainter.Antialiasing)
         # make a white drawing background
-        paint.setBrush(Qt.white)
+        paint.setBrush(Qt.gray)
         paint.drawRect(event.rect())
 
         paint.setTransform(QTransform().translate(0.5*self.width(), 0.5*self.height()))
@@ -242,7 +248,7 @@ class omerViewer(QWidget):
 
         pen = QPen()
         rlocation = np.array([ -0.49*self.width(), -0.49*self.height() ])
-        rsize = [ 95, 18 ]
+        rsize = [ 100, 18 ]
 
         pen.setColor(Qt.black)
         paint.setPen(pen)
@@ -262,7 +268,7 @@ class omerViewer(QWidget):
             if self.layer_activity[i] == True:
                 pen.setColor(Qt.black)
             else:
-                pen.setColor(Qt.gray)
+                pen.setColor(Qt.lightGray)
             paint.setPen(pen)
             paint.drawText(rect, Qt.AlignLeft, self.layer_labels[i])
 
@@ -290,7 +296,6 @@ app = QApplication([])
 
 filename=init()
 SimuViewer=omerViewer(filename)
-SimuViewer.show()
 #SimuViewer.start()
     
 sys.exit(app.exec_())

@@ -13,7 +13,6 @@ size_ind = 7
 color_ind = 8
 layer_ind = 9
 
-colordef = np.array([Qt.black, Qt.gray, Qt.blue, Qt.red, Qt.yellow, Qt.green, Qt.green, Qt.black, Qt.gray, Qt.blue, Qt.red, Qt.yellow])
 command_coding = { 'y':0, '@':1, 'r':3, 'c':4, 'l':5, 's':6 }
 fidelity_scale = [ Qt.SolidPattern, Qt.Dense2Pattern, Qt.Dense6Pattern, Qt.NoBrush ]
 
@@ -23,7 +22,7 @@ fidelity_scale = [ Qt.SolidPattern, Qt.Dense2Pattern, Qt.Dense6Pattern, Qt.NoBru
 class omerFrame:
 
     def __init__(self, obj):
-        self.colordef = np.array([Qt.black, Qt.gray, Qt.blue, Qt.red, Qt.yellow, Qt.green, Qt.green, Qt.black, Qt.gray, Qt.blue, Qt.red, Qt.yellow])
+        self.colordef = np.array([Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue])
         self.populate(obj)
 
     def populate(self, obj):
@@ -38,6 +37,7 @@ class omerFrame:
         self.layer_ind = 9
 
         self.bare_positions = np.array(self.objects[:,self.pos1_ind:], dtype=np.float64)
+        self.bare_positions[:,[1,2,4,5]] = -self.bare_positions[:,[1,2,4,5]]
 
         size_pos = np.nonzero(self.objects[:,0] == command_coding['r'])[0]
         self.bare_sizes = np.zeros(obj_nb)
@@ -74,35 +74,32 @@ class omerFrame:
 
 
     def getLineF(self,v):
-        return np.array([QLineF(a[pos1_ind], -a[pos1_ind+2], a[pos2_ind], -a[pos2_ind+2]) for a in v])
+        return np.array([QLineF(a[pos1_ind], a[pos1_ind+2], a[pos2_ind], a[pos2_ind+2]) for a in v])
 
     def getPen(self,v):
-        pen = QPen(colordef[v[color_ind]])
+        pen = QPen(self.colordef[v[color_ind]])
         pen.setWidth(v[size_ind])
         return pen
 
     def getRectF(self,v):
         rad = v[:,size_ind]
         v[:,pos1_ind] = v[:,pos1_ind]-rad
-        v[:,pos1_ind+2] = -v[:,pos1_ind+2]-rad
+        v[:,pos1_ind+2] = v[:,pos1_ind+2]-rad
         return np.array([ QRectF(a[pos1_ind], a[pos1_ind+2], 2*a[size_ind], 2*a[size_ind]) for a in v ])
 
     def getBrush(self,v):
         fid = fidelity_scale[self.fidelity]
-        c = colordef[v[:,color_ind].astype(np.int)]
+        c = self.colordef[v[:,color_ind].astype(np.int)]
         return np.array([ QBrush(col,fid) for col in c ])
     
     def getPen(self,v):
-        c = colordef[v[:,color_ind].astype(np.int)]
+        c = self.colordef[v[:,color_ind].astype(np.int)]
         w = v[:,size_ind]
         return np.array([ QPen(QBrush(col), width) for (col, width) in zip(c,w) ])
 
     def displayCircles(self, painter):
 
         circles_labels = np.nonzero(self.masked_objects[:,0] == command_coding['c'])[0]
-
-        pen = QPen()
-        pen.setColor(Qt.black)
 
         c = self.masked_objects[circles_labels]
 
@@ -140,6 +137,7 @@ class omerFrame:
         sticks_labels = np.nonzero(self.masked_objects[:,0] == command_coding['s'])[0]
         s = self.masked_objects[sticks_labels]
 
+        # should switch to drawPolygon in future
         brush = QBrush(Qt.SolidPattern)
         pen = self.getPen(s)
         objectAttrs = self.getLineF(s)
@@ -151,11 +149,11 @@ class omerFrame:
 
 
     def display(self, painter, transform, layer_list, fidelity):
-        print "a"
+#        print "a"
         self.fidelity = fidelity
         self.applyTransform(transform)
         obj_nb = (self.objects[:,0].shape)[0]
-        print "b"
+#        print "b"
         displayed_obj = np.zeros(obj_nb, dtype=np.bool)
         displayed_nb = np.nonzero(layer_list)[0]
         for d in displayed_nb:
@@ -164,7 +162,7 @@ class omerFrame:
             
         displayed_obj = np.logical_and(displayed_obj, -np.isnan(self.bare_positions[:,2]) ) # remove color/layer/radius entries
 
-        print "c"
+#        print "c"
 
         self.masked_objects = self.objects[displayed_obj]
         
@@ -173,12 +171,12 @@ class omerFrame:
 #        display_obj(painter, self.masked_objects)
 
         self.painter_calls = np.empty((self.masked_objects.shape[0],4), dtype=np.object)
-        print "d"        
+#        print "d"        
         self.displayCircles(painter)
         self.displayLines(painter)
         self.displaySticks(painter)
 
-        print "e"
+#        print "e"
 #        self.painter_calls = self.painter_calls[ np.nonzero(self.painter_calls[:,0]) ]
 
         for [pen, brush, paintMethod, paintArgs] in self.painter_calls:
@@ -186,4 +184,4 @@ class omerFrame:
             painter.setBrush(brush)
             paintMethod(paintArgs)
 
-        print "f"
+#        print "f"
