@@ -55,7 +55,7 @@ class omerViewer(QWidget):
         self.layer_labels = [] 
 
         for i in range(self.layer_nb):
-            label = "Layer "+str(i+1)
+            label = "Layer "+str(i+1)+" (F"+str(i+1)+")"
             self.layer_labels.append(label)
 
         self.fidelity = 0
@@ -102,10 +102,6 @@ class omerViewer(QWidget):
                 if k == Qt.Key_N and m == Qt.SHIFT:
                     self.start()
                     return True
-
-            if event.type() == QEvent.KeyPress:
-                catched = self.keyPressEvent(event)
-                return catched
             else:
                 return False
             
@@ -161,6 +157,7 @@ class omerViewer(QWidget):
                 self.timer.stop()
             if(self.frame_nb < len(self.pos_stream.frames)-1):
                 self.frame_nb = self.frame_nb+1
+                print self.frame_nb
             cached = True
         elif e == Qt.Key_P:
             if self.timer.isActive():
@@ -243,20 +240,32 @@ class omerViewer(QWidget):
         frame = self.pos_stream.frames[self.frame_nb]
         frame.display(paint,self.transform, self.layer_activity, self.fidelity)
 
-        location_ratio = [ -0.48, -0.48 ] 
-        rsize = [ 60, 18 ]
-        
-#        paint.setFont(QFont("Arial", 15, QFont.Bold))
         pen = QPen()
-        
+        rlocation = np.array([ -0.49*self.width(), -0.49*self.height() ])
+        rsize = [ 95, 18 ]
+
+        pen.setColor(Qt.black)
+        paint.setPen(pen)
+        rect = QRectF(rlocation[0], rlocation[1], rsize[0], rsize[1])
+        paint.drawText(rect, Qt.AlignLeft, "Frame "+str(self.frame_nb+1)+" (n p)")
+        rlocation[1] = rlocation[1]+rsize[1]
+        rsize = [ 95, 18 ]
+        pen.setColor(Qt.black)
+        paint.setPen(pen)
+        rect = QRectF(rlocation[0], rlocation[1], rsize[0], rsize[1])
+        paint.drawText(rect, Qt.AlignLeft, "Texture "+str(self.fidelity_max-self.fidelity)+" (+ -)")
+
+        rlocation[1] = rlocation[1]+rsize[1]
+        rsize = [ 95, 18 ]
         for i in range(self.layer_nb):
-            rect = QRectF(location_ratio[0]*self.width(), location_ratio[1]*self.height()+i*rsize[1], rsize[0], rsize[1])
+            rect = QRectF(rlocation[0], rlocation[1]+(i+1)*rsize[1], rsize[0], rsize[1])
             if self.layer_activity[i] == True:
                 pen.setColor(Qt.black)
             else:
                 pen.setColor(Qt.gray)
             paint.setPen(pen)
             paint.drawText(rect, Qt.AlignLeft, self.layer_labels[i])
+
 
 #            self.layer_labels[i].setText(label)
 #            self.layer_labels[i].show()

@@ -151,10 +151,11 @@ class omerFrame:
 
 
     def display(self, painter, transform, layer_list, fidelity):
+        print "a"
         self.fidelity = fidelity
         self.applyTransform(transform)
         obj_nb = (self.objects[:,0].shape)[0]
-
+        print "b"
         displayed_obj = np.zeros(obj_nb, dtype=np.bool)
         displayed_nb = np.nonzero(layer_list)[0]
         for d in displayed_nb:
@@ -163,6 +164,8 @@ class omerFrame:
             
         displayed_obj = np.logical_and(displayed_obj, -np.isnan(self.bare_positions[:,2]) ) # remove color/layer/radius entries
 
+        print "c"
+
         self.masked_objects = self.objects[displayed_obj]
         
         self.masked_objects = self.masked_objects[np.argsort(self.masked_objects[:,self.pos1_ind+1])]
@@ -170,17 +173,17 @@ class omerFrame:
 #        display_obj(painter, self.masked_objects)
 
         self.painter_calls = np.empty((self.masked_objects.shape[0],4), dtype=np.object)
-        
-
-
+        print "d"        
         self.displayCircles(painter)
         self.displayLines(painter)
         self.displaySticks(painter)
 
-        self.painter_calls = self.painter_calls[ np.nonzero(self.painter_calls[:,0]) ]
+        print "e"
+#        self.painter_calls = self.painter_calls[ np.nonzero(self.painter_calls[:,0]) ]
 
         for [pen, brush, paintMethod, paintArgs] in self.painter_calls:
             painter.setPen(pen)
             painter.setBrush(brush)
             paintMethod(paintArgs)
 
+        print "f"
