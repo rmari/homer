@@ -15,9 +15,12 @@ class omerFile:
         
         self.is_file=True
 
-        self.chunksize = 100000
-        self.read(filename)
-
+        self.chunksize = 500000
+        names = ['a', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6']
+        self.reader = pd.read_table(filename, delim_whitespace=True, names=names, iterator=True)
+        
+        self.frames = []
+        self.init = True
         
     def Lx(self):
         return self.max[0]-self.min[0]
@@ -45,29 +48,34 @@ class omerFile:
             if pos.item(i) < self.min[i]:
                 self.min[i] = pos.item(i)
 
-    def read(self, filename):        
-        print "a"
-        names = ['a', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6']
-        myframe = pd.read_table(filename, delim_whitespace=True, names=names)
-        print "b"
+    def read_chunk(self):
+
+        myframe = self.reader.get_chunk(self.chunksize)
+        if myframe.empty:
+            return False
+
         for k in command_coding:
             myframe.replace(to_replace=k,value=command_coding[k],inplace=True)
 
-        print "c"
         myframe.astype(np.float)
-        print "d"
         splitpoints = np.nonzero(np.array(pd.isnull(myframe['a'])))[0]
-        print "e"
+
         whole_array = np.array(myframe)
-        print "f"
         split_array = np.split(whole_array, splitpoints)
-        print "g"
-        self.frames = []
-        for frame in split_array:
+        
+        frame = split_array[0]
+        if self.init:
+            self.init = False
+        else:
+            self.frames.append(omerFrame.omerFrame(np.vstack((self.truncated_array, frame))))
+            
+        for frame in split_array[1:-1]:
             self.frames.append(omerFrame.omerFrame(frame))
-        print "e"
+
+        self.truncated_array = split_array[-1]
+
 
         self.max = np.array([myframe['p1'].max(), myframe['p2'].max(), myframe['p3'].max()])
         self.min = np.array([myframe['p1'].min(), myframe['p2'].min(), myframe['p3'].min()])
 
-        print "f"
+        return True

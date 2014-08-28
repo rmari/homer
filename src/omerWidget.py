@@ -23,6 +23,7 @@ class omerWidget(QWidget):
         self.timer = QBasicTimer()
 
         self.infile=omerFile.omerFile(filename)
+        self.infile.read_chunk()
 
         self.scale = 0.7*self.width()/self.infile.Lx()
 
@@ -73,14 +74,32 @@ class omerWidget(QWidget):
     def start(self):
         self.timer.start(self.speed,self)
 
+    def incrementFrame(self):
+        if(self.frame_nb < len(self.infile.frames)-1):
+            self.frame_nb = self.frame_nb+1
+            return True
+        else:
+            new_frames = self.infile.read_chunk()
+            if new_frames:
+                self.frame_nb = self.frame_nb+1
+                return True
+            else:
+                return False
+
+    def decrementFrame(self):
+        if(self.frame_nb > 0):
+            self.frame_nb = self.frame_nb-1
+            return True
+        else:
+            return False
 
     def timerEvent(self, event):
         if event.timerId() == self.timer.timerId():
-            if(self.frame_nb < len(self.infile.frames)-1):
-                self.frame_nb = self.frame_nb+1
-                self.update()
+            if self.forward_anim:
+                self.incrementFrame()
             else:
-                return
+                self.decrementFrame()
+            self.update() 
         else:
             QWidget.timerEvent(self, event)
 
@@ -88,8 +107,8 @@ class omerWidget(QWidget):
         self.layer_activity[label] = -self.layer_activity[label]
         
     def eventFilter(self, obj, event):
+        
         if obj == self:
-#            print event.type()
             if event.type() == QEvent.ShortcutOverride:
                 k =  event.key() 
                 m = event.modifiers()
@@ -97,6 +116,8 @@ class omerWidget(QWidget):
                 if k == Qt.Key_N and m == Qt.SHIFT:
                     self.start()
                     return True
+                else:
+                    return False
             else:
                 return False
             
@@ -150,14 +171,12 @@ class omerWidget(QWidget):
         elif e == Qt.Key_N:
             if self.timer.isActive():
                 self.timer.stop()
-            if(self.frame_nb < len(self.infile.frames)-1):
-                self.frame_nb = self.frame_nb+1
+            self.incrementFrame()
             catched = True
         elif e == Qt.Key_P:
             if self.timer.isActive():
                 self.timer.stop()
-            if self.frame_nb > 0:
-                self.frame_nb = self.frame_nb-1
+            self.decrementFrame()
             catched = True
         elif e == Qt.Key_G:
             if self.timer.isActive():
