@@ -64,7 +64,6 @@ class omerFrame:
 
     def applyTransform(self, transform):
 
-#        print self.bare_positions[:,self.pos1_ind+3:].shape, transform.shape
         self.transformed_positions_1 = np.dot(self.bare_positions[:,0:3],transform)
         self.transformed_positions_2 = np.dot(self.bare_positions[:,3:6],transform)
 
@@ -168,8 +167,6 @@ class omerFrame:
         
         self.masked_objects = self.masked_objects[np.argsort(self.masked_objects[:,self.pos1_ind+1])]
 
-#        display_obj(painter, self.masked_objects)
-
         self.painter_calls = np.empty((self.masked_objects.shape[0],4), dtype=np.object)
 #        print "d"        
         self.displayCircles(painter)
@@ -177,7 +174,6 @@ class omerFrame:
         self.displaySticks(painter)
 
 #        print "e"
-#        self.painter_calls = self.painter_calls[ np.nonzero(self.painter_calls[:,0]) ]
 
         for [pen, brush, paintMethod, paintArgs] in self.painter_calls:
             painter.setPen(pen)

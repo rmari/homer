@@ -18,7 +18,6 @@ class omerWidget(QWidget):
 
     def __init__(self, filename, parent=None):
         QWidget.__init__(self, parent)
-        # setGeometry(x_pos, y_pos, width, height)
         
         self.timer = QBasicTimer()
 
@@ -28,12 +27,8 @@ class omerWidget(QWidget):
         self.scale = 0.7*self.width()/self.infile.Lx()
 
         self.initWindow()
-
-#        self.connect(self.timer, SIGNAL("timeout()"), self.update)
         
         self.transform = self.scale*np.identity(3)
-
-#        self.bg_layer = omerLayer.omerBackgroundLayer(Box)
 
         self.frame_nb = 0
 
