@@ -23,11 +23,9 @@ def init():
 
 
 
-#def main():
 app = QApplication([])    
 
 filename=init()
 SimuViewer=omerWidget.omerWidget(filename)
-#SimuViewer.start()
     
 sys.exit(app.exec_())

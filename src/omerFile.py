@@ -46,24 +46,28 @@ class omerFile:
                 self.min[i] = pos.item(i)
 
     def read(self, filename):        
-
+        print "a"
         names = ['a', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6']
         myframe = pd.read_table(filename, delim_whitespace=True, names=names)
+        print "b"
         for k in command_coding:
             myframe.replace(to_replace=k,value=command_coding[k],inplace=True)
 
+        print "c"
         myframe.astype(np.float)
-
+        print "d"
         splitpoints = np.nonzero(np.array(pd.isnull(myframe['a'])))[0]
-
+        print "e"
         whole_array = np.array(myframe)
-
+        print "f"
         split_array = np.split(whole_array, splitpoints)
-        
+        print "g"
         self.frames = []
         for frame in split_array:
             self.frames.append(omerFrame.omerFrame(frame))
+        print "e"
 
         self.max = np.array([myframe['p1'].max(), myframe['p2'].max(), myframe['p3'].max()])
         self.min = np.array([myframe['p1'].min(), myframe['p2'].min(), myframe['p3'].min()])
 
+        print "f"

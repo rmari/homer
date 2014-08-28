@@ -21,30 +21,16 @@ class omerWidget(QWidget):
         # setGeometry(x_pos, y_pos, width, height)
         
         self.timer = QBasicTimer()
-    
-        self.pos_stream=omerFile.omerFile(filename)
-        Box=[self.pos_stream.Lx(),self.pos_stream.Ly(), self.pos_stream.Lz()]
-        self.setBox(Box)
 
-        self.positions=dict()
+        self.infile=omerFile.omerFile(filename)
 
-        ratio = self.L[2]/self.L[0]
-        self.windowSizeX = 800
-        self.windowSizeY = self.windowSizeX*ratio
-        self.windowLocationX = 400
-        self.windowLocationY = self.windowLocationX
+        self.scale = 0.7*self.width()/self.infile.Lx()
 
-        self.setGeometry(self.windowLocationX, self.windowLocationY, self.windowSizeX, self.windowSizeY)
-
-        self.scale = 0.7*self.width()/self.L[0]
-
-        self.setWindowTitle('omer viewer')
+        self.initWindow()
 
 #        self.connect(self.timer, SIGNAL("timeout()"), self.update)
         
         self.transform = self.scale*np.identity(3)
-
-        spheres = [ QGraphicsEllipseItem(0,0,50,50) ]
 
 #        self.bg_layer = omerLayer.omerBackgroundLayer(Box)
 
@@ -73,22 +59,24 @@ class omerWidget(QWidget):
         
         self.show()
 
+    def initWindow(self):
+        ratio = self.infile.Lz()/self.infile.Lx()
+        self.windowSizeX = 800
+        self.windowSizeY = self.windowSizeX*ratio
+        self.windowLocationX = 400
+        self.windowLocationY = self.windowLocationX
+
+        self.setGeometry(self.windowLocationX, self.windowLocationY, self.windowSizeX, self.windowSizeY)
+
+        self.setWindowTitle('omer viewer')
+
     def start(self):
         self.timer.start(self.speed,self)
 
 
-
-    def setBox(self, BoxSize):
-        self.L=BoxSize
-
-    def setConfiguration(self, pos, radius):
-        self.positions=pos
-        self.radius=radius
-
-
     def timerEvent(self, event):
         if event.timerId() == self.timer.timerId():
-            if(self.frame_nb < len(self.pos_stream.frames)-1):
+            if(self.frame_nb < len(self.infile.frames)-1):
                 self.frame_nb = self.frame_nb+1
                 self.update()
             else:
@@ -122,84 +110,85 @@ class omerWidget(QWidget):
         e = event.key()
         if e == Qt.Key_Tab:
             self.transform = self.scale*np.identity(3)
-            cached = True
+            catched = True
         elif e == Qt.Key_F1:
             self.layerSwitch(0)
-            cached = True
+            catched = True
         elif e == Qt.Key_F2:
             self.layerSwitch(1)
-            cached = True
+            catched = True
         elif e == Qt.Key_F3:
             self.layerSwitch(2)
-            cached = True
+            catched = True
         elif e == Qt.Key_F4:
             self.layerSwitch(3)
-            cached = True
+            catched = True
         elif e == Qt.Key_F5:
             self.layerSwitch(4)
-            cached = True
+            catched = True
         elif e == Qt.Key_F6:
             self.layerSwitch(5)
-            cached = True
+            catched = True
         elif e == Qt.Key_F7:
             self.layerSwitch(6)
-            cached = True
+            catched = True
         elif e == Qt.Key_F8:
             self.layerSwitch(7)
-            cached = True
+            catched = True
         elif e == Qt.Key_F9:
             self.layerSwitch(8)
-            cached = True
+            catched = True
         elif e == Qt.Key_F10:
             self.layerSwitch(9)
-            cached = True
+            catched = True
         elif e == Qt.Key_F11:
             self.layerSwitch(10)
-            cached = True
+            catched = True
         elif e == Qt.Key_F12:
             self.layerSwitch(11)
-            cached = True
+            catched = True
         elif e == Qt.Key_N:
             if self.timer.isActive():
                 self.timer.stop()
-            if(self.frame_nb < len(self.pos_stream.frames)-1):
+            if(self.frame_nb < len(self.infile.frames)-1):
                 self.frame_nb = self.frame_nb+1
-            cached = True
+            catched = True
         elif e == Qt.Key_P:
             if self.timer.isActive():
                 self.timer.stop()
             if self.frame_nb > 0:
                 self.frame_nb = self.frame_nb-1
-            cached = True
+            catched = True
         elif e == Qt.Key_G:
             if self.timer.isActive():
                 self.timer.stop()
             self.frame_nb = 0
-            cached = True
+            catched = True
         elif e == Qt.Key_Asterisk:
             factor = 1.05
             self.scale *= factor
             self.transform = factor*self.transform
-            cached = True
+            catched = True
         elif e == Qt.Key_Slash:
             factor = 1.05
             self.scale /= factor
             self.transform = self.transform/factor
-            cached = True
+            catched = True
         elif e == Qt.Key_Q:
             QCoreApplication.instance().quit()
-            cached = True
+            catched = True
         elif e == Qt.Key_Minus:
             if self.fidelity < self.fidelity_max:
                 self.fidelity = self.fidelity + 1
-            cached = True
+            catched = True
         elif e == Qt.Key_Plus:
             if self.fidelity > self.fidelity_min:
                 self.fidelity = self.fidelity - 1
-            cached = True
-        elif e == QKeySequence(Qt.Key_Shift + Qt.Key_N):
-            self.start()
-            cached = True
+            catched = True
+        elif e == Qt.Key_Space:
+            self.timer.stop()
+            catched = True
+
         self.update()
         return catched
 
@@ -228,24 +217,7 @@ class omerWidget(QWidget):
         self.update()
             
             
-            
-        
-    def paintEvent(self, event):
-        global paint
-        paint = QPainter()
-        paint.begin(self)
-
-
-        paint.setRenderHint(QPainter.Antialiasing)
-        # make a white drawing background
-        paint.setBrush(Qt.gray)
-        paint.drawRect(event.rect())
-
-        paint.setTransform(QTransform().translate(0.5*self.width(), 0.5*self.height()))
-        
-        frame = self.pos_stream.frames[self.frame_nb]
-        frame.display(paint,self.transform, self.layer_activity, self.fidelity)
-
+    def writeLabels(self, paint):
         pen = QPen()
         rlocation = np.array([ -0.49*self.width(), -0.49*self.height() ])
         rsize = [ 100, 18 ]
@@ -272,10 +244,21 @@ class omerWidget(QWidget):
             paint.setPen(pen)
             paint.drawText(rect, Qt.AlignLeft, self.layer_labels[i])
 
+            
+        
+    def paintEvent(self, event):
+        global paint
+        paint = QPainter()
+        paint.begin(self)
 
-#            self.layer_labels[i].setText(label)
-#            self.layer_labels[i].show()
+        paint.setRenderHint(QPainter.Antialiasing)
 
+        paint.setTransform(QTransform().translate(0.5*self.width(), 0.5*self.height()))
+        
+        frame = self.infile.frames[self.frame_nb]
+        frame.display(paint,self.transform, self.layer_activity, self.fidelity)
+
+        self.writeLabels(paint)
 
         paint.end()
 
