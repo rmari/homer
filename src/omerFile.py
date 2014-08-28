@@ -21,6 +21,7 @@ class omerFile:
         
         self.frames = []
         self.init = True
+        self.read_all = False
         
     def Lx(self):
         return self.max[0]-self.min[0]
@@ -49,8 +50,13 @@ class omerFile:
                 self.min[i] = pos.item(i)
 
     def read_chunk(self):
+        if self.read_all:
+            return False
 
         myframe = self.reader.get_chunk(self.chunksize)
+
+        if myframe.shape[0] < self.chunksize:
+            self.read_all = True
         if myframe.empty:
             return False
 
