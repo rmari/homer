@@ -3,8 +3,8 @@ from PySide.QtCore import *
 from PySide.QtGui import *
 from PySide.QtOpenGL import *
 
-from numba import autojit
-from numba import jit, void, int_, float32
+#from numba import autojit
+#from numba import jit, void, int_, float32
 
 pos1_ind = 1
 pos2_ind = 4
@@ -15,119 +15,9 @@ layer_ind = 9
 
 colordef = np.array([Qt.black, Qt.gray, Qt.blue, Qt.red, Qt.yellow, Qt.green, Qt.green, Qt.black, Qt.gray, Qt.blue, Qt.red, Qt.yellow])
 command_coding = { 'y':0, '@':1, 'r':3, 'c':4, 'l':5, 's':6 }
-
-def displayCircles(obj, painter_calls, painter):
-    
-    circles_labels = np.nonzero(obj[:,0] == command_coding['c'])[0]
-    
-    brush = QBrush(Qt.SolidPattern)
-    pen = QPen()
-    pen.setColor(Qt.black)
-    
-    for i in circles_labels:
-        
-        c = obj[i]
-        color = colordef[c[color_ind]]
-        
-        
-        brush.setColor(color)
-
-        rad = c[size_ind]
-        objectAttrs = QRectF(c[pos1_ind]-rad, -c[pos1_ind+2]-rad, 2*rad, 2*rad)
-        painter_calls[i] = np.array([pen,brush,painter.drawEllipse,objectAttrs])
-        
-#            painter.drawEllipse(objectAttrs)
-
-def displayLines(obj, painter_calls,painter):
-    
-    lines_labels = np.nonzero(obj[:,0] == command_coding['l'])[0]
-    pen = QPen()
-    brush = QBrush()
-    
-    for i in lines_labels:
-        l = obj[i]
-        color = colordef[l[color_ind]]
-        pen.setColor(color)
-
-        objectAttrs = QLineF(l[pos1_ind], -l[pos1_ind+2], l[pos2_ind], -l[pos2_ind+2])
-        painter_calls[i] = np.array([pen,brush,painter.drawLine,objectAttrs])
-#            painter.drawLine(objectAttrs)
-        
-def displaySticks(obj, painter_calls, painter):
-
-    sticks_labels = np.nonzero(obj[:,0] == command_coding['s'])[0]
-    pen = QPen()
-    brush = QBrush()
-    
-    for i in sticks_labels:
-        s = obj[i]
-        
-        thickness = s[size_ind]
-        pen.setWidth(thickness)
-        color = colordef[s[color_ind]]
-        pen.setColor(color)
-        
-        
-        objectAttrs = QLineF(s[pos1_ind], -s[pos1_ind+2], s[pos2_ind], -s[pos2_ind+2])
-        
-        painter_calls[i] = np.array([pen,brush,painter.drawLine,objectAttrs])
-        
-#            painter.drawLine(objectAttrs)
+fidelity_scale = [ Qt.SolidPattern, Qt.Dense2Pattern, Qt.Dense6Pattern, Qt.NoBrush ]
 
 
-
-
-def display_obj(painter, obj):
-    obj = obj[np.argsort(obj[:,pos1_ind+1])]
-#        print obj[:,self.pos1_ind+1]
-
-    print "d"
-
-    painter_calls = np.empty((obj.shape[0],4), dtype=np.object)
-    
-    
-    
-    displayCircles(obj, painter_calls, painter)
-    displayLines(obj, painter_calls, painter)
-    displaySticks(obj, painter_calls, painter)
-    print "e"
-    painter_calls = painter_calls[ np.nonzero(painter_calls[:,0]) ]
-
-    for [pen, brush, paintMethod, paintArgs] in painter_calls:
-        painter.setPen(pen)
-        painter.setBrush(brush)
-        paintMethod(paintArgs)
-        #            print paintMethod
-        #            print paintArgs
-    print "f"
-
-display_obj_jit = jit(display_obj)
-
-
-def getLineF(v):
-    return np.array([QLineF(a[pos1_ind], -a[pos1_ind+2], a[pos2_ind], -a[pos2_ind+2]) for a in v])
-
-
-def getPen(a):
-    pen = QPen(colordef[a[color_ind]])
-    pen.setWidth(a[size_ind])
-    return pen
-
-def getRectF(v):
-    rad = v[:,size_ind]
-    v[:,pos1_ind] = v[:,pos1_ind]-rad
-    v[:,pos1_ind+2] = -v[:,pos1_ind+2]-rad
-    return np.array([ QRectF(a[pos1_ind], a[pos1_ind+2], 2*a[size_ind], 2*a[size_ind]) for a in v ])
-
-def getBrush(v):
-    c = colordef[v[:,color_ind].astype(np.int)]
-    return np.array([ QBrush(col) for col in c ])
-
-def getPen(v):
-    c = colordef[v[:,color_ind].astype(np.int)]
-    w = v[:,size_ind]
-    
-    return np.array([ QPen(QBrush(col), width) for (col, width) in zip(c,w) ])
 
 
 class omerFrame:
@@ -178,14 +68,36 @@ class omerFrame:
         self.transformed_positions_1 = np.dot(self.bare_positions[:,0:3],transform)
         self.transformed_positions_2 = np.dot(self.bare_positions[:,3:6],transform)
 
-
         self.objects[:,self.pos1_ind:self.pos1_ind+6] = np.hstack((self.transformed_positions_1, self.transformed_positions_2))
         self.objects[:,self.size_ind] = self.bare_sizes*np.linalg.det(transform)**(1./3.)
 
 
 
-    def displayCircles(self, painter):
+    def getLineF(self,v):
+        return np.array([QLineF(a[pos1_ind], -a[pos1_ind+2], a[pos2_ind], -a[pos2_ind+2]) for a in v])
 
+    def getPen(self,v):
+        pen = QPen(colordef[v[color_ind]])
+        pen.setWidth(v[size_ind])
+        return pen
+
+    def getRectF(self,v):
+        rad = v[:,size_ind]
+        v[:,pos1_ind] = v[:,pos1_ind]-rad
+        v[:,pos1_ind+2] = -v[:,pos1_ind+2]-rad
+        return np.array([ QRectF(a[pos1_ind], a[pos1_ind+2], 2*a[size_ind], 2*a[size_ind]) for a in v ])
+
+    def getBrush(self,v):
+        fid = fidelity_scale[self.fidelity]
+        c = colordef[v[:,color_ind].astype(np.int)]
+        return np.array([ QBrush(col,fid) for col in c ])
+    
+    def getPen(self,v):
+        c = colordef[v[:,color_ind].astype(np.int)]
+        w = v[:,size_ind]
+        return np.array([ QPen(QBrush(col), width) for (col, width) in zip(c,w) ])
+
+    def displayCircles(self, painter):
 
         circles_labels = np.nonzero(self.masked_objects[:,0] == command_coding['c'])[0]
 
@@ -199,17 +111,13 @@ class omerFrame:
         pen = QPen(pcolor)
         pen.setWidth(pthickness)
 
-        brush = getBrush(c)
-        objectAttrs = getRectF(c)
+        brush = self.getBrush(c)
+        objectAttrs = self.getRectF(c)
 
         self.painter_calls[circles_labels,0] = pen
         self.painter_calls[circles_labels,1] = brush
         self.painter_calls[circles_labels,2] = painter.drawEllipse
         self.painter_calls[circles_labels,3] = objectAttrs
-
-
-#            painter.drawEllipse(objectAttrs)
-
 
     def displayLines(self, painter):
 
@@ -218,22 +126,13 @@ class omerFrame:
         l = self.masked_objects[lines_labels]
 
         brush = QBrush(Qt.SolidPattern)
-        pen = getPen(l)
-        objectAttrs = getLineF(l)
+        pen = self.getPen(l)
+        objectAttrs = self.getLineF(l)
         
         self.painter_calls[lines_labels,0] = pen
         self.painter_calls[lines_labels,1] = brush
         self.painter_calls[lines_labels,2] = painter.drawLine
         self.painter_calls[lines_labels,3] = objectAttrs
-
-        # for i in lines_labels:
-        #     l = self.masked_objects[i]
-        #     color = self.colordef[l[self.color_ind]]
-        #     pen.setColor(color)
-
-        #     objectAttrs = QLineF(l[self.pos1_ind], -l[self.pos1_ind+2], l[self.pos2_ind], -l[self.pos2_ind+2])
-        #     self.painter_calls[i] = np.array([pen,brush,painter.drawLine,objectAttrs])
-#            painter.drawLine(objectAttrs)
 
 
     def displaySticks(self, painter):
@@ -242,32 +141,17 @@ class omerFrame:
         s = self.masked_objects[sticks_labels]
 
         brush = QBrush(Qt.SolidPattern)
-        pen = getPen(s)
-        objectAttrs = getLineF(s)
+        pen = self.getPen(s)
+        objectAttrs = self.getLineF(s)
 
         self.painter_calls[sticks_labels,0] = pen
         self.painter_calls[sticks_labels,1] = brush
         self.painter_calls[sticks_labels,2] = painter.drawLine
         self.painter_calls[sticks_labels,3] = objectAttrs
 
-        # for i in sticks_labels:
-        #     s = self.masked_objects[i]
 
-        #     thickness = s[self.size_ind]
-        #     pen.setWidth(thickness)
-        #     color = self.colordef[s[self.color_ind]]
-        #     pen.setColor(color)
-
-
-        #     objectAttrs = QLineF(s[self.pos1_ind], -s[self.pos1_ind+2], s[self.pos2_ind], -s[self.pos2_ind+2])
-            
-        #     self.painter_calls[i] = np.array([pen,brush,painter.drawLine,objectAttrs])
-
-#            painter.drawLine(objectAttrs)
-
-
-    def display(self, painter, transform, layer_list):
-
+    def display(self, painter, transform, layer_list, fidelity):
+        self.fidelity = fidelity
         self.applyTransform(transform)
         obj_nb = (self.objects[:,0].shape)[0]
 

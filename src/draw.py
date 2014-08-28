@@ -14,7 +14,7 @@ import omerFile
 
 
 class omerViewer(QWidget):
-    speed=1
+    speed=0
 
     def __init__(self, filename, parent=None):
         QWidget.__init__(self, parent)
@@ -55,9 +55,16 @@ class omerViewer(QWidget):
         self.layer_labels = [] 
 
         for i in range(self.layer_nb):
-            label = "Layer "+str(i)
+            label = "Layer "+str(i+1)
             self.layer_labels.append(label)
 
+        self.fidelity = 0
+        self.fidelity_min = 0
+        self.fidelity_max = 3
+
+        sc_ShiftN = QShortcut(QKeySequence("Shift+N"), self)
+
+        self.installEventFilter(self)
 
     def start(self):
         self.timer.start(self.speed,self)
@@ -85,51 +92,113 @@ class omerViewer(QWidget):
     def layerSwitch(self,label):
         self.layer_activity[label] = -self.layer_activity[label]
         
+    def eventFilter(self, obj, event):
+        if obj == self:
+#            print event.type()
+            if event.type() == QEvent.ShortcutOverride:
+                k =  event.key() 
+                m = event.modifiers()
+                
+                if k == Qt.Key_N and m == Qt.SHIFT:
+                    self.start()
+                    return True
+
+            if event.type() == QEvent.KeyPress:
+                catched = self.keyPressEvent(event)
+                return catched
+            else:
+                return False
+            
+        else:
+            return False 
+
+
 
     def keyPressEvent(self, event):
+        catched = False
         e = event.key()
         if e == Qt.Key_Tab:
             self.transform = self.scale*np.identity(3)
+            cached = True
         elif e == Qt.Key_F1:
             self.layerSwitch(0)
+            cached = True
         elif e == Qt.Key_F2:
             self.layerSwitch(1)
+            cached = True
         elif e == Qt.Key_F3:
             self.layerSwitch(2)
+            cached = True
         elif e == Qt.Key_F4:
             self.layerSwitch(3)
+            cached = True
         elif e == Qt.Key_F5:
             self.layerSwitch(4)
+            cached = True
         elif e == Qt.Key_F6:
             self.layerSwitch(5)
+            cached = True
         elif e == Qt.Key_F7:
             self.layerSwitch(6)
+            cached = True
         elif e == Qt.Key_F8:
             self.layerSwitch(7)
+            cached = True
         elif e == Qt.Key_F9:
             self.layerSwitch(8)
+            cached = True
         elif e == Qt.Key_F10:
             self.layerSwitch(9)
+            cached = True
         elif e == Qt.Key_F11:
             self.layerSwitch(10)
+            cached = True
         elif e == Qt.Key_F12:
             self.layerSwitch(11)
+            cached = True
         elif e == Qt.Key_N:
+            if self.timer.isActive():
+                self.timer.stop()
             if(self.frame_nb < len(self.pos_stream.frames)-1):
                 self.frame_nb = self.frame_nb+1
+            cached = True
         elif e == Qt.Key_P:
-            if(self.frame_nb > 0):
+            if self.timer.isActive():
+                self.timer.stop()
+            if self.frame_nb > 0:
                 self.frame_nb = self.frame_nb-1
+            cached = True
+        elif e == Qt.Key_G:
+            if self.timer.isActive():
+                self.timer.stop()
+            self.frame_nb = 0
+            cached = True
         elif e == Qt.Key_Asterisk:
             factor = 1.05
             self.scale *= factor
             self.transform = factor*self.transform
+            cached = True
         elif e == Qt.Key_Slash:
             factor = 1.05
             self.scale /= factor
             self.transform = self.transform/factor
-
+            cached = True
+        elif e == Qt.Key_Q:
+            QCoreApplication.instance().quit()
+            cached = True
+        elif e == Qt.Key_Minus:
+            if self.fidelity < self.fidelity_max:
+                self.fidelity = self.fidelity + 1
+            cached = True
+        elif e == Qt.Key_Plus:
+            if self.fidelity > self.fidelity_min:
+                self.fidelity = self.fidelity - 1
+            cached = True
+        elif e == QKeySequence(Qt.Key_Shift + Qt.Key_N):
+            self.start()
+            cached = True
         self.update()
+        return catched
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -172,10 +241,10 @@ class omerViewer(QWidget):
         paint.setTransform(QTransform().translate(0.5*self.width(), 0.5*self.height()))
         
         frame = self.pos_stream.frames[self.frame_nb]
-        frame.display(paint,self.transform, self.layer_activity)
+        frame.display(paint,self.transform, self.layer_activity, self.fidelity)
 
         location_ratio = [ -0.48, -0.48 ] 
-        rsize = [ 60, 15 ]
+        rsize = [ 60, 18 ]
         
 #        paint.setFont(QFont("Arial", 15, QFont.Bold))
         pen = QPen()
