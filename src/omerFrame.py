@@ -62,6 +62,58 @@ class omerFrame:
         
         self.objects = np.hstack((self.objects, np.reshape(self.bare_sizes,(obj_nb,1)), np.reshape(self.bare_colors,(obj_nb,1)), np.reshape(self.bare_layers,(obj_nb,1))))
 
+        # remove non-object commands
+        real_obj_indices = -np.isnan(self.bare_positions[:,2])
+        self.objects = self.objects[real_obj_indices]
+        self.bare_positions = self.bare_positions[real_obj_indices]
+        self.bare_sizes = self.bare_sizes[real_obj_indices]
+
+        self.obj_nb = (self.objects[:,0].shape)[0]
+
+        self.painter_methods = np.empty((self.obj_nb,4), dtype=np.object)
+
+
+        self.circles_labels = np.nonzero(self.objects[:,0] == command_coding['c'])[0]
+        self.painter_methods[self.circles_labels,0] = 1
+        self.lines_labels = np.nonzero(self.objects[:,0] == command_coding['l'])[0]
+        self.painter_methods[self.lines_labels,0] = 2
+        self.sticks_labels = np.nonzero(self.objects[:,0] == command_coding['s'])[0]
+        self.painter_methods[self.sticks_labels,0] = 2
+
+        self.fidelity = fidelity_scale[0]
+
+        self.painter_methods[self.circles_labels, 1] = self.getCirclesPens()
+        self.painter_methods[self.circles_labels, 2] = self.getCirclesBrushes()
+        self.painter_methods[self.lines_labels, 1] = self.getLinesPens()
+        self.painter_methods[self.lines_labels, 2] = self.getLinesBrushes()
+        self.painter_methods[self.sticks_labels, 1] = self.getSticksPens()
+        self.painter_methods[self.sticks_labels, 2] = self.getSticksBrushes()
+
+    def getCirclesPens(self):
+        pcolor = Qt.black
+        pthickness = 1
+        pen = QPen(pcolor)
+        pen.setWidth(pthickness)
+        return pen
+
+    def getCirclesBrushes(self):
+        c = self.objects[self.circles_labels]
+        return self.getBrush(c)
+        
+    def getLinesPens(self):
+        l = self.objects[self.lines_labels]
+        return self.getPen(l)
+
+    def getLinesBrushes(self):
+        return QBrush(Qt.SolidPattern)
+
+    def getSticksPens(self):
+        s = self.objects[self.sticks_labels]
+        return self.getPen(s)
+
+    def getSticksBrushes(self):
+        return QBrush(Qt.SolidPattern)
+
     def applyTransform(self, transform):
 
         self.transformed_positions_1 = np.dot(self.bare_positions[:,0:3],transform)
@@ -96,86 +148,48 @@ class omerFrame:
         w = v[:,size_ind]
         return np.array([ QPen(QBrush(col), width) for (col, width) in zip(c,w) ])
 
-    def displayCircles(self, painter):
-
-        circles_labels = np.nonzero(self.masked_objects[:,0] == command_coding['c'])[0]
-
-        c = self.masked_objects[circles_labels]
-
-        pcolor = Qt.black
-        pthickness = 1
-        pen = QPen(pcolor)
-        pen.setWidth(pthickness)
-
-        brush = self.getBrush(c)
+    def displayCircles(self):
+        c = self.objects[self.circles_labels]
         objectAttrs = self.getRectF(c)
+        self.painter_methods[self.circles_labels,3] = objectAttrs
 
-        self.painter_calls[circles_labels,0] = pen
-        self.painter_calls[circles_labels,1] = brush
-        self.painter_calls[circles_labels,2] = painter.drawEllipse
-        self.painter_calls[circles_labels,3] = objectAttrs
-
-    def displayLines(self, painter):
-
-        lines_labels = np.nonzero(self.masked_objects[:,0] == command_coding['l'])[0]
-
-        l = self.masked_objects[lines_labels]
-
-        brush = QBrush(Qt.SolidPattern)
-        pen = self.getPen(l)
+    def displayLines(self):
+        l = self.objects[self.lines_labels]
         objectAttrs = self.getLineF(l)
-        
-        self.painter_calls[lines_labels,0] = pen
-        self.painter_calls[lines_labels,1] = brush
-        self.painter_calls[lines_labels,2] = painter.drawLine
-        self.painter_calls[lines_labels,3] = objectAttrs
+        self.painter_methods[self.lines_labels,3] = objectAttrs
 
-
-    def displaySticks(self, painter):
-
-        sticks_labels = np.nonzero(self.masked_objects[:,0] == command_coding['s'])[0]
-        s = self.masked_objects[sticks_labels]
-
-        # should switch to drawPolygon in future
-        brush = QBrush(Qt.SolidPattern)
-        pen = self.getPen(s)
+    def displaySticks(self):
+        s = self.objects[self.sticks_labels]
         objectAttrs = self.getLineF(s)
-
-        self.painter_calls[sticks_labels,0] = pen
-        self.painter_calls[sticks_labels,1] = brush
-        self.painter_calls[sticks_labels,2] = painter.drawLine
-        self.painter_calls[sticks_labels,3] = objectAttrs
-
+        self.painter_methods[self.sticks_labels,3] = objectAttrs
 
     def display(self, painter, transform, layer_list, fidelity):
 #        print "a"
         self.fidelity = fidelity
         self.applyTransform(transform)
-        obj_nb = (self.objects[:,0].shape)[0]
 #        print "b"
-        displayed_obj = np.zeros(obj_nb, dtype=np.bool)
+
+        self.displayCircles()
+        self.displayLines()
+        self.displaySticks()
+
+        displayed_obj = np.zeros(self.obj_nb, dtype=np.bool)
         displayed_nb = np.nonzero(layer_list)[0]
         for d in displayed_nb:
             displayed_obj = np.logical_or(displayed_obj, self.objects[:,self.layer_ind] == d )
-            
-            
-        displayed_obj = np.logical_and(displayed_obj, -np.isnan(self.bare_positions[:,2]) ) # remove color/layer/radius entries
 
 #        print "c"
 
         self.masked_objects = self.objects[displayed_obj]
         
-        self.masked_objects = self.masked_objects[np.argsort(self.masked_objects[:,self.pos1_ind+1])]
+        self.ordering = np.argsort(self.masked_objects[:,self.pos1_ind+1])
+        pcalls = self.painter_methods[displayed_obj][self.ordering]
 
-        self.painter_calls = np.empty((self.masked_objects.shape[0],4), dtype=np.object)
-#        print "d"        
-        self.displayCircles(painter)
-        self.displayLines(painter)
-        self.displaySticks(painter)
-
-#        print "e"
-
-        for [pen, brush, paintMethod, paintArgs] in self.painter_calls:
+        pcalls[ pcalls[:,0] == 1,0] = painter.drawEllipse 
+        pcalls[ pcalls[:,0] == 2,0] = painter.drawLine
+        
+        for [paintMethod, pen, brush, paintArgs] in pcalls:
+#            print paintMethod, pen, brush, paintArgs
             painter.setPen(pen)
             painter.setBrush(brush)
             paintMethod(paintArgs)
