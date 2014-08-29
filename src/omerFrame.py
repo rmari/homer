@@ -88,13 +88,18 @@ class omerFrame:
         self.painter_methods[self.lines_labels, 2] = self.getLinesBrushes()
         self.painter_methods[self.sticks_labels, 1] = self.getSticksPens()
         self.painter_methods[self.sticks_labels, 2] = self.getSticksBrushes()
+        
+        self.width_scale = 1
 
     def getCirclesPens(self):
         pcolor = Qt.black
         pthickness = 1
-        pen = QPen(pcolor)
-        pen.setWidth(pthickness)
-        return pen
+        pens = [ QPen(pcolor) for i in self.circles_labels ]
+        for i in range(len(pens)):
+            p = pens[i]
+            p.setWidthF(0)
+        return pens
+
 
     def getCirclesBrushes(self):
         c = self.objects[self.circles_labels]
@@ -127,10 +132,6 @@ class omerFrame:
     def getLineF(self,v):
         return np.array([QLineF(a[pos1_ind], a[pos1_ind+2], a[pos2_ind], a[pos2_ind+2]) for a in v])
 
-    def getPen(self,v):
-        pen = QPen(self.colordef[v[color_ind]])
-        pen.setWidth(v[size_ind])
-        return pen
 
     def getRectF(self,v):
         rad = v[:,size_ind]
@@ -146,7 +147,11 @@ class omerFrame:
     def getPen(self,v):
         c = self.colordef[v[:,color_ind].astype(np.int)]
         w = v[:,size_ind]
-        return np.array([ QPen(QBrush(col), width) for (col, width) in zip(c,w) ])
+        pens = np.array([ QPen(col) for col in c ])
+        for i in range(len(pens)):
+            p = pens[i]
+            p.setWidthF(float(w[i]))
+        return pens
 
     def displayCircles(self):
         c = self.objects[self.circles_labels]
@@ -164,10 +169,10 @@ class omerFrame:
         self.painter_methods[self.sticks_labels,3] = objectAttrs
 
     def display(self, painter, transform, layer_list, fidelity):
-#        print "a"
-        self.fidelity = fidelity
+        print "a"
+        self.fidelity = fidelity_scale[fidelity]
         self.applyTransform(transform)
-#        print "b"
+        print "b"
 
         self.displayCircles()
         self.displayLines()
@@ -178,20 +183,26 @@ class omerFrame:
         for d in displayed_nb:
             displayed_obj = np.logical_or(displayed_obj, self.objects[:,self.layer_ind] == d )
 
-#        print "c"
+        print "c"
 
         self.masked_objects = self.objects[displayed_obj]
         
         self.ordering = np.argsort(self.masked_objects[:,self.pos1_ind+1])
         pcalls = self.painter_methods[displayed_obj][self.ordering]
-
+        print "d"
         pcalls[ pcalls[:,0] == 1,0] = painter.drawEllipse 
         pcalls[ pcalls[:,0] == 2,0] = painter.drawLine
-        
+        print "e"
+
+        self.width_scale = (np.linalg.det(transform)**(1./3.))
+
         for [paintMethod, pen, brush, paintArgs] in pcalls:
-#            print paintMethod, pen, brush, paintArgs
+            pen.setWidthF(self.width_scale*pen.widthF())
             painter.setPen(pen)
+
+            brush.setStyle(self.fidelity)
             painter.setBrush(brush)
             paintMethod(paintArgs)
+            pen.setWidthF(pen.widthF()/self.width_scale)
 
-#        print "f"
+        print "f"
