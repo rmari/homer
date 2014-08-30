@@ -3,101 +3,86 @@ import sys
 import numpy as np
 import pandas as pd
 import io
+from PySide.QtCore import *
+from PySide.QtGui import *
+from PySide.QtOpenGL import *
+import omerFrame
+
+command_coding = { 'y':0, '@':1, 'r':3, 'c':4, 'l':5, 's':6 }
 
 class omerFile:
-    
-    def __init__(self, filename, layers):
+    def __init__(self, filename):
         
-        self.instream=io.open(str(filename), 'r')
         self.is_file=True
 
-
-
-        #            self.is_file=False # means that we deal with stdin
-        self.layers = layers
-        self.layer=0
-        self.color=0
+        self.chunksize = 500000
+        names = ['a', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6']
+        self.reader = pd.read_table(filename, delim_whitespace=True, names=names, iterator=True)
         
-        self.get_snapshot()
-    
+        self.frames = []
+        self.init = True
+        self.read_all = False
+        
     def Lx(self):
-        return 50.
+        return self.max[0]-self.min[0]
 
     def Ly(self):
-        return 50.
+        return self.max[1]-self.min[1]
 
     def Lz(self):
-        return 50.
+        return self.max[2]-self.min[2]
 
 
-    def __iter__(self):
-        return self.positions.__iter__()
+
+    def atparse(self,values):
+        col=int(values[1])
+        if col > 5:
+            col=0
+
+        self.color = self.colordef[str(col)]
+
+
+    def updateBoundaries(self, pos):
+        for i in range(3):
+            if pos.item(i) > self.max[i]:
+                self.max[i] = pos.item(i)
+            if pos.item(i) < self.min[i]:
+                self.min[i] = pos.item(i)
+
+    def read_chunk(self):
+        if self.read_all:
+            return False
+
+        myframe = self.reader.get_chunk(self.chunksize)
+
+        if myframe.shape[0] < self.chunksize:
+            self.read_all = True
+        if myframe.empty:
+            return False
+
+        for k in command_coding:
+            myframe.replace(to_replace=k,value=command_coding[k],inplace=True)
+
+        myframe.astype(np.float)
+        splitpoints = np.nonzero(np.array(pd.isnull(myframe['a'])))[0]
+
+        whole_array = np.array(myframe)
+        split_array = np.split(whole_array, splitpoints)
         
-        
-    def parse(self,line):
-
-        values=split(line)
-        try:
-            cmd = values[0]
-        except IndexError:
-            return 1
-
-        if cmd == 'y':
-            self.layer = int(values[1])
-        elif cmd == '@':
-            self.color = int(values[1])
-        elif cmd == 'r':
-            self.radius = float(values[1])
-        elif cmd == 'c':
-            position = np.mat([float(values[j]) for j in range(1,4)])
-            objectType = 'c'
-            objectColor = self.color
-            objectRadius = self.radius
-            self.layers[self.layer].addObject([objectType, objectColor, objectRadius, position])
-        elif cmd == 'l':
-            position1 = np.mat([float(values[j]) for j in range(1,4)])
-            position2 = np.mat([float(values[j]) for j in range(4,7)])
-            objectType = 'l'
-            objectColor = self.color
-            objectRadius = self.radius
-            self.layers[self.layer].addObject([objectType, objectColor, objectRadius, position1, position2])
-            
-            
-        return 0
-        
-        
-    def get_snapshot(self, verbose=False):
-
-        for layer in self.layers:
-            layer.clear()
-
-        switch=0
-        count=0
-        for line in self.instream:
-            if len(line)==0: # eof
-                return 1
-        
-
-            switch+=self.parse(line)
-
-            if switch==1:
-                break
-
-
-    def rewind(self): # go to beginning of the file
-        if self.is_file:
-            self.instream.seek(0)
-            self.reset_members()
-            return
+        frame = split_array[0]
+        if self.init:
+            self.init = False
         else:
-            sys.stderr.write("Cannot rewind")
-            sys.stderr.write("Input is %s".str(instream))
-            sys.exit(1)
+            self.frames.append(omerFrame.omerFrame(np.vstack((self.truncated_array, frame))))
+            
+        for frame in split_array[1:-1]:
+            self.frames.append(omerFrame.omerFrame(frame))
+
+        self.truncated_array = split_array[-1]
 
 
-    def getData(self): # go to beginning of the file
-        my_cols=['object','f0','f1','f2','f3','f4','f5']
-        dattype = {'object': np.str, 'f0': np.float, 'f1': np.float, 'f2': np.float, 'f3': np.float, 'f4': np.float, 'f5': np.float}
-        self.in_table = pd.read_table('y_D3N512VF0.48Bidi1.4_0.5Cubic_1_fric1_tlub3_sr0.05.yap', sep=' ', names=my_cols, dtype=dattype)
-        
-        self.in_table[self.in_table['object']=='y']['f0'] == 1
+        self.max = np.array([myframe['p1'].max(), myframe['p2'].max(), myframe['p3'].max()])
+        self.min = np.array([myframe['p1'].min(), myframe['p2'].min(), myframe['p3'].min()])
+
+        return True
+
