@@ -52,6 +52,8 @@ class omerWidget(QWidget):
         pal.setColor(QPalette.Window, Qt.gray)
         self.setAutoFillBackground(True)
         self.setPalette(pal)
+
+        self.prefactor = str()
         
         self.show()
 
@@ -69,7 +71,7 @@ class omerWidget(QWidget):
     def start(self):
         self.timer.start(self.speed,self)
 
-    def incrementFrame(self):
+    def incrementOneFrame(self):
         if(self.frame_nb < len(self.infile.frames)-1):
             self.frame_nb = self.frame_nb+1
             return True
@@ -80,10 +82,15 @@ class omerWidget(QWidget):
                 return True
             else:
                 return False
+        
+    def incrementFrame(self,inc_nb):
+        count = 1
+        while self.incrementOneFrame() and count<inc_nb:
+            count = count+1
 
-    def decrementFrame(self):
-        if(self.frame_nb > 0):
-            self.frame_nb = self.frame_nb-1
+    def decrementFrame(self, dec_nb):
+        if(self.frame_nb >= dec_nb):
+            self.frame_nb = self.frame_nb-dec_nb
             return True
         else:
             return False
@@ -91,7 +98,7 @@ class omerWidget(QWidget):
     def timerEvent(self, event):
         if event.timerId() == self.timer.timerId():
             if self.forward_anim:
-                self.incrementFrame()
+                self.incrementOneFrame()
             else:
                 self.decrementFrame()
             self.update() 
@@ -107,9 +114,19 @@ class omerWidget(QWidget):
             if event.type() == QEvent.ShortcutOverride:
                 k =  event.key() 
                 m = event.modifiers()
-                
+
                 if k == Qt.Key_N and m == Qt.SHIFT:
+                    self.forward_anim = True
                     self.start()
+                    return True
+                elif k == Qt.Key_P and m == Qt.SHIFT:
+                    self.forward_anim = False
+                    self.start()
+                    return True
+                elif k == Qt.Key_G and m == Qt.SHIFT:
+                    while self.incrementOneFrame():
+                        print self.frame_nb
+                    self.update()
                     return True
                 else:
                     return False
@@ -166,17 +183,29 @@ class omerWidget(QWidget):
         elif e == Qt.Key_N:
             if self.timer.isActive():
                 self.timer.stop()
-            self.incrementFrame()
+            try:
+                inc_nb = int(self.prefactor)
+                self.incrementFrame(inc_nb)
+            except ValueError:
+                self.incrementFrame(1)
             catched = True
         elif e == Qt.Key_P:
             if self.timer.isActive():
                 self.timer.stop()
-            self.decrementFrame()
+            try:
+                dec_nb = int(self.prefactor)
+                self.decrementFrame(inc_nb)
+            except ValueError:
+                self.decrementFrame(1)
             catched = True
         elif e == Qt.Key_G:
             if self.timer.isActive():
                 self.timer.stop()
-            self.frame_nb = 0
+            try:
+                f_nb = int(self.prefactor)
+                self.frame_nb = f_nb
+            except ValueError:
+                self.frame_nb = 0
             catched = True
         elif e == Qt.Key_Asterisk:
             factor = 1.05
@@ -202,6 +231,17 @@ class omerWidget(QWidget):
         elif e == Qt.Key_Space:
             self.timer.stop()
             catched = True
+        t = event.text()
+        try:
+            i = int(t)
+            self.prefactor = self.prefactor + t
+        except ValueError:
+            self.prefactor = ""
+            pass
+
+        # elif e == Qt.Key_Space:
+        #     self.timer.stop()
+        #     catched = True
 
         self.update()
         return catched
@@ -234,7 +274,7 @@ class omerWidget(QWidget):
     def writeLabels(self, paint):
         pen = QPen()
         rlocation = np.array([ -0.49*self.width(), -0.49*self.height() ])
-        rsize = [ 100, 18 ]
+        rsize = [ 120, 18 ]
 
         pen.setColor(Qt.black)
         paint.setPen(pen)

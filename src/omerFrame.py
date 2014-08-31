@@ -169,10 +169,8 @@ class omerFrame:
         self.painter_methods[self.sticks_labels,3] = objectAttrs
 
     def display(self, painter, transform, layer_list, fidelity):
-        print "a"
         self.fidelity = fidelity_scale[fidelity]
         self.applyTransform(transform)
-        print "b"
 
         self.displayCircles()
         self.displayLines()
@@ -183,16 +181,13 @@ class omerFrame:
         for d in displayed_nb:
             displayed_obj = np.logical_or(displayed_obj, self.objects[:,self.layer_ind] == d )
 
-        print "c"
-
         self.masked_objects = self.objects[displayed_obj]
         
         self.ordering = np.argsort(self.masked_objects[:,self.pos1_ind+1])
         pcalls = self.painter_methods[displayed_obj][self.ordering]
-        print "d"
+
         pcalls[ pcalls[:,0] == 1,0] = painter.drawEllipse 
         pcalls[ pcalls[:,0] == 2,0] = painter.drawLine
-        print "e"
 
         self.width_scale = (np.linalg.det(transform)**(1./3.))
 
@@ -205,4 +200,3 @@ class omerFrame:
             paintMethod(paintArgs)
             pen.setWidthF(pen.widthF()/self.width_scale)
 
-        print "f"
