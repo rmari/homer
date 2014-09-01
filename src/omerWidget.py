@@ -44,8 +44,6 @@ class omerWidget(QWidget):
         self.fidelity_min = 0
         self.fidelity_max = 3
 
-        sc_ShiftN = QShortcut(QKeySequence("Shift+N"), self)
-
         self.installEventFilter(self)
 
         pal = QPalette()
@@ -100,7 +98,7 @@ class omerWidget(QWidget):
             if self.forward_anim:
                 self.incrementOneFrame()
             else:
-                self.decrementFrame()
+                self.decrementFrame(1)
             self.update() 
         else:
             QWidget.timerEvent(self, event)
@@ -109,7 +107,6 @@ class omerWidget(QWidget):
         self.layer_activity[label] = -self.layer_activity[label]
         
     def eventFilter(self, obj, event):
-        
         if obj == self:
             if event.type() == QEvent.ShortcutOverride:
                 k =  event.key() 
@@ -118,6 +115,7 @@ class omerWidget(QWidget):
                 if k == Qt.Key_N and m == Qt.SHIFT:
                     self.forward_anim = True
                     self.start()
+                    event.accept()
                     return True
                 elif k == Qt.Key_P and m == Qt.SHIFT:
                     self.forward_anim = False
@@ -125,7 +123,8 @@ class omerWidget(QWidget):
                     return True
                 elif k == Qt.Key_G and m == Qt.SHIFT:
                     while self.incrementOneFrame():
-                        print self.frame_nb
+                        pass
+                    self.frame_nb = self.frame_nb-1
                     self.update()
                     return True
                 else:
@@ -141,6 +140,7 @@ class omerWidget(QWidget):
     def keyPressEvent(self, event):
         catched = False
         e = event.key()
+        m = event.modifiers()
         if e == Qt.Key_Tab:
             self.transform = self.scale*np.identity(3)
             catched = True
@@ -180,7 +180,7 @@ class omerWidget(QWidget):
         elif e == Qt.Key_F12:
             self.layerSwitch(11)
             catched = True
-        elif e == Qt.Key_N:
+        elif e == Qt.Key_N and m != Qt.SHIFT:
             if self.timer.isActive():
                 self.timer.stop()
             try:
@@ -189,7 +189,7 @@ class omerWidget(QWidget):
             except ValueError:
                 self.incrementFrame(1)
             catched = True
-        elif e == Qt.Key_P:
+        elif e == Qt.Key_P and m != Qt.SHIFT:
             if self.timer.isActive():
                 self.timer.stop()
             try:
@@ -198,7 +198,7 @@ class omerWidget(QWidget):
             except ValueError:
                 self.decrementFrame(1)
             catched = True
-        elif e == Qt.Key_G:
+        elif e == Qt.Key_G and m != Qt.SHIFT:
             if self.timer.isActive():
                 self.timer.stop()
             try:
@@ -301,14 +301,12 @@ class omerWidget(QWidget):
             
         
     def paintEvent(self, event):
-        global paint
         paint = QPainter()
         paint.begin(self)
 
         paint.setRenderHint(QPainter.Antialiasing)
 
         paint.setTransform(QTransform().translate(0.5*self.width(), 0.5*self.height()))
-        
         frame = self.infile.frames[self.frame_nb]
         frame.display(paint,self.transform, self.layer_activity, self.fidelity)
 

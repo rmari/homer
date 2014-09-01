@@ -121,10 +121,10 @@ class omerFrame:
 
     def applyTransform(self, transform):
 
-        self.transformed_positions_1 = np.dot(self.bare_positions[:,0:3],transform)
-        self.transformed_positions_2 = np.dot(self.bare_positions[:,3:6],transform)
+        transformed_positions_1 = np.dot(self.bare_positions[:,0:3],transform)
+        transformed_positions_2 = np.dot(self.bare_positions[:,3:6],transform)
 
-        self.objects[:,self.pos1_ind:self.pos1_ind+6] = np.hstack((self.transformed_positions_1, self.transformed_positions_2))
+        self.objects[:,self.pos1_ind:self.pos1_ind+6] = np.hstack((transformed_positions_1, transformed_positions_2))
         self.objects[:,self.size_ind] = self.bare_sizes*np.linalg.det(transform)**(1./3.)
 
 
