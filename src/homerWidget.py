@@ -3,25 +3,25 @@
 #coding=utf-8
 from PySide.QtCore import *
 from PySide.QtGui import *
-from PySide.QtOpenGL import *
+#from PySide.QtOpenGL import *
 import numpy as np
 
 import sys, os
 
-import omerFile
+import homerFile
 
 
-
-
-class omerWidget(QWidget):
+class homerWidget(QWidget):
     speed=0
 
     def __init__(self, filename, parent=None):
+        
         QWidget.__init__(self, parent)
         
         self.timer = QBasicTimer()
 
-        self.infile=omerFile.omerFile(filename)
+        self.fname = filename
+        self.infile=homerFile.homerFile(self.fname)
         self.infile.read_chunk()
 
         self.scale = 0.7*self.width()/self.infile.Lx()
@@ -64,7 +64,7 @@ class omerWidget(QWidget):
 
         self.setGeometry(self.windowLocationX, self.windowLocationY, self.windowSizeX, self.windowSizeY)
 
-        self.setWindowTitle('omer viewer')
+        self.setWindowTitle("Homer - "+self.fname)
 
     def start(self):
         self.timer.start(self.speed,self)

@@ -8,7 +8,7 @@ import numpy as np
 
 import sys, os
 
-import omerWidget
+import homerWidget
 
 def init():
     
@@ -24,6 +24,6 @@ def init():
 app = QApplication([])    
 
 filename=init()
-SimuViewer=omerWidget.omerWidget(filename)
+SimuViewer=homerWidget.homerWidget(filename)
     
 sys.exit(app.exec_())

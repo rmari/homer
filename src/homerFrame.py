@@ -19,7 +19,7 @@ fidelity_scale = [ Qt.SolidPattern, Qt.Dense2Pattern, Qt.Dense6Pattern, Qt.NoBru
 
 
 
-class omerFrame:
+class homerFrame:
 
     def __init__(self, obj):
         self.colordef = np.array([Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue])

@@ -6,11 +6,11 @@ import io
 from PySide.QtCore import *
 from PySide.QtGui import *
 from PySide.QtOpenGL import *
-import omerFrame
+import homerFrame
 
 command_coding = { 'y':0, '@':1, 'r':3, 'c':4, 'l':5, 's':6 }
 
-class omerFile:
+class homerFile:
     def __init__(self, filename):
         
         self.is_file=True
@@ -42,13 +42,6 @@ class omerFile:
         self.color = self.colordef[str(col)]
 
 
-    def updateBoundaries(self, pos):
-        for i in range(3):
-            if pos.item(i) > self.max[i]:
-                self.max[i] = pos.item(i)
-            if pos.item(i) < self.min[i]:
-                self.min[i] = pos.item(i)
-
     def read_chunk(self):
         if self.read_all:
             return False
@@ -73,10 +66,10 @@ class omerFile:
         if self.init:
             self.init = False
         else:
-            self.frames.append(omerFrame.omerFrame(np.vstack((self.truncated_array, frame))))
+            self.frames.append(homerFrame.homerFrame(np.vstack((self.truncated_array, frame))))
             
         for frame in split_array[1:-1]:
-            self.frames.append(omerFrame.omerFrame(frame))
+            self.frames.append(homerFrame.homerFrame(frame))
 
         self.truncated_array = split_array[-1]
 
