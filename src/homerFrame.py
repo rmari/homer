@@ -2,6 +2,7 @@ import numpy as np
 from PySide.QtCore import *
 from PySide.QtGui import *
 from PySide.QtOpenGL import *
+import sys
 
 #from numba import autojit
 #from numba import jit, void, int_, float32
@@ -13,7 +14,10 @@ fidelity_scale = [ Qt.SolidPattern, Qt.Dense2Pattern, Qt.Dense6Pattern, Qt.NoBru
 
 
 
-class homerFrame:
+class homerFrame(object):
+
+    __slots__ = [ 'pos2_ind', 'width_scale', 'size_ind', 'fidelity', 'sticks', 'layers', 'lines_labels', 'sticks_labels', 'pos1_ind', 'circles', 'circles_labels', 'layer_ind', 'obj_nb', 'painter_methods', 'color_ind', 'lines', 'colordef', 'ordering'] # saves some memory usage by avoiding dict of attributes
+
 
     def __init__(self, obj):
         self.colordef = np.array([Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue])
@@ -58,20 +62,19 @@ class homerFrame:
 
         self.obj_nb = (all_objects[:,0].shape)[0]
 
-        self.z_coords = np.zeros(self.obj_nb)
         self.layers = all_objects[:,self.layer_ind]
 
         self.painter_methods = np.empty((self.obj_nb,4), dtype=np.object)
 
         self.circles_labels = np.nonzero(all_objects[:,0] == command_coding['c'])[0]
         self.painter_methods[self.circles_labels,0] = 1
-        self.circles = np.array(all_objects[self.circles_labels][:,[self.color_ind, self.size_ind, self.pos1_ind, self.pos1_ind+1, self.pos1_ind+2]])
+        self.circles = np.array(all_objects[self.circles_labels][:,[self.color_ind, self.size_ind, self.pos1_ind, self.pos1_ind+1, self.pos1_ind+2]], dtype=np.float32)
         self.lines_labels = np.nonzero(all_objects[:,0] == command_coding['l'])[0]
         self.painter_methods[self.lines_labels,0] = 2
-        self.lines = np.array(all_objects[self.lines_labels][:,[self.color_ind, self.size_ind, self.pos1_ind, self.pos1_ind+1, self.pos1_ind+2,self.pos2_ind, self.pos2_ind+1, self.pos2_ind+2]])
+        self.lines = np.array(all_objects[self.lines_labels][:,[self.color_ind, self.size_ind, self.pos1_ind, self.pos1_ind+1, self.pos1_ind+2,self.pos2_ind, self.pos2_ind+1, self.pos2_ind+2]], dtype=np.float32)
         self.sticks_labels = np.nonzero(all_objects[:,0] == command_coding['s'])[0]
         self.painter_methods[self.sticks_labels,0] = 2
-        self.sticks = np.array(all_objects[self.sticks_labels][:,[self.color_ind, self.size_ind, self.pos1_ind, self.pos1_ind+1, self.pos1_ind+2,self.pos2_ind, self.pos2_ind+1, self.pos2_ind+2]])
+        self.sticks = np.array(all_objects[self.sticks_labels][:,[self.color_ind, self.size_ind, self.pos1_ind, self.pos1_ind+1, self.pos1_ind+2,self.pos2_ind, self.pos2_ind+1, self.pos2_ind+2]], dtype=np.float32)
 
         self.fidelity = fidelity_scale[0]
 
@@ -123,23 +126,6 @@ class homerFrame:
     def getSticksBrushes(self):
         return QBrush(Qt.SolidPattern)
 
-    def applyTransform(self, transform):
-        self.transformed_lines_positions = np.hstack((np.dot(self.lines[:,self.pos1_ind:self.pos1_ind+3],transform),np.dot(self.lines[:,self.pos2_ind:self.pos2_ind+3],transform)))
-        self.transformed_sticks_positions = np.hstack((np.dot(self.sticks[:,self.pos1_ind:self.pos1_ind+3],transform), np.dot(self.sticks[:,self.pos2_ind:self.pos2_ind+3],transform)))
-        self.transformed_circles_positions =  np.dot(self.circles[:,self.pos1_ind:self.pos1_ind+3],transform)
-
-
-        scale = np.linalg.det(transform)**(1./3.)
-        self.transformed_lines_sizes = 1
-        self.transformed_sticks_sizes = self.sticks[:,self.size_ind]*scale
-        self.transformed_circles_sizes = self.circles[:,self.size_ind]*scale
-
-        
-        self.z_coords[self.circles_labels] = -self.transformed_circles_positions[:,1] 
-        self.z_coords[self.lines_labels] = -self.transformed_lines_positions[:,1] 
-        self.z_coords[self.sticks_labels] = -self.transformed_sticks_positions[:,1] 
-
-        
     def getLineF(self,pos):
         return np.array([QLineF(np.ravel(a)[0], -np.ravel(a)[2], np.ravel(a)[3], -np.ravel(a)[5]) for a in pos]) # need to ravel (which is ugly) as for a weird reason pr.ndim=2, but a in pr is sometimes (not always) such that a.ndim=2 . It looks like a numpy bug.
 
@@ -167,41 +153,53 @@ class homerFrame:
             p.setWidthF(float(w[i]))
         return pens
 
-    def displayCircles(self):
-        objectAttrs = self.getRectF(self.transformed_circles_positions, self.transformed_circles_sizes)
+    def generatePainters(self, painter, transform, layer_list, fidelity):
+        # 1 apply geometrical transform to coords
+        transformed_lines_positions = np.hstack((np.dot(self.lines[:,self.pos1_ind:self.pos1_ind+3],transform),np.dot(self.lines[:,self.pos2_ind:self.pos2_ind+3],transform)))
+        transformed_sticks_positions = np.hstack((np.dot(self.sticks[:,self.pos1_ind:self.pos1_ind+3],transform), np.dot(self.sticks[:,self.pos2_ind:self.pos2_ind+3],transform)))
+        transformed_circles_positions =  np.dot(self.circles[:,self.pos1_ind:self.pos1_ind+3],transform)
+
+        scale = np.linalg.det(transform)**(1./3.)
+        transformed_lines_sizes = 1
+        transformed_sticks_sizes = self.sticks[:,self.size_ind]*scale
+        transformed_circles_sizes = self.circles[:,self.size_ind]*scale
+
+        # 2 generate associated qt geometric shapes
+        objectAttrs = self.getRectF(transformed_circles_positions, transformed_circles_sizes)
         self.painter_methods[self.circles_labels,3] = objectAttrs
 
-    def displayLines(self):
-        objectAttrs = self.getLineF(self.transformed_lines_positions)
+        objectAttrs = self.getLineF(transformed_lines_positions)
         self.painter_methods[self.lines_labels,3] = objectAttrs
 
-    def displaySticks(self):
-        objectAttrs = self.getLineF(self.transformed_sticks_positions)
+        objectAttrs = self.getLineF(transformed_sticks_positions)
         self.painter_methods[self.sticks_labels,3] = objectAttrs
 
-    def display(self, painter, transform, layer_list, fidelity):
-        self.fidelity = fidelity_scale[fidelity]
-        self.applyTransform(transform)
+        # 3 order according to z coord
+        z_coords = np.zeros(self.obj_nb)
+        z_coords[self.circles_labels] = -transformed_circles_positions[:,1] 
+        z_coords[self.lines_labels] = -transformed_lines_positions[:,1] 
+        z_coords[self.sticks_labels] = -transformed_sticks_positions[:,1] 
 
-        self.displayCircles()
-        self.displayLines()
-        self.displaySticks()
-
+        # 4 filter out layers
         displayed_obj = np.zeros(self.obj_nb, dtype=np.bool)
         displayed_nb = np.nonzero(layer_list)[0]
         for d in displayed_nb:
             displayed_obj = np.logical_or(displayed_obj, self.layers == d )
 
-        self.ordering = np.argsort(self.z_coords[displayed_obj])
-
-        pcalls = self.painter_methods[displayed_obj][self.ordering]
-
+        self.ordering= np.argsort(np.compress(displayed_obj,z_coords))
+        pcalls = np.take(np.compress(displayed_obj,self.painter_methods, axis=0),self.ordering, axis=0)
         pcalls[ pcalls[:,0] == 1,0] = painter.drawEllipse 
         pcalls[ pcalls[:,0] == 2,0] = painter.drawLine
 
+        return pcalls
+        
+    def display(self, painter, transform, layer_list, fidelity):
+        self.fidelity = fidelity_scale[fidelity]
+
         self.width_scale = (np.linalg.det(transform)**(1./3.))
 
-        for [paintMethod, pen, brush, paintArgs] in pcalls:
+
+        for [paintMethod, pen, brush, paintArgs] in self.generatePainters(painter, transform, layer_list, fidelity):
             pen.setWidthF(self.width_scale*pen.widthF())
             painter.setPen(pen)
 
@@ -209,4 +207,8 @@ class homerFrame:
             painter.setBrush(brush)
             paintMethod(paintArgs)
             pen.setWidthF(pen.widthF()/self.width_scale)
+    
+        self.ordering = np.array([])
+
+
 

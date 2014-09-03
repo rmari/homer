@@ -7,13 +7,7 @@ from PySide.QtOpenGL import *
 import numpy as np
 
 import sys, os
-
-from guppy import hpy
-
 import homerWidget
-
-h=hpy()
-h.setref()
 
 def init():
     
@@ -31,5 +25,5 @@ app = QApplication([])
 filename=init()
 SimuViewer=homerWidget.homerWidget(filename)
 
-print h.heap()    
+
 sys.exit(app.exec_())

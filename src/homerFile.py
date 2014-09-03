@@ -7,6 +7,7 @@ from PySide.QtCore import *
 from PySide.QtGui import *
 from PySide.QtOpenGL import *
 import homerFrame
+import gc, pprint
 
 command_coding = { 'y':0, '@':1, 'r':3, 'c':4, 'l':5, 's':6 }
 
@@ -33,50 +34,6 @@ class homerFile:
         return self.max[2]-self.min[2]
 
 
-    def parse_raw_frame(self, raw_frame):
-        self.objects = obj
-        obj_nb = (self.objects[:,0].shape)[0]
-
-        self.pos1_ind = 1
-        self.pos2_ind = 4
-
-        self.size_ind = 7
-        self.color_ind = 8
-        self.layer_ind = 9
-
-        self.bare_positions = np.array(self.objects[:,self.pos1_ind:], dtype=np.float64)
-        self.bare_positions[:,[1,2,4,5]] = -self.bare_positions[:,[1,2,4,5]]
-
-        size_pos = np.nonzero(self.objects[:,0] == command_coding['r'])[0]
-        self.bare_sizes = np.zeros(obj_nb)
-
-        for i in range(len(size_pos)-1):
-            self.bare_sizes[size_pos[i]:size_pos[i+1]] = self.objects[size_pos[i],1]
-        self.bare_sizes[size_pos[-1]:] = self.objects[size_pos[-1],1]
-
-        color_pos = np.nonzero(self.objects[:,0] == command_coding['@'])[0]
-        self.bare_colors = np.empty(obj_nb, dtype=np.int)
-
-        for i in range(len(color_pos)-1):
-            self.bare_colors[color_pos[i]:color_pos[i+1]] = int(self.objects[color_pos[i],1])
-        self.bare_colors[color_pos[-1]:] = int(self.objects[color_pos[-1],1])
-
-        layer_pos = np.nonzero(self.objects[:,0] == command_coding['y'])[0]
-        self.bare_layers = np.empty(obj_nb, dtype=np.int)
-
-        for i in range(len(color_pos)-1):
-            self.bare_layers[layer_pos[i]:layer_pos[i+1]] = int(self.objects[layer_pos[i],1])
-        self.bare_layers[layer_pos[-1]:] = int(self.objects[layer_pos[-1],1])
-        
-        self.objects = np.hstack((self.objects, np.reshape(self.bare_sizes,(obj_nb,1)), np.reshape(self.bare_colors,(obj_nb,1)), np.reshape(self.bare_layers,(obj_nb,1))))
-
-        # remove non-object commands
-        real_obj_indices = -np.isnan(self.bare_positions[:,2])
-        self.objects = self.objects[real_obj_indices]
-        self.bare_positions = self.bare_positions[real_obj_indices]
-        self.bare_sizes = self.bare_sizes[real_obj_indices]
-
-
     def read_chunk(self):
         if self.read_all:
             return False
@@ -91,10 +48,10 @@ class homerFile:
         for k in command_coding:
             in_raw_data.replace(to_replace=k,value=command_coding[k],inplace=True)
 
-        in_raw_data.astype(np.float)
+        in_raw_data.astype(np.float32)
         framepoints = np.nonzero(np.array(pd.isnull(in_raw_data['a'])))[0]
 
-        whole_array = np.array(in_raw_data)
+        whole_array = np.array(in_raw_data, dtype=np.float32)
         raw_data_frames = np.split(whole_array, framepoints)
         
         frame = raw_data_frames[0]
@@ -111,6 +68,7 @@ class homerFile:
 
         self.max = np.array([in_raw_data['p1'].max(), in_raw_data['p2'].max(), in_raw_data['p3'].max()])
         self.min = np.array([in_raw_data['p1'].min(), in_raw_data['p2'].min(), in_raw_data['p3'].min()])
+
 
         return True
 
