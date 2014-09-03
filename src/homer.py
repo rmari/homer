@@ -7,6 +7,7 @@ from PySide.QtOpenGL import *
 import numpy as np
 
 import sys, os
+
 import homerWidget
 
 def init():

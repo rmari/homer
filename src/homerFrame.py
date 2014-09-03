@@ -4,14 +4,8 @@ from PySide.QtGui import *
 from PySide.QtOpenGL import *
 import sys
 
-#from numba import autojit
-#from numba import jit, void, int_, float32
-
-
 command_coding = { 'y':0, '@':1, 'r':3, 'c':4, 'l':5, 's':6 }
 fidelity_scale = [ Qt.SolidPattern, Qt.Dense2Pattern, Qt.Dense6Pattern, Qt.NoBrush ]
-
-
 
 
 class homerFrame(object):

@@ -7,7 +7,6 @@ from PySide.QtCore import *
 from PySide.QtGui import *
 from PySide.QtOpenGL import *
 import homerFrame
-import gc, pprint
 
 command_coding = { 'y':0, '@':1, 'r':3, 'c':4, 'l':5, 's':6 }
 
