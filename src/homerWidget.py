@@ -194,7 +194,7 @@ class homerWidget(QWidget):
                 self.timer.stop()
             try:
                 dec_nb = int(self.prefactor)
-                self.decrementFrame(inc_nb)
+                self.decrementFrame(dec_nb)
             except ValueError:
                 self.decrementFrame(1)
             catched = True
@@ -254,7 +254,7 @@ class homerWidget(QWidget):
         self.previous_point = self.current_point
         self.current_point = event.posF()
         
-        angleY = 4*(self.current_point.x() - self.previous_point.x())/self.width()
+        angleY = -4*(self.current_point.x() - self.previous_point.x())/self.width()
         
         sinAngleY = np.sin(angleY)
         cosAngleY = np.cos(angleY)
