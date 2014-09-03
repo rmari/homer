@@ -1,6 +1,3 @@
-#!/Users/LevichFellow/anaconda/bin/python
-##!/usr/bin/python
-#coding=utf-8
 from PySide.QtCore import *
 from PySide.QtGui import *
 from PySide.QtOpenGL import *
