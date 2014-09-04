@@ -14,11 +14,10 @@ import homerFile
 class homerWidget(QWidget):
     speed=0
 
-#    @profile 
     def __init__(self, filename, parent=None):
-        
+
         QWidget.__init__(self, parent)
-        
+        self.parent = parent        
         self.timer = QBasicTimer()
 
         self.fname = filename
@@ -54,7 +53,7 @@ class homerWidget(QWidget):
         self.setPalette(pal)
 
         self.prefactor = str()
-        
+        self.offset = QPointF(0, 0)
         self.show()
 
     def initWindow(self):
@@ -145,6 +144,7 @@ class homerWidget(QWidget):
         m = event.modifiers()
         if e == Qt.Key_Tab:
             self.transform = self.scale*np.identity(3)
+            self.offset = QPointF(0,0)
             catched = True
         elif e == Qt.Key_F1:
             self.layerSwitch(0)
@@ -249,26 +249,36 @@ class homerWidget(QWidget):
         return catched
 
     def mousePressEvent(self, event):
+        modifier = QApplication.keyboardModifiers()
         if event.button() == Qt.LeftButton:
             self.current_point = event.posF()
+            if modifier == Qt.ShiftModifier:
+                self.translate = True
+            else:
+                self.translate = False
 
+                
     def mouseMoveEvent(self, event):
         self.previous_point = self.current_point
         self.current_point = event.posF()
-        
-        angleY = -4*(self.current_point.x() - self.previous_point.x())/self.width()
-        
-        sinAngleY = np.sin(angleY)
-        cosAngleY = np.cos(angleY)
-        generator = np.mat([[cosAngleY, -sinAngleY, 0], [sinAngleY, cosAngleY, 0], [0, 0, 1]])
-        self.transform = generator*self.transform
-
-        angleX = -4*(self.current_point.y() - self.previous_point.y())/self.height()
-        
-        sinAngleX = np.sin(angleX)
-        cosAngleX = np.cos(angleX)
-        generator = np.mat([[1, 0, 0], [0, cosAngleX, -sinAngleX], [0, sinAngleX, cosAngleX]])
-        self.transform = generator*self.transform
+        if self.translate:
+            translateX = self.offset.x() + (self.current_point.x() - self.previous_point.x())
+            translateY = self.offset.y() + (self.current_point.y() - self.previous_point.y())
+            self.offset = QPointF(translateX, translateY)
+        else: # rotate
+            angleY = -4*(self.current_point.x() - self.previous_point.x())/self.width()
+            
+            sinAngleY = np.sin(angleY)
+            cosAngleY = np.cos(angleY)
+            generator = np.mat([[cosAngleY, -sinAngleY, 0], [sinAngleY, cosAngleY, 0], [0, 0, 1]])
+            self.transform = generator*self.transform
+            
+            angleX = -4*(self.current_point.y() - self.previous_point.y())/self.height()
+            
+            sinAngleX = np.sin(angleX)
+            cosAngleX = np.cos(angleX)
+            generator = np.mat([[1, 0, 0], [0, cosAngleX, -sinAngleX], [0, sinAngleX, cosAngleX]])
+            self.transform = generator*self.transform
 
         self.update()
             
@@ -305,13 +315,15 @@ class homerWidget(QWidget):
     def paintEvent(self, event):
         paint = QPainter()
         paint.begin(self)
-
         paint.setRenderHint(QPainter.Antialiasing)
 
+
         paint.setTransform(QTransform().translate(0.5*self.width(), 0.5*self.height()))
+        paint.translate(self.offset)
         frame = self.infile.frames[self.frame_nb]
         frame.display(paint,self.transform, self.layer_activity, self.fidelity)
 
+        paint.translate(QPointF(-self.offset.x(),-self.offset.y()))
         self.writeLabels(paint)
 
         paint.end()

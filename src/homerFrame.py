@@ -16,7 +16,6 @@ class homerFrame(object):
         self.colordef = np.array([Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue])
         self.populate(obj)
 
-#    @profile
     def populate(self, obj):
         obj_nb = (obj[:,0].shape)[0]
 
@@ -45,8 +44,8 @@ class homerFrame(object):
         bare_layers = np.empty(obj_nb, dtype=np.int)
 
         for i in range(len(color_pos)-1):
-            bare_layers[layer_pos[i]:layer_pos[i+1]] = int(obj[layer_pos[i],1])
-        bare_layers[layer_pos[-1]:] = int(obj[layer_pos[-1],1])
+            bare_layers[layer_pos[i]:layer_pos[i+1]] = int(obj[layer_pos[i],1])-1
+        bare_layers[layer_pos[-1]:] = int(obj[layer_pos[-1],1])-1
         
         all_objects = np.hstack((obj, np.reshape(bare_sizes,(obj_nb,1)), np.reshape(bare_colors,(obj_nb,1)), np.reshape(bare_layers,(obj_nb,1))))
 

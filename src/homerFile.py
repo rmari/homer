@@ -32,7 +32,6 @@ class homerFile:
     def Lz(self):
         return self.max[2]-self.min[2]
 
-#    @profile 
     def read_chunk(self):
         if self.read_all:
             return False
@@ -60,7 +59,8 @@ class homerFile:
             self.frames.append(homerFrame.homerFrame(np.vstack((self.truncated_array, frame))))
             
         for frame in raw_data_frames[1:-1]:
-            self.frames.append(homerFrame.homerFrame(frame))
+            if frame.size>0:
+                self.frames.append(homerFrame.homerFrame(frame))
 
         self.truncated_array = raw_data_frames[-1]
 
