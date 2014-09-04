@@ -30,7 +30,7 @@ Currently, Homer supports the following subset of Yaplot's data format:
 | Command | Result |
 |---------|--------|
 | Empty line | New frame |
-| @ [0-6] | Set the color of following objects (see default color palette below)|
+| @ [0-6] | Set the color of following objects (see default color palette below) |
 | y [1-12] | Set the layer of following objects |
 | r x | Set the thickness/radius of following objects to x | 
 | l x1 y1 z1 x2 y2 z2 | Draw a line from 1 to 2 |
