@@ -15,7 +15,7 @@ class homerFile:
         
         self.is_file=True
 
-        self.chunksize = 500000
+        self.chunksize = 50000
         names = ['a', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6']
         self.reader = pd.read_table(filename, delim_whitespace=True, names=names, iterator=True)
         
@@ -68,6 +68,6 @@ class homerFile:
         self.max = np.array([in_raw_data['p1'].max(), in_raw_data['p2'].max(), in_raw_data['p3'].max()])
         self.min = np.array([in_raw_data['p1'].min(), in_raw_data['p2'].min(), in_raw_data['p3'].min()])
 
-
+        del in_raw_data
         return True
 

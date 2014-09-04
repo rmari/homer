@@ -14,6 +14,7 @@ import homerFile
 class homerWidget(QWidget):
     speed=0
 
+
     def __init__(self, filename, parent=None):
         
         QWidget.__init__(self, parent)
@@ -21,6 +22,7 @@ class homerWidget(QWidget):
         self.timer = QBasicTimer()
 
         self.fname = filename
+
         self.infile=homerFile.homerFile(self.fname)
         self.infile.read_chunk()
 

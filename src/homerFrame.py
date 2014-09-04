@@ -7,7 +7,6 @@ import sys
 command_coding = { 'y':0, '@':1, 'r':3, 'c':4, 'l':5, 's':6 }
 fidelity_scale = [ Qt.SolidPattern, Qt.Dense2Pattern, Qt.Dense6Pattern, Qt.NoBrush ]
 
-
 class homerFrame(object):
 
     __slots__ = [ 'pos2_ind', 'width_scale', 'size_ind', 'fidelity', 'sticks', 'layers', 'lines_labels', 'sticks_labels', 'pos1_ind', 'circles', 'circles_labels', 'layer_ind', 'obj_nb', 'painter_methods', 'color_ind', 'lines', 'colordef', 'ordering'] # saves some memory usage by avoiding dict of attributes
@@ -18,7 +17,6 @@ class homerFrame(object):
         self.populate(obj)
 
     def populate(self, obj):
-
         obj_nb = (obj[:,0].shape)[0]
 
         self.pos1_ind = 1
@@ -32,6 +30,7 @@ class homerFrame(object):
         bare_sizes = np.zeros(obj_nb)
         for i in range(len(size_pos)-1):
             bare_sizes[size_pos[i]:size_pos[i+1]] = obj[size_pos[i],1]
+#        print bare_sizes.shape, obj.shape, size_pos.shape, size_pos[-1]
         bare_sizes[size_pos[-1]:] = obj[size_pos[-1],1]
 
         color_pos = np.nonzero(obj[:,0] == command_coding['@'])[0]
@@ -83,23 +82,17 @@ class homerFrame(object):
         self.painter_methods[self.circles_labels, 2] = self.getCirclesBrushes()
         self.painter_methods[self.lines_labels, 1] = self.getLinesPens()
         self.painter_methods[self.lines_labels, 2] = self.getLinesBrushes()
-        self.painter_methods[self.sticks_labels, 1] = self.getSticksPens()
+#        self.painter_methods[self.sticks_labels, 1] = self.getSticksPens()
         self.painter_methods[self.sticks_labels, 2] = self.getSticksBrushes()
         self.width_scale = 1
 
-        all_objects = np.array([])
-        size_pos = np.array([])
-        bare_sizes = np.array([])
-        color_pos = np.array([])
-        bare_colors = np.array([])
-        layer_pos = np.array([])
-        bare_layers = np.array([])
 
     def getCirclesPens(self):
         pcolor = Qt.black
         pthickness = 1
-        pens = [ QPen(pcolor) for i in self.circles_labels ]
-        for i in range(len(pens)):
+        pens = np.array([ QPen(pcolor) for i in self.circles_labels ])
+        pens_nb = self.circles_labels.shape[0]
+        for i in range(pens_nb):
             p = pens[i]
             p.setWidthF(0)
         return pens
@@ -137,14 +130,16 @@ class homerFrame(object):
         fid = fidelity_scale[self.fidelity]
         c = self.colordef[v[:,self.color_ind].astype(np.int)]
         return np.array([ QBrush(col,fid) for col in c ])
-    
+
     def getPen(self,v):
         c = self.colordef[v[:,self.color_ind].astype(np.int)]
         w = v[:,self.size_ind]
+
         pens = np.array([ QPen(col) for col in c ])
         for i in range(len(pens)):
             p = pens[i]
             p.setWidthF(float(w[i]))
+
         return pens
 
     def generatePainters(self, painter, transform, layer_list, fidelity):
@@ -168,6 +163,9 @@ class homerFrame(object):
         objectAttrs = self.getLineF(transformed_sticks_positions)
         self.painter_methods[self.sticks_labels,3] = objectAttrs
 
+        self.painter_methods[self.sticks_labels, 1] = self.getSticksPens()
+
+
         # 3 order according to z coord
         z_coords = np.zeros(self.obj_nb)
         z_coords[self.circles_labels] = -transformed_circles_positions[:,1] 
@@ -184,7 +182,8 @@ class homerFrame(object):
         pcalls = np.take(np.compress(displayed_obj,self.painter_methods, axis=0),self.ordering, axis=0)
         pcalls[ pcalls[:,0] == 1,0] = painter.drawEllipse 
         pcalls[ pcalls[:,0] == 2,0] = painter.drawLine
-
+        
+        self.painter_methods[self.sticks_labels, 1] = None
         return pcalls
         
     def display(self, painter, transform, layer_list, fidelity):
