@@ -1,7 +1,5 @@
 <h1> Homer </h1>
 
-![Homer](./img/homer_1.png)
-
 Homer is a program to visualize computer simulations data (typically
 Molecular Dynamics data) in an easy manner. It is developed to replace
 Yaplot (https://github.com/vitroid/Yaplot), mainly because Yaplot's
@@ -17,6 +15,12 @@ flaws are to be expected :) Also, so far not all of Yaplot features are availabl
 
 Homer needs a Python 2.7 interpreter and the numpy, pandas and PySide
 packages.
+
+You can run Homer as follows:
+
+```
+python path_to_homer/src/homer.py your_command_file
+```
 
 <h2> Data format </h2>
 
