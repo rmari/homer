@@ -27,6 +27,7 @@ $ python path_to_homer/src/homer.py your_command_file
 <h2> Data format </h2>
 
 Currently, Homer supports the following subset of Yaplot's data format:
+
 | Command | Result |
 |---------|--------|
 | Empty line | New frame |
