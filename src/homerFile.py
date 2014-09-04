@@ -32,7 +32,7 @@ class homerFile:
     def Lz(self):
         return self.max[2]-self.min[2]
 
-
+#    @profile 
     def read_chunk(self):
         if self.read_all:
             return False

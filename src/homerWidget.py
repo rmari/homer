@@ -14,7 +14,7 @@ import homerFile
 class homerWidget(QWidget):
     speed=0
 
-
+#    @profile 
     def __init__(self, filename, parent=None):
         
         QWidget.__init__(self, parent)
@@ -301,7 +301,7 @@ class homerWidget(QWidget):
             paint.drawText(rect, Qt.AlignLeft, self.layer_labels[i])
 
             
-        
+
     def paintEvent(self, event):
         paint = QPainter()
         paint.begin(self)

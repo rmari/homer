@@ -16,6 +16,7 @@ class homerFrame(object):
         self.colordef = np.array([Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue])
         self.populate(obj)
 
+#    @profile
     def populate(self, obj):
         obj_nb = (obj[:,0].shape)[0]
 
@@ -78,12 +79,12 @@ class homerFrame(object):
         self.color_ind = 0
 #        self.layer_ind = 1
 
-        self.painter_methods[self.circles_labels, 1] = self.getCirclesPens()
-        self.painter_methods[self.circles_labels, 2] = self.getCirclesBrushes()
-        self.painter_methods[self.lines_labels, 1] = self.getLinesPens()
-        self.painter_methods[self.lines_labels, 2] = self.getLinesBrushes()
+#        self.painter_methods[self.circles_labels, 1] = self.getCirclesPens()
+#        self.painter_methods[self.circles_labels, 2] = self.getCirclesBrushes()
+#        self.painter_methods[self.lines_labels, 1] = self.getLinesPens()
+#        self.painter_methods[self.lines_labels, 2] = self.getLinesBrushes()
 #        self.painter_methods[self.sticks_labels, 1] = self.getSticksPens()
-        self.painter_methods[self.sticks_labels, 2] = self.getSticksBrushes()
+#        self.painter_methods[self.sticks_labels, 2] = self.getSticksBrushes()
         self.width_scale = 1
 
 
@@ -163,7 +164,12 @@ class homerFrame(object):
         objectAttrs = self.getLineF(transformed_sticks_positions)
         self.painter_methods[self.sticks_labels,3] = objectAttrs
 
+        self.painter_methods[self.circles_labels, 1] = self.getCirclesPens()
+        self.painter_methods[self.circles_labels, 2] = self.getCirclesBrushes()
+        self.painter_methods[self.lines_labels, 1] = self.getLinesPens()
+        self.painter_methods[self.lines_labels, 2] = self.getLinesBrushes()
         self.painter_methods[self.sticks_labels, 1] = self.getSticksPens()
+        self.painter_methods[self.sticks_labels, 2] = self.getSticksBrushes()
 
 
         # 3 order according to z coord
@@ -183,7 +189,12 @@ class homerFrame(object):
         pcalls[ pcalls[:,0] == 1,0] = painter.drawEllipse 
         pcalls[ pcalls[:,0] == 2,0] = painter.drawLine
         
+        self.painter_methods[self.circles_labels, 1] = None
+        self.painter_methods[self.circles_labels, 2] = None
+        self.painter_methods[self.lines_labels, 1] = None
+        self.painter_methods[self.lines_labels, 2] = None
         self.painter_methods[self.sticks_labels, 1] = None
+        self.painter_methods[self.sticks_labels, 2] = None
         return pcalls
         
     def display(self, painter, transform, layer_list, fidelity):
