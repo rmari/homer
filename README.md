@@ -19,7 +19,7 @@ packages.
 You can run Homer as follows:
 
 ```
-python path_to_homer/src/homer.py your_command_file
+$ python path_to_homer/src/homer.py your_command_file
 ```
 
 <h2> Data format </h2>
