@@ -1,6 +1,6 @@
 <h1> Homer </h1>
 
-![Homer](rmari.github.com/homer/img/homer_1.png)
+![Homer](https://rmari.github.com/homer.git/img/homer_1.png)
 
 Homer is a program to visualize computer simulations data (typically
 Molecular Dynamics data) in an easy manner. It is developed to replace
