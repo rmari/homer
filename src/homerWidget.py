@@ -85,6 +85,7 @@ class homerWidget(QWidget):
         self.setGeometry(self.windowLocationX, self.windowLocationY, self.windowSizeX, self.windowSizeY)
 
         self.setWindowTitle("Homer - "+self.fname)
+        self.setWindowIcon(QIcon('../img/icon.png'))
 
     def setRelatives(self,relatives, own_label):
         self.relatives = relatives
@@ -377,5 +378,5 @@ class homerWidget(QWidget):
 
         paint.end()
 
-        if not self.is_slave:
+        if len(self.relatives) and not self.is_slave:
             self.updated.emit(self.label)

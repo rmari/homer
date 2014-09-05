@@ -39,6 +39,7 @@ app = QApplication([])
 
 filenames=init()
 widgets = [ homerWidget.homerWidget(f) for f in filenames ]
+app.setWindowIcon(QIcon('../img/icon.png'))
 
 cnt = 0
 for w in widgets:
