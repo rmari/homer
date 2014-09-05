@@ -24,6 +24,7 @@ import sys, os
 
 import homerWidget
 
+
 def init():
     
     arg_nb_min=2
@@ -39,7 +40,9 @@ app = QApplication([])
 
 filenames=init()
 widgets = [ homerWidget.homerWidget(f) for f in filenames ]
-app.setWindowIcon(QIcon('../img/icon.png'))
+
+path = os.path.dirname(os.path.abspath(__file__))
+app.setWindowIcon(QIcon(path+'/../img/icon.png'))
 
 cnt = 0
 for w in widgets:

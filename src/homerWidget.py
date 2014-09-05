@@ -85,8 +85,10 @@ class homerWidget(QWidget):
         self.setGeometry(self.windowLocationX, self.windowLocationY, self.windowSizeX, self.windowSizeY)
 
         self.setWindowTitle("Homer - "+self.fname)
-        self.setWindowIcon(QIcon('../img/icon.png'))
-
+        path = os.path.dirname(os.path.abspath(__file__))
+        print path+'/../img/icon.png'
+        self.setWindowIcon(QIcon(path+'/../img/icon.png'))
+        
     def setRelatives(self,relatives, own_label):
         self.relatives = relatives
         self.label = own_label
