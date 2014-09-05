@@ -144,9 +144,8 @@ class homerFrame(object):
         return np.array([ QRectF(np.ravel(a)[0], np.ravel(a)[2], np.ravel(a)[3], np.ravel(a)[3]) for a in pr ]) # need to ravel (which is ugly) as for a weird reason pr.ndim=2, but a in pr is sometimes (not always) such that a.ndim=2 . It looks like a numpy bug.
 
     def getBrush(self,v):
-        fid = fidelity_scale[self.fidelity]
         c = self.colordef[v[:,self.color_ind].astype(np.int)]
-        return np.array([ QBrush(col,fid) for col in c ])
+        return np.array([ QBrush(col,self.fidelity) for col in c ])
 
     def getPen(self,v):
         c = self.colordef[v[:,self.color_ind].astype(np.int)]
