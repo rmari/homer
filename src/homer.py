@@ -26,19 +26,23 @@ import homerWidget
 
 def init():
     
-    arg_nb=2
-    if len(sys.argv) != arg_nb :
-        print "   Utilisation: ", sys.argv[0], "INPUT_FILE"
+    arg_nb_min=2
+    if len(sys.argv) < arg_nb_min :
+        print "   Utilisation: ", sys.argv[0], "INPUT_FILES"
         exit(1)
         
-    return sys.argv[1]
+    return sys.argv[1:]
 
 
 
 app = QApplication([])    
 
-filename=init()
-SimuViewer=homerWidget.homerWidget(filename)
+filenames=init()
+widgets = [ homerWidget.homerWidget(f) for f in filenames ]
 
+cnt = 0
+for w in widgets:
+    w.setRelatives(widgets, cnt)
+    cnt = cnt+1
 
 sys.exit(app.exec_())

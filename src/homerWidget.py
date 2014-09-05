@@ -27,6 +27,8 @@ import homerFile
 
 class homerWidget(QWidget):
     speed=0
+    updated = Signal(int)
+    read_chunk = Signal()
 
     def __init__(self, filename, parent=None):
 
@@ -68,6 +70,9 @@ class homerWidget(QWidget):
 
         self.prefactor = str()
         self.offset = QPointF(0, 0)
+
+        self.relatives = []
+
         self.show()
 
     def initWindow(self):
@@ -81,15 +86,32 @@ class homerWidget(QWidget):
 
         self.setWindowTitle("Homer - "+self.fname)
 
+    def setRelatives(self,relatives, own_label):
+        self.relatives = relatives
+        self.label = own_label
+        for r in self.relatives:
+            if r != self:
+                r.updated.connect(self.slaveUpdate)
+                r.read_chunk.connect(self.slaveReadChunk)
+
     def start(self):
         self.timer.start(self.speed,self)
 
+    @Slot()
+    def slaveReadChunk(self):
+        self.infile.read_chunk()
+        
+    def readChunk(self):
+        new_frames = self.infile.read_chunk()
+        self.read_chunk.emit()
+        return new_frames
+            
     def incrementOneFrame(self):
         if(self.frame_nb < len(self.infile.frames)-1):
             self.frame_nb = self.frame_nb+1
             return True
         else:
-            new_frames = self.infile.read_chunk()
+            new_frames = self.readChunk()
             if new_frames:
                 self.frame_nb = self.frame_nb+1
                 return True
@@ -123,32 +145,35 @@ class homerWidget(QWidget):
         
     def eventFilter(self, obj, event):
         if obj == self:
-            if event.type() == QEvent.ShortcutOverride:
-                k =  event.key() 
-                m = event.modifiers()
+            self.is_slave = False
 
-                if k == Qt.Key_N and m == Qt.SHIFT:
-                    self.forward_anim = True
-                    self.start()
-                    event.accept()
-                    return True
-                elif k == Qt.Key_P and m == Qt.SHIFT:
-                    self.forward_anim = False
-                    self.start()
-                    return True
-                elif k == Qt.Key_G and m == Qt.SHIFT:
-                    while self.incrementOneFrame():
-                        pass
+#        print obj, self
+        if event.type() == QEvent.ShortcutOverride:
+            k =  event.key() 
+            m = event.modifiers()
+            
+            if k == Qt.Key_N and m == Qt.SHIFT:
+                self.forward_anim = True
+                self.start()
+                event.accept()
+                return True
+            elif k == Qt.Key_P and m == Qt.SHIFT:
+                self.forward_anim = False
+                self.start()
+                return True
+            elif k == Qt.Key_G and m == Qt.SHIFT:
+                while self.incrementOneFrame():
+                    pass
                     self.frame_nb = self.frame_nb-1
                     self.update()
-                    return True
-                else:
-                    return False
+                return True
             else:
                 return False
-            
         else:
-            return False 
+            return False
+                
+#        else:
+#            return False 
 
 
 
@@ -324,7 +349,17 @@ class homerWidget(QWidget):
             paint.setPen(pen)
             paint.drawText(rect, Qt.AlignLeft, self.layer_labels[i])
 
-            
+    @Slot(int)
+    def slaveUpdate(self, master_label):
+        self.is_slave = True
+        master = self.relatives[master_label]
+
+        self.transform=master.transform
+        self.offset = master.offset
+        self.frame_nb = master.frame_nb
+        self.layer_activity = master.layer_activity
+        self.fidelity = master.fidelity
+        self.update()
 
     def paintEvent(self, event):
         paint = QPainter()
@@ -342,4 +377,5 @@ class homerWidget(QWidget):
 
         paint.end()
 
-
+        if not self.is_slave:
+            self.updated.emit(self.label)
