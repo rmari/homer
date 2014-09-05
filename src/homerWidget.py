@@ -77,7 +77,7 @@ class homerWidget(QWidget):
 
     def initWindow(self):
         ratio = self.infile.Lz()/self.infile.Lx()
-        self.windowSizeX = 800
+        self.windowSizeX = 500
         self.windowSizeY = self.windowSizeX*ratio
         self.windowLocationX = 400
         self.windowLocationY = self.windowLocationX
