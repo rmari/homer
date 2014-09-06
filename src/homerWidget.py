@@ -73,6 +73,8 @@ class homerWidget(QWidget):
 
         self.relatives = []
 
+        self.verbosity = True
+
         self.show()
 
     def initWindow(self):
@@ -275,6 +277,11 @@ class homerWidget(QWidget):
         elif e == Qt.Key_Space:
             self.timer.stop()
             catched = True
+        elif e == Qt.Key_V:
+            self.verbosity = not self.verbosity
+            catched = True
+
+
         t = event.text()
         try:
             i = int(t)
@@ -376,7 +383,8 @@ class homerWidget(QWidget):
         frame.display(paint,self.transform, self.layer_activity, self.fidelity)
 
         paint.translate(QPointF(-self.offset.x(),-self.offset.y()))
-        self.writeLabels(paint)
+        if self.verbosity:
+            self.writeLabels(paint)
 
         paint.end()
 

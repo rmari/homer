@@ -57,3 +57,4 @@ Currently, Homer supports the following subset of Yaplot's data format:
 | g | Move to the first frame | Move to frame i |
 | G | Move to the last frame | - |
 | [F1 - F12] | Switch on/off layer [1-12] | - |
+| v | Switch on/off top left information text |
