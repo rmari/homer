@@ -32,7 +32,7 @@ class homerFile:
         
         self.is_file=True
 
-        self.chunksize = 50000
+        self.chunksize = 500000
         names = ['a', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6']
         self.reader = pd.read_table(filename, delim_whitespace=True, names=names, iterator=True)
         

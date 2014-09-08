@@ -17,7 +17,7 @@
 
 from PySide.QtCore import *
 from PySide.QtGui import *
-#from PySide.QtOpenGL import *
+from PySide.QtOpenGL import *
 import numpy as np
 
 import sys, os
@@ -25,14 +25,14 @@ import sys, os
 import homerFile
 
 
-class homerWidget(QWidget):
+class homerWidget(QGLWidget):
     speed=0
     updated = Signal(int)
     read_chunk = Signal()
 
     def __init__(self, filename, parent=None):
 
-        QWidget.__init__(self, parent)
+        QGLWidget.__init__(self, QGLFormat(QGL.SampleBuffers), parent)
         self.parent = parent        
         self.timer = QBasicTimer()
 
@@ -88,7 +88,6 @@ class homerWidget(QWidget):
 
         self.setWindowTitle("Homer - "+self.fname)
         path = os.path.dirname(os.path.abspath(__file__))
-        print path+'/../img/icon.png'
         self.setWindowIcon(QIcon(path+'/../img/icon.png'))
         
     def setRelatives(self,relatives, own_label):
