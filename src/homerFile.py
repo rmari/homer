@@ -68,7 +68,7 @@ class homerFile:
 
         whole_array = np.array(in_raw_data, dtype=np.float32)
         raw_data_frames = np.split(whole_array, framepoints)
-        
+
         frame = raw_data_frames[0]
         if self.init:
             self.init = False
@@ -76,6 +76,7 @@ class homerFile:
             self.frames.append(homerFrame.homerFrame(np.vstack((self.truncated_array, frame))))
             
         for frame in raw_data_frames[1:-1]:
+            frame = frame[1:] 
             if frame.size>0:
                 self.frames.append(homerFrame.homerFrame(frame))
 
