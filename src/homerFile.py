@@ -82,7 +82,6 @@ class homerFile:
 
         self.truncated_array = raw_data_frames[-1]
 
-
         self.max = np.array([in_raw_data['p1'].max(), in_raw_data['p2'].max(), in_raw_data['p3'].max()])
         self.min = np.array([in_raw_data['p1'].min(), in_raw_data['p2'].min(), in_raw_data['p3'].min()])
 

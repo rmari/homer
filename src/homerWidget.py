@@ -168,8 +168,7 @@ class homerWidget(QGLWidget):
             elif k == Qt.Key_G and m == Qt.SHIFT:
                 while self.incrementOneFrame():
                     pass
-                    self.frame_nb = self.frame_nb-1
-                    self.update()
+                self.update()
                 return True
             else:
                 return False
