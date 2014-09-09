@@ -27,8 +27,8 @@ command_coding = { 'y':0, '@':1, 'r':3, 'c':4, 'l':5, 's':6 }
 fidelity_scale = [ Qt.SolidPattern, Qt.Dense3Pattern, Qt.Dense6Pattern, Qt.NoBrush ]
 
 
-size_ind = 7
-color_ind = 8
+#size_ind = 7
+#color_ind = 8
 
 # @numba.vectorize(['pyobject(f8[:])'])
 # def getPen(v):

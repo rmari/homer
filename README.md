@@ -38,6 +38,17 @@ Currently, Homer supports the following subset of Yaplot's data format:
 | s x1 y1 z1 x2 y2 z2 | Draw a stick (line with thickness) from 1 to 2 |
 | c x y z | Draw a circle centered on x,y,z |
 
+Default colors:
+| 0 | Qt.black |
+| 1 | Qt.gray |
+| 2 | Qt.white |
+| 3 | Qt.green |
+| 4 | Qt.yellow |
+| 5 | Qt.red |
+| 6 | Qt.blue |
+User-defined colors will be introduced in a near-future. 
+Meanwhile, a solution is to modify by hand the colordef array in the homerFrame class.
+
 <h2> Control commands </h2>
 
 | Command | Result without prefix | Result with number i prefix |
