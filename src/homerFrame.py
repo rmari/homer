@@ -47,8 +47,7 @@ class homerFrame(object):
     __slots__ = [ 'pos2_ind', 'size_ind', 'fidelity', 'sticks', 'layers', 'lines_labels', 'sticks_labels', 'pos1_ind', 'circles', 'circles_labels', 'layer_ind', 'obj_nb', 'painter_methods', 'painter', 'layer_list', 'color_ind', 'lines', 'colordef', 'ordering', 'transform', 'scale'] # saves some memory usage by avoiding dict of attributes
 
     def __init__(self, obj):
-        self.colordef = np.array([Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue])
-
+        self.colordef = np.array([Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue, Qt.magenta, Qt.darkGreen, Qt.cyan])
         obj_nb = (obj[:,0].shape)[0]
 
         self.pos1_ind = 1
@@ -66,15 +65,13 @@ class homerFrame(object):
         bare_sizes[size_pos[-1]:] = obj[size_pos[-1],1]
 
         color_pos = np.nonzero(obj[:,0] == command_coding['@'])[0]
-        bare_colors = np.empty(obj_nb, dtype=np.int)
-
+        bare_colors = 2*np.ones(obj_nb, dtype=np.int) # default to white
         for i in range(len(color_pos)-1):
             bare_colors[color_pos[i]:color_pos[i+1]] = int(obj[color_pos[i],1])
         bare_colors[color_pos[-1]:] = int(obj[color_pos[-1],1])
 
         layer_pos = np.nonzero(obj[:,0] == command_coding['y'])[0]
-        bare_layers = np.empty(obj_nb, dtype=np.int)
-
+        bare_layers = np.zeros(obj_nb, dtype=np.int)
         for i in range(len(color_pos)-1):
             bare_layers[layer_pos[i]:layer_pos[i+1]] = int(obj[layer_pos[i],1])-1
         bare_layers[layer_pos[-1]:] = int(obj[layer_pos[-1],1])-1
@@ -84,6 +81,7 @@ class homerFrame(object):
         # remove non-object commands
         real_obj_indices = -np.isnan(obj[:,2])
         all_objects = all_objects[real_obj_indices]
+
 
         self.obj_nb = (all_objects[:,0].shape)[0]
 
@@ -179,6 +177,7 @@ class homerFrame(object):
         bcolor = 3
         self.painter_methods[self.circles_labels, pcolor] = Qt.black
         self.painter_methods[self.circles_labels, pthickness] = 1
+
         self.painter_methods[self.circles_labels, bcolor] = self.colordef[self.circles[:,self.color_ind].astype(np.int)]
 
         self.painter_methods[self.lines_labels, pcolor] = self.colordef[self.lines[:,self.color_ind].astype(np.int)]

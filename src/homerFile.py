@@ -72,9 +72,12 @@ class homerFile:
         frame = raw_data_frames[0]
         if self.init:
             self.init = False
+            if len(raw_data_frames) == 1:
+                self.frames.append(homerFrame.homerFrame(frame))
         else:
             self.frames.append(homerFrame.homerFrame(np.vstack((self.truncated_array, frame))))
             
+
         for frame in raw_data_frames[1:-1]:
             frame = frame[1:] 
             if frame.size>0:

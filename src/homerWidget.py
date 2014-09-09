@@ -69,7 +69,8 @@ class homerWidget(QGLWidget):
         self.setPalette(pal)
 
         self.prefactor = str()
-        self.offset = QPointF(0, 0)
+
+        self.offset = QPointF(-self.infile.min[0]*self.scale-0.45*self.windowSizeX, self.infile.min[2]*self.scale+0.45*self.windowSizeY)
 
         self.relatives = []
 
@@ -377,6 +378,7 @@ class homerWidget(QGLWidget):
 
         paint.setTransform(QTransform().translate(0.5*self.width(), 0.5*self.height()))
         paint.translate(self.offset)
+
         frame = self.infile.frames[self.frame_nb]
         frame.display(paint,self.transform, self.layer_activity, self.fidelity)
 
