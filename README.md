@@ -39,6 +39,7 @@ Currently, Homer supports the following subset of Yaplot's data format:
 | c x y z | Draw a circle centered on x,y,z |
 
 Default colors:
+
 | 0 | Qt.black |
 | 1 | Qt.gray |
 | 2 | Qt.white |
@@ -46,6 +47,7 @@ Default colors:
 | 4 | Qt.yellow |
 | 5 | Qt.red |
 | 6 | Qt.blue |
+
 User-defined colors will be introduced in a near-future. 
 Meanwhile, a solution is to modify by hand the colordef array in the homerFrame class.
 
