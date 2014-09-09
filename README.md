@@ -40,6 +40,7 @@ Currently, Homer supports the following subset of Yaplot's data format:
 
 Default colors:
 
+|---|---------|
 | 0 | Qt.black |
 | 1 | Qt.gray |
 | 2 | Qt.white |
