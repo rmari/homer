@@ -39,7 +39,7 @@ Currently, Homer supports the following subset of Yaplot's data format:
 | c x y z | Draw a circle centered on x,y,z |
 
 Default colors:
-
+| Index | Color | 
 |---|---------|
 | 0 | Qt.black |
 | 1 | Qt.gray |
