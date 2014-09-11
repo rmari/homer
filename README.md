@@ -33,14 +33,14 @@ Currently, Homer supports the following subset of Yaplot's data format:
 | Empty line | New frame |
 | @ [0-6] | Set the color of following objects (see default color palette below) |
 | y [1-12] | Set the layer of following objects |
-| r x | Set the thickness/radius of following objects to x | 
+| r x | Set the thickness/radius of following objects to x |
 | l x1 y1 z1 x2 y2 z2 | Draw a line from 1 to 2 |
 | s x1 y1 z1 x2 y2 z2 | Draw a stick (line with thickness) from 1 to 2 |
 | c x y z | Draw a circle centered on x,y,z |
 
 Default colors:
 
-| Index | Color | 
+| Index | Color |
 |-------|-------|
 | 0 | Qt.black |
 | 1 | Qt.gray |
@@ -50,7 +50,7 @@ Default colors:
 | 5 | Qt.red |
 | 6 | Qt.blue |
 
-User-defined colors will be introduced in a near-future. 
+User-defined colors will be introduced in a near-future.
 Meanwhile, a solution is to modify by hand the colordef array in the homerFrame class.
 
 <h2> Control commands </h2>
@@ -72,4 +72,4 @@ Meanwhile, a solution is to modify by hand the colordef array in the homerFrame 
 | g | Move to the first frame | Move to frame i |
 | G | Move to the last frame | - |
 | [F1 - F12] | Switch on/off layer [1-12] | - |
-| v | Switch on/off top left information text |
+| v | Switch on/off top left information text | - |
