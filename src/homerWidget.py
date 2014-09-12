@@ -26,7 +26,7 @@ import homerFile
 
 
 class homerWidget(QGLWidget):
-    speed=0
+
     updated = Signal(int)
     read_chunk = Signal()
 
@@ -75,7 +75,8 @@ class homerWidget(QGLWidget):
         self.relatives = []
 
         self.verbosity = True
-
+        self.speed=0
+        self.is_slave = False
         self.show()
 
     def initWindow(self):
@@ -148,43 +149,12 @@ class homerWidget(QGLWidget):
     def layerSwitch(self,label):
         self.layer_activity[label] = -self.layer_activity[label]
         
-    def eventFilter(self, obj, event):
-        if obj == self:
-            self.is_slave = False
-
-#        print obj, self
-        if event.type() == QEvent.ShortcutOverride:
-            k =  event.key() 
-            m = event.modifiers()
-            
-            if k == Qt.Key_N and m == Qt.SHIFT:
-                self.forward_anim = True
-                self.start()
-                event.accept()
-                return True
-            elif k == Qt.Key_P and m == Qt.SHIFT:
-                self.forward_anim = False
-                self.start()
-                return True
-            elif k == Qt.Key_G and m == Qt.SHIFT:
-                while self.incrementOneFrame():
-                    pass
-                self.update()
-                return True
-            else:
-                return False
-        else:
-            return False
-                
-#        else:
-#            return False 
-
-
 
     def keyPressEvent(self, event):
         catched = False
         e = event.key()
         m = event.modifiers()
+
         if e == Qt.Key_Tab:
             self.transform = self.scale*np.identity(3)
             self.offset = QPointF(0,0)
@@ -279,6 +249,30 @@ class homerWidget(QGLWidget):
         elif e == Qt.Key_V:
             self.verbosity = not self.verbosity
             catched = True
+        elif e == Qt.Key_N and m == Qt.SHIFT:
+            try:
+                inc_nb = int(self.prefactor)
+                self.speed = int(1000./inc_nb) # timer timeout in msec
+            except ValueError:
+                pass
+            self.forward_anim = True
+            self.start()
+            event.accept()
+            catched = True
+        elif e == Qt.Key_P and m == Qt.SHIFT:
+            try:
+                inc_nb = int(self.prefactor)
+                self.speed = int(1000./inc_nb) # timer timeout in msec
+            except ValueError:
+                pass
+            self.forward_anim = False
+            self.start()
+            catched = True
+        elif e == Qt.Key_G and m == Qt.SHIFT:
+            while self.incrementOneFrame():
+                pass
+            self.update()
+            catched = True
 
 
         t = event.text()
@@ -286,12 +280,9 @@ class homerWidget(QGLWidget):
             i = int(t)
             self.prefactor = self.prefactor + t
         except ValueError:
-            self.prefactor = ""
-            pass
+            if catched:
+                self.prefactor = ""
 
-        # elif e == Qt.Key_Space:
-        #     self.timer.stop()
-        #     catched = True
 
         self.update()
         return catched
