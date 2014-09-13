@@ -76,8 +76,8 @@ Meanwhile, a solution is to modify by hand the colordef array in the homerFrame 
 | - | Decrease opacity | - |
 | n | Next frame | Move forward by i frames |
 | p | Previous frame | Move backward by i frames |
-| N | Forward movie | - |
-| P | Backward movie | - |
+| N | Forward movie | Framerate i |
+| P | Backward movie | Framerate i |
 | Space | Stop movie | - |
 | g | Move to the first frame | Move to frame i |
 | G | Move to the last frame | - |
