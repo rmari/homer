@@ -1,17 +1,26 @@
 <h1> Homer </h1>
 
+Version 0.2, Sept. 13, 2014
+
 ![Homer](./img/homer_1.png)
 
 Homer is a program to visualize computer simulations data (typically
 Molecular Dynamics data) in an easy manner. It is developed to replace
 Yaplot (https://github.com/vitroid/Yaplot), mainly because Yaplot's
-code depends on now obsolete libraries that makes it hard to install
-on a recent machine. Homer is thus so far a clone of Yaplot, based on
+code depends on X, which can make it hard to install
+on a recent machine. Homer is thus mostly a clone of Yaplot, based on
 the same idea of a simple set of commands interpreted to render an
 intentionally basic representation of 3D data.
 
 Homer is still in development stage, so some bugs or early design
-flaws are to be expected :) Also, so far not all of Yaplot features are available.
+flaws are to be expected :) Also, so far not all of Yaplot features
+are available. As of v0.2, Yaplot-style command files containing
+lines, sticks and circles are processed by Homer. The layer, color and
+radius commands are supported. Most display features offered by Yaplot
+are available, the only notable exception being the perspective
+control. Also the possibility to display multiple input files is
+still very primitive in Homer. Two original features, translation of
+the field of view and a (primitive) selection system are offered.
 
 <h2> Installation </h2>
 
