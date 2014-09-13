@@ -58,7 +58,8 @@ Meanwhile, a solution is to modify by hand the colordef array in the homerFrame 
 | Command | Result without prefix | Result with number i prefix |
 |---------|------------------------------|---------------------------|
 | Mouse left-button drag  | Rotate field of view | - |
-| Shift + Mouse left-button drag  | Translate filed of view | - |
+| Shift + Mouse left-button drag  | Translate field of view | - |
+| Ctrl + Mouse left-button drag  | Make a selection | - |
 | Tab | Reset rotation and translation | - |
 | * | Zoom in | - |
 | / | Zoom out | - |

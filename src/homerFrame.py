@@ -44,7 +44,7 @@ fidelity_scale = [ Qt.SolidPattern, Qt.Dense3Pattern, Qt.Dense6Pattern, Qt.NoBru
 
 class homerFrame(object):
 
-    __slots__ = [ 'pos2_ind', 'size_ind', 'fidelity', 'sticks', 'layers', 'lines_labels', 'sticks_labels', 'pos1_ind', 'circles', 'circles_labels', 'layer_ind', 'obj_nb', 'painter_methods', 'painter', 'layer_list', 'color_ind', 'lines', 'colordef', 'ordering', 'transform', 'scale'] # saves some memory usage by avoiding dict of attributes
+    __slots__ = [ 'pos2_ind', 'size_ind', 'fidelity', 'sticks', 'layers', 'lines_labels', 'sticks_labels', 'pos1_ind', 'circles', 'circles_labels', 'layer_ind', 'obj_nb', 'painter_methods', 'painter', 'layer_list', 'color_ind', 'lines', 'colordef', 'ordering', 'transform', 'scale', 'selection'] # saves some memory usage by avoiding dict of attributes
 
     def __init__(self, obj):
         self.colordef = np.array([Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue, Qt.magenta, Qt.darkGreen, Qt.cyan])
@@ -201,6 +201,14 @@ class homerFrame(object):
         for d in displayed_nb:
             displayed_obj = np.logical_or(displayed_obj, self.layers == d )
 
+        # 5 filter out selection
+        centerx = self.painter_methods[:,p1]
+        centery = self.painter_methods[:,p2]
+        displayed_obj = np.logical_and(centerx>self.selection[0], displayed_obj)
+        displayed_obj = np.logical_and(centerx<self.selection[2], displayed_obj)
+        displayed_obj = np.logical_and(centery>self.selection[1], displayed_obj)
+        displayed_obj = np.logical_and(centery<self.selection[3], displayed_obj)
+
         self.ordering= np.argsort(np.compress(displayed_obj,z_coords))
         pcalls = np.take(np.compress(displayed_obj,self.painter_methods, axis=0),self.ordering, axis=0)
         pcalls[ pcalls[:,0] == 1,0] = self.painter.drawEllipse 
@@ -208,13 +216,14 @@ class homerFrame(object):
         
         return pcalls
 
-    def display(self, painter, transform, layer_list, fidelity):
+    def display(self, painter, transform, layer_list, fidelity, selection):
         self.fidelity = fidelity_scale[fidelity]
         self.painter = painter
         self.layer_list = layer_list
         self.transform = transform
         self.scale = np.linalg.det(transform)**(1./3.)
-    
+        self.selection = [selection.left(), selection.top(), selection.right(), selection.bottom()]
+        print self.selection
         pen = QPen()
         brush = QBrush()
         brush.setStyle(self.fidelity)
