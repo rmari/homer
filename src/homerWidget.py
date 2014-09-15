@@ -72,6 +72,9 @@ class homerWidget(QGLWidget):
 
         self.offset = QPointF(-self.infile.min[0]*self.scale-0.45*self.windowSizeX, self.infile.min[2]*self.scale+0.45*self.windowSizeY)
 
+        self.selection_corner1 = QPointF(0,0)
+        self.selection_corner2 = QPointF(self.width(),self.height())
+
         self.relatives = []
 
         self.verbosity = True
@@ -291,10 +294,16 @@ class homerWidget(QGLWidget):
         modifier = QApplication.keyboardModifiers()
         if event.button() == Qt.LeftButton:
             self.current_point = event.posF()
+            self.translate = False
+            self.select = False
+            self.rotate = False
             if modifier == Qt.ShiftModifier:
                 self.translate = True
+            elif modifier == Qt.ControlModifier:
+                self.select = True
+                self.selection_corner1 = self.current_point
             else:
-                self.translate = False
+                self.rotate = True
 
                 
     def mouseMoveEvent(self, event):
@@ -304,7 +313,7 @@ class homerWidget(QGLWidget):
             translateX = self.offset.x() + (self.current_point.x() - self.previous_point.x())
             translateY = self.offset.y() + (self.current_point.y() - self.previous_point.y())
             self.offset = QPointF(translateX, translateY)
-        else: # rotate
+        elif self.rotate:
             angleY = -4*(self.current_point.x() - self.previous_point.x())/self.width()
             
             sinAngleY = np.sin(angleY)
@@ -318,6 +327,8 @@ class homerWidget(QGLWidget):
             cosAngleX = np.cos(angleX)
             generator = np.mat([[1, 0, 0], [0, cosAngleX, -sinAngleX], [0, sinAngleX, cosAngleX]])
             self.transform = generator*self.transform
+        elif self.select: # rotate
+            self.selection_corner2 = self.current_point
 
         self.update()
             
@@ -370,8 +381,14 @@ class homerWidget(QGLWidget):
         paint.setTransform(QTransform().translate(0.5*self.width(), 0.5*self.height()))
         paint.translate(self.offset)
 
+        selection_width = self.selection_corner2.x()-self.selection_corner1.x()
+        selection_height = self.selection_corner2.y()-self.selection_corner1.y()
+        selection_x = self.selection_corner1.x()-0.5*self.width()
+        selection_y = self.selection_corner1.y()-0.5*self.height()
+        selection_rect = QRectF(selection_x,selection_y,selection_width,selection_height)
+
         frame = self.infile.frames[self.frame_nb]
-        frame.display(paint,self.transform, self.layer_activity, self.fidelity)
+        frame.display(paint,self.transform, self.layer_activity, self.fidelity,selection_rect)
 
         paint.translate(QPointF(-self.offset.x(),-self.offset.y()))
         if self.verbosity:
