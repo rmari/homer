@@ -64,7 +64,7 @@ class homerFile:
             in_raw_data.replace(to_replace=k,value=command_coding[k],inplace=True)
 
         in_raw_data.astype(np.float32)
-        framepoints = np.nonzero(np.array(pd.isnull(in_raw_data['a'])))[0]
+        framepoints = np.nonzero(np.array(pd.isnull(in_raw_data['p1'])))[0] # removes empty lines and lines with only one field
 
         whole_array = np.array(in_raw_data, dtype=np.float32)
         raw_data_frames = np.split(whole_array, framepoints)
