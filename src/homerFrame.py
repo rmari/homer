@@ -204,10 +204,10 @@ class homerFrame(object):
         # 5 filter out selection
         centerx = self.painter_methods[:,p1]
         centery = self.painter_methods[:,p2]
-        displayed_obj = np.logical_and(centerx>self.selection[0], displayed_obj)
-        displayed_obj = np.logical_and(centerx<self.selection[2], displayed_obj)
-        displayed_obj = np.logical_and(centery>self.selection[1], displayed_obj)
-        displayed_obj = np.logical_and(centery<self.selection[3], displayed_obj)
+#        displayed_obj = np.logical_and(centerx>self.selection[0], displayed_obj)
+#        displayed_obj = np.logical_and(centerx<self.selection[2], displayed_obj)
+#        displayed_obj = np.logical_and(centery>self.selection[1], displayed_obj)
+#        displayed_obj = np.logical_and(centery<self.selection[3], displayed_obj)
 
         self.ordering= np.argsort(np.compress(displayed_obj,z_coords))
         pcalls = np.take(np.compress(displayed_obj,self.painter_methods, axis=0),self.ordering, axis=0)
