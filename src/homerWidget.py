@@ -71,6 +71,7 @@ class homerWidget(QGLWidget):
         self.prefactor = str()
 
         self.offset = QPointF(-self.infile.min[0]*self.scale-0.45*self.windowSizeX, self.infile.min[2]*self.scale+0.45*self.windowSizeY)
+        self.translation = [self.offset.x()+0.5*self.width(), self.offset.y()+0.5*self.width()]
 
         self.selection_corner1 = QPointF(0,0)
         self.selection_corner2 = QPointF(self.width(),self.height())
@@ -290,6 +291,7 @@ class homerWidget(QGLWidget):
         self.update()
         return catched
 
+
     def mousePressEvent(self, event):
         modifier = QApplication.keyboardModifiers()
         if event.button() == Qt.LeftButton:
@@ -378,19 +380,22 @@ class homerWidget(QGLWidget):
         paint.setRenderHint(QPainter.Antialiasing)
 
 
-        paint.setTransform(QTransform().translate(0.5*self.width(), 0.5*self.height()))
-        paint.translate(self.offset)
+#        paint.setTransform(QTransform().translate(0.5*self.width(), 0.5*self.height()))
+#        paint.translate(self.offset)
+        self.translation = [self.offset.x()+0.5*self.width(), self.offset.y()+0.5*self.width()]
 
         selection_width = self.selection_corner2.x()-self.selection_corner1.x()
         selection_height = self.selection_corner2.y()-self.selection_corner1.y()
         selection_x = self.selection_corner1.x()-0.5*self.width()
         selection_y = self.selection_corner1.y()-0.5*self.height()
         selection_rect = QRectF(selection_x,selection_y,selection_width,selection_height)
+        print selection_rect
+        print self.selection_corner1, self.selection_corner2
 
         frame = self.infile.frames[self.frame_nb]
-        frame.display(paint,self.transform, self.layer_activity, self.fidelity,selection_rect)
+        frame.display(paint,self.transform, self.translation, self.layer_activity, self.fidelity,selection_rect)
 
-        paint.translate(QPointF(-self.offset.x(),-self.offset.y()))
+#        paint.translate(QPointF(-self.offset.x(),-self.offset.y()))
         if self.verbosity:
             self.writeLabels(paint)
 

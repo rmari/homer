@@ -44,10 +44,10 @@ fidelity_scale = [ Qt.SolidPattern, Qt.Dense3Pattern, Qt.Dense6Pattern, Qt.NoBru
 
 class homerFrame(object):
 
-    __slots__ = [ 'pos2_ind', 'size_ind', 'fidelity', 'sticks', 'layers', 'lines_labels', 'sticks_labels', 'pos1_ind', 'circles', 'circles_labels', 'layer_ind', 'obj_nb', 'painter_methods', 'painter', 'layer_list', 'color_ind', 'lines', 'colordef', 'ordering', 'transform', 'scale', 'selection'] # saves some memory usage by avoiding dict of attributes
+    __slots__ = [ 'pos2_ind', 'size_ind', 'fidelity', 'sticks', 'layers', 'lines_labels', 'sticks_labels', 'pos1_ind', 'circles', 'circles_labels', 'layer_ind', 'obj_nb', 'painter_methods', 'painter', 'layer_list', 'color_ind', 'lines', 'colordef', 'ordering', 'transform', 'scale', 'selection', 'translate'] # saves some memory usage by avoiding dict of attributes
 
     def __init__(self, obj):
-        self.colordef = np.array([Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue, Qt.magenta, Qt.darkGreen, Qt.cyan])
+        self.colordef = np.array([Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue, Qt.magenta, Qt.darkGreen, Qt.cyan, Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue, Qt.magenta, Qt.darkGreen, Qt.cyan])
         obj_nb = (obj[:,0].shape)[0]
 
         self.pos1_ind = 1
@@ -155,22 +155,22 @@ class homerFrame(object):
         p2 = 5
         p3 = 6
         p4 = 7
-        self.painter_methods[self.circles_labels,p1] = np.ravel(pr[:,0])
-        self.painter_methods[self.circles_labels,p2] = np.ravel(pr[:,2])
+        self.painter_methods[self.circles_labels,p1] = np.ravel(pr[:,0])+self.translate[0]
+        self.painter_methods[self.circles_labels,p2] = np.ravel(pr[:,2])+self.translate[1]
         self.painter_methods[self.circles_labels,p3] = np.ravel(pr[:,3])
         self.painter_methods[self.circles_labels,p4] = np.ravel(pr[:,3])
         
 
-        self.painter_methods[self.lines_labels,p1] = np.ravel(transformed_lines_positions[:,0])
-        self.painter_methods[self.lines_labels,p2] = -np.ravel(transformed_lines_positions[:,2])
-        self.painter_methods[self.lines_labels,p3] = np.ravel(transformed_lines_positions[:,3])
-        self.painter_methods[self.lines_labels,p4] = -np.ravel(transformed_lines_positions[:,5])
+        self.painter_methods[self.lines_labels,p1] = np.ravel(transformed_lines_positions[:,0])+self.translate[0]
+        self.painter_methods[self.lines_labels,p2] = -np.ravel(transformed_lines_positions[:,2])+self.translate[1]
+        self.painter_methods[self.lines_labels,p3] = np.ravel(transformed_lines_positions[:,3])+self.translate[0]
+        self.painter_methods[self.lines_labels,p4] = -np.ravel(transformed_lines_positions[:,5])+self.translate[1]
 
 
-        self.painter_methods[self.sticks_labels,p1] = np.ravel(transformed_sticks_positions[:,0])
-        self.painter_methods[self.sticks_labels,p2] = -np.ravel(transformed_sticks_positions[:,2])
-        self.painter_methods[self.sticks_labels,p3] = np.ravel(transformed_sticks_positions[:,3])
-        self.painter_methods[self.sticks_labels,p4] = -np.ravel(transformed_sticks_positions[:,5])
+        self.painter_methods[self.sticks_labels,p1] = np.ravel(transformed_sticks_positions[:,0])+self.translate[0]
+        self.painter_methods[self.sticks_labels,p2] = -np.ravel(transformed_sticks_positions[:,2])+self.translate[1]
+        self.painter_methods[self.sticks_labels,p3] = np.ravel(transformed_sticks_positions[:,3])+self.translate[0]
+        self.painter_methods[self.sticks_labels,p4] = -np.ravel(transformed_sticks_positions[:,5])+self.translate[1]
 
         pcolor = 1
         pthickness = 2
@@ -216,13 +216,15 @@ class homerFrame(object):
         
         return pcalls
 
-    def display(self, painter, transform, layer_list, fidelity, selection):
+
+    def display(self, painter, transform, translate, layer_list, fidelity, selection):
         self.fidelity = fidelity_scale[fidelity]
         self.painter = painter
         self.layer_list = layer_list
         self.transform = transform
+        self.translate = translate
         self.scale = np.linalg.det(transform)**(1./3.)
-        self.selection = [selection.left(), selection.top(), selection.right(), selection.bottom()]
+        self.selection = np.array([selection.left(), selection.top(), selection.right(), selection.bottom()])
         print self.selection
         pen = QPen()
         brush = QBrush()
