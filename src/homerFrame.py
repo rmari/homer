@@ -21,26 +21,9 @@ from PySide.QtGui import *
 from PySide.QtOpenGL import *
 import sys
 
-#import numba
-
 command_coding = { 'y':0, '@':1, 'r':3, 'c':4, 'l':5, 's':6 }
 fidelity_scale = [ Qt.SolidPattern, Qt.Dense3Pattern, Qt.Dense6Pattern, Qt.NoBrush ]
 
-
-#size_ind = 7
-#color_ind = 8
-
-# @numba.vectorize(['pyobject(f8[:])'])
-# def getPen(v):
-#     c = colordef[v[:,color_ind].astype(np.int)]
-#     w = v[size_ind]
-    
-#     pens = np.array([ QPen(col) for col in c ])
-#     for i in range(len(pens)):
-#         p = pens[i]
-#         p.setWidthF(w[i])
-
-#     return pens
 
 class homerFrame(object):
 
@@ -110,30 +93,6 @@ class homerFrame(object):
         self.scale = 1
 
 
-    def getCirclesPens(self):
-        pcolor = Qt.black
-        pthickness = 1
-        pens = np.array([ QPen(pcolor) for i in self.circles_labels ])
-        pens_nb = self.circles_labels.shape[0]
-        for i in range(pens_nb):
-            p = pens[i]
-            p.setWidthF(0)
-        return pens
-
-    def getBrush(self,v):
-        c = self.colordef[v[:,self.color_ind].astype(np.int)]
-        return np.array([ QBrush(col,self.fidelity) for col in c ])
-
-    def getPen(self,v):
-        c = self.colordef[v[:,self.color_ind].astype(np.int)]
-        w = v[:,self.size_ind]
-
-        pens = np.array([ QPen(col) for col in c ])
-        for i in range(len(pens)):
-            p = pens[i]
-            p.setWidthF(float(w[i]))
-
-        return pens
 
     def generatePainters(self):
         # 1 apply geometrical transform to coords
