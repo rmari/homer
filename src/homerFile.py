@@ -18,7 +18,7 @@
 from string import *
 import sys
 import numpy as np
-import pandas as pd
+#import pandas as pd
 import io
 from PySide.QtCore import *
 from PySide.QtGui import *
@@ -31,11 +31,8 @@ class homerFile:
     def __init__(self, filename):
         
         self.is_file=True
-
+        self.fname=filename
         self.chunksize = 500000
-        names = ['a', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6']
-        self.reader = pd.read_table(filename, delim_whitespace=True, names=names, iterator=True)
-#        self.reader = pd.read_table(filename, delimiter='\n', iterator=True)        
         self.frames = []
         self.init = True
         self.read_all = False
@@ -53,40 +50,67 @@ class homerFile:
         if self.read_all:
             return False
 
-        in_raw_data = self.reader.get_chunk(self.chunksize)
 
-        if in_raw_data.shape[0] < self.chunksize:
-            self.read_all = True
-        if in_raw_data.empty:
-            return False
+        ftype = np.float32
+        regexp = r"(\D\s)(.+)"
+        in_raw_data = np.fromregex(self.fname, regexp, [('com', 'S1'), ('val', 'S1000')])
 
-        for k in command_coding:
-            in_raw_data.replace(to_replace=k,value=command_coding[k],inplace=True)
 
-        in_raw_data.astype(np.float32)
-        framepoints = np.nonzero(np.array(pd.isnull(in_raw_data['p1'])))[0] # removes empty lines and lines with only one field
+        obj_nb = np.shape(in_raw_data)[0]
 
-        whole_array = np.array(in_raw_data, dtype=np.float32)
-        raw_data_frames = np.split(whole_array, framepoints)
+        attributes = np.zeros(obj_nb, dtype=[('r', ftype), ('@', ftype), ('y', ftype)])
+        #attributes = {'r': np.zeros(obj_nb, dtype=ftype), '@': np.zeros(obj_nb, dtype=ftype), 'y': np.ones(obj_nb, dtype=ftype)} # size, color, layer
+        all_att_mask = np.ones(obj_nb, dtype=np.bool)
+        for at in ['r','@','y']:
+            att_mask = in_raw_data['com']==at
+            all_att_mask -= att_mask
+            pos = np.nonzero(att_mask)[0]
+            if len(pos)>0:
+                for i in range(len(pos)-1):
+                    attributes[at][pos[i]:pos[i+1]] = in_raw_data['val'][pos[i]]
+                attributes[at][pos[-1]:] = in_raw_data['val'][pos[-1]]
 
-        frame = raw_data_frames[0]
-        if self.init:
-            self.init = False
-            if len(raw_data_frames) == 1:
-                self.frames.append(homerFrame.homerFrame(frame))
-        else:
-            self.frames.append(homerFrame.homerFrame(np.vstack((self.truncated_array, frame))))
-            
+        in_raw_data = in_raw_data[all_att_mask]
+        attributes = attributes[all_att_mask]
 
-        for frame in raw_data_frames[1:-1]:
-            frame = frame[1:] 
-            if frame.size>0:
-                self.frames.append(homerFrame.homerFrame(frame))
+        framebreaks = np.nonzero(in_raw_data['com']=='\n')
+        # the regexp used to extract data from file considers every framebreak to be 
+        # 'com'='\n' and 'val'='whatever comes on the next line'
+        # so we have to treat specifically the lines coming right after framebreaks
+        splitcoms = np.asarray(list(np.core.defchararray.split(in_raw_data['val'][framebreaks], maxsplit=1)), dtype='S100')
+        in_raw_data['com'][framebreaks]=splitcoms[:,0]
+        in_raw_data['val'][framebreaks]=splitcoms[:,1]
 
-        self.truncated_array = raw_data_frames[-1]
+        # now split frames
+        in_raw_data = np.split(in_raw_data, framebreaks[0])
+        attributes = np.split(attributes, framebreaks[0])
 
-        self.max = np.array([in_raw_data['p1'].max(), in_raw_data['p2'].max(), in_raw_data['p3'].max()])
-        self.min = np.array([in_raw_data['p1'].min(), in_raw_data['p2'].min(), in_raw_data['p3'].min()])
+        # and split according to object types
+        obj_list = ['c','s','l']
+        obj_vals = dict()
+        obj_attrs = dict()
+        for i in range(len(in_raw_data)):
+            frame = in_raw_data[i]
+            attrs = attributes[i]
+    
+            obj_masks = {o: frame['com']==o for o in obj_list}
+    
+            o='c'
+            obj_vals[o] = np.genfromtxt(frame['val'][obj_masks[o]], dtype='3f32')
+            obj_attrs[o] = attrs[obj_masks[o]]
+    
+            o='s'
+            obj_vals[o] = np.genfromtxt(frame['val'][obj_masks[o]], dtype='6f32')
+            obj_attrs[o] = attrs[obj_masks[o]]
+    
+            o='l'
+            obj_vals[o] = np.genfromtxt(frame['val'][obj_masks[o]], dtype='6f32')
+            obj_attrs[o] = attrs[obj_masks[o]]
+            self.frames.append(homerFrame.homerFrame(obj_vals, obj_attrs))
+
+
+#        self.max = np.array([in_raw_data['p1'].max(), in_raw_data['p2'].max(), in_raw_data['p3'].max()])
+#        self.min = np.array([in_raw_data['p1'].min(), in_raw_data['p2'].min(), in_raw_data['p3'].min()])
 
         del in_raw_data
         return True

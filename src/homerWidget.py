@@ -41,8 +41,9 @@ class homerWidget(QGLWidget):
         self.infile=homerFile.homerFile(self.fname)
         self.infile.read_chunk()
 
-        self.scale = 0.7*self.width()/self.infile.Lx()
-
+#        self.scale = 0.7*self.width()/self.infile.Lx()
+        self.scale = 0.7*self.width()/20.
+        
         self.initWindow()
         
         self.transform = self.scale*np.identity(3)
@@ -70,7 +71,8 @@ class homerWidget(QGLWidget):
 
         self.prefactor = str()
 
-        self.offset = QPointF(-self.infile.min[0]*self.scale-0.45*self.windowSizeX, self.infile.min[2]*self.scale+0.45*self.windowSizeY)
+        #        self.offset = QPointF(-self.infile.min[0]*self.scale-0.45*self.windowSizeX, self.infile.min[2]*self.scale+0.45*self.windowSizeY)
+        self.offset = QPointF(0,0)
         self.translation = [self.offset.x()+0.5*self.width(), self.offset.y()+0.5*self.width()]
 
         self.selection_corner1 = QPointF(0,0)
@@ -84,7 +86,8 @@ class homerWidget(QGLWidget):
         self.show()
 
     def initWindow(self):
-        ratio = self.infile.Lz()/self.infile.Lx()
+#        ratio = self.infile.Lz()/self.infile.Lx()
+        ratio = 1
         self.windowSizeX = 500
         self.windowSizeY = self.windowSizeX*ratio
         self.windowLocationX = 400

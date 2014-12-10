@@ -27,83 +27,86 @@ fidelity_scale = [ Qt.SolidPattern, Qt.Dense3Pattern, Qt.Dense6Pattern, Qt.NoBru
 
 class homerFrame(object):
 
-    __slots__ = [ 'pos2_ind', 'size_ind', 'fidelity', 'sticks', 'layers', 'lines_labels', 'sticks_labels', 'pos1_ind', 'circles', 'circles_labels', 'layer_ind', 'obj_nb', 'painter_methods', 'painter', 'layer_list', 'color_ind', 'lines', 'colordef', 'ordering', 'transform', 'scale', 'selection', 'translate'] # saves some memory usage by avoiding dict of attributes
+#    __slots__ = [ 'pos2_ind', 'size_ind', 'fidelity', 'sticks', 'layers', 'lines_attrs', 'sticks_labels', 'pos1_ind', 'circles', 'circles_labels', 'layer_ind', 'obj_nb', 'painter_methods', 'painter', 'layer_list', 'color_ind', 'lines', 'colordef', 'ordering', 'transform', 'scale', 'selection', 'translate'] # saves some memory usage by avoiding dict of attributes
 
-    def __init__(self, obj):
+    def __init__(self, obj_vals, obj_attrs):
         self.colordef = np.array([Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue, Qt.magenta, Qt.darkGreen, Qt.cyan, Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue, Qt.magenta, Qt.darkGreen, Qt.cyan])
-        obj_nb = (obj[:,0].shape)[0]
 
-        self.pos1_ind = 1
-        self.pos2_ind = 4
-
-        self.size_ind = 7
-        self.color_ind = 8
-        self.layer_ind = 9
-
-        size_pos = np.nonzero(obj[:,0] == command_coding['r'])[0]
-        bare_sizes = np.zeros(obj_nb)
-        for i in range(len(size_pos)-1):
-            bare_sizes[size_pos[i]:size_pos[i+1]] = obj[size_pos[i],1]
-
-        bare_sizes[size_pos[-1]:] = obj[size_pos[-1],1]
-
-        color_pos = np.nonzero(obj[:,0] == command_coding['@'])[0]
-        bare_colors = 2*np.ones(obj_nb, dtype=np.int) # default to white
-        for i in range(len(color_pos)-1):
-            bare_colors[color_pos[i]:color_pos[i+1]] = int(obj[color_pos[i],1])
-        bare_colors[color_pos[-1]:] = int(obj[color_pos[-1],1])
-
-        layer_pos = np.nonzero(obj[:,0] == command_coding['y'])[0]
-        bare_layers = np.zeros(obj_nb, dtype=np.int)
-        for i in range(len(color_pos)-1):
-            bare_layers[layer_pos[i]:layer_pos[i+1]] = int(obj[layer_pos[i],1])-1
-        bare_layers[layer_pos[-1]:] = int(obj[layer_pos[-1],1])-1
+        self.lines=obj_vals['l']
+        self.sticks=obj_vals['s']
+        self.circles=obj_vals['c']
+        self.lines_attrs=obj_attrs['l']
+        self.sticks_attrs=obj_attrs['s']
+        self.circles_attrs=obj_attrs['c']
         
-        all_objects = np.hstack((obj, np.reshape(bare_sizes,(obj_nb,1)), np.reshape(bare_colors,(obj_nb,1)), np.reshape(bare_layers,(obj_nb,1))))
+        self.obj_nb = self.lines.shape[0] + self.sticks.shape[0] + self.circles.shape[0]
 
-        # remove non-object commands
-        real_obj_indices = -np.isnan(obj[:,2])
-        all_objects = all_objects[real_obj_indices]
-
-
-        self.obj_nb = (all_objects[:,0].shape)[0]
-
-        self.layers = all_objects[:,self.layer_ind]
-
-        self.painter_methods = np.empty((self.obj_nb,8), dtype=np.object)
-
-        self.circles_labels = np.nonzero(all_objects[:,0] == command_coding['c'])[0]
-        self.painter_methods[self.circles_labels,0] = 1
-        self.circles = np.array(all_objects[self.circles_labels][:,[self.color_ind, self.size_ind, self.pos1_ind, self.pos1_ind+1, self.pos1_ind+2]], dtype=np.float32)
-        self.lines_labels = np.nonzero(all_objects[:,0] == command_coding['l'])[0]
-        self.painter_methods[self.lines_labels,0] = 2
-        self.lines = np.array(all_objects[self.lines_labels][:,[self.color_ind, self.size_ind, self.pos1_ind, self.pos1_ind+1, self.pos1_ind+2,self.pos2_ind, self.pos2_ind+1, self.pos2_ind+2]], dtype=np.float32)
-        self.sticks_labels = np.nonzero(all_objects[:,0] == command_coding['s'])[0]
-        self.painter_methods[self.sticks_labels,0] = 2
-        self.sticks = np.array(all_objects[self.sticks_labels][:,[self.color_ind, self.size_ind, self.pos1_ind, self.pos1_ind+1, self.pos1_ind+2,self.pos2_ind, self.pos2_ind+1, self.pos2_ind+2]], dtype=np.float32)
+        ###
 
         self.fidelity = fidelity_scale[0]
-
-        self.pos1_ind = 2
-        self.pos2_ind = 5
-
-        self.size_ind = 1
-        self.color_ind = 0
 
         self.scale = 1
 
 
 
     def generatePainters(self):
-        # 1 apply geometrical transform to coords
-        transformed_lines_positions = np.hstack((np.dot(self.lines[:,self.pos1_ind:self.pos1_ind+3],self.transform),np.dot(self.lines[:,self.pos2_ind:self.pos2_ind+3],self.transform)))
-        transformed_sticks_positions = np.hstack((np.dot(self.sticks[:,self.pos1_ind:self.pos1_ind+3],self.transform), np.dot(self.sticks[:,self.pos2_ind:self.pos2_ind+3],self.transform)))
-        transformed_circles_positions =  np.dot(self.circles[:,self.pos1_ind:self.pos1_ind+3],self.transform)
 
-        scale = np.linalg.det(self.transform)**(1./3.)
-        transformed_lines_sizes = 1
-        transformed_sticks_sizes = self.sticks[:,self.size_ind]*scale
-        transformed_circles_sizes = self.circles[:,self.size_ind]*scale
+        # 2 filter out layers
+        displayed_nb = np.nonzero(self.layer_list)[0]
+
+        lines_nb = self.lines.shape[0]
+        displayed_lines = np.zeros(lines_nb, dtype=np.bool)
+        for d in displayed_nb:
+            displayed_lines = np.logical_or(displayed_lines, self.lines_attrs['y'] == d )
+        sticks_nb = self.sticks.shape[0]
+        displayed_sticks = np.zeros(sticks_nb, dtype=np.bool)
+        for d in displayed_nb:
+            displayed_sticks = np.logical_or(displayed_sticks, self.sticks_attrs['y'] == d )
+        circles_nb = self.circles.shape[0]
+        displayed_circles = np.zeros(circles_nb, dtype=np.bool)
+        for d in displayed_nb:
+            displayed_circles = np.logical_or(displayed_circles, self.circles_attrs['y'] == d )
+
+            
+        # 3 filter out selection
+        #        centerx = self.painter_methods[:,p1]
+        #        centery = self.painter_methods[:,p2]
+        #        displayed_obj = np.logical_and(centerx>self.selection[0], displayed_obj)
+        #        displayed_obj = np.logical_and(centerx<self.selection[2], displayed_obj)
+        #        displayed_obj = np.logical_and(centery>self.selection[1], displayed_obj)
+        #        displayed_obj = np.logical_and(centery<self.selection[3], displayed_obj)
+
+
+        # 1 apply geometrical transform to coords
+        transformed_lines_positions = np.hstack((np.dot(self.lines[displayed_lines,:3],self.transform),np.dot(self.lines[displayed_lines,3:6],self.transform)))
+        transformed_sticks_positions = np.hstack((np.dot(self.sticks[displayed_sticks,:3],self.transform), np.dot(self.sticks[displayed_sticks,3:6],self.transform)))
+        transformed_circles_positions =  np.dot(self.circles[displayed_circles,:3],self.transform)
+
+        transformed_sticks_sizes = self.scale*self.sticks_attrs['r'][displayed_sticks]
+        transformed_circles_sizes = self.circles_attrs['r'][displayed_circles]*self.scale
+
+
+
+        disp_l_nb = np.count_nonzero(displayed_lines)
+        disp_c_nb = np.count_nonzero(displayed_circles)
+        disp_s_nb = np.count_nonzero(displayed_sticks)
+        disp_nb = disp_c_nb + disp_l_nb +  disp_s_nb
+        pcalls = np.empty((disp_nb,9), dtype=np.object)
+
+        pcalls[:disp_c_nb,0] = self.painter.drawEllipse
+        pcalls[disp_c_nb:,0] = self.painter.drawLine
+
+        pcalls[:disp_c_nb,1] = Qt.black      
+        pcalls[disp_c_nb:disp_c_nb+disp_l_nb,1] = self.colordef[self.lines_attrs['@'][displayed_lines].astype(np.int)]
+        pcalls[disp_c_nb+disp_l_nb:,1] = self.colordef[self.sticks_attrs['@'][displayed_sticks].astype(np.int)]
+
+        pcalls[:disp_c_nb,2] = 1
+        pcalls[disp_c_nb:disp_c_nb+disp_l_nb,2] = 1
+        pcalls[disp_c_nb+disp_l_nb:,2] = self.scale*self.sticks_attrs['r'][displayed_sticks] 
+
+        pcalls[:disp_c_nb,3] = self.colordef[self.circles_attrs['@'][displayed_circles].astype(np.int)]
+        pcalls[disp_c_nb:disp_c_nb+disp_l_nb,3] = Qt.black
+        pcalls[disp_c_nb+disp_l_nb:,3] = Qt.black
 
         # 2 generate associated qt geometric shapes
         pr = np.column_stack((transformed_circles_positions,transformed_circles_sizes))
@@ -114,65 +117,35 @@ class homerFrame(object):
         p2 = 5
         p3 = 6
         p4 = 7
-        self.painter_methods[self.circles_labels,p1] = np.ravel(pr[:,0])+self.translate[0]
-        self.painter_methods[self.circles_labels,p2] = np.ravel(pr[:,2])+self.translate[1]
-        self.painter_methods[self.circles_labels,p3] = np.ravel(pr[:,3])
-        self.painter_methods[self.circles_labels,p4] = np.ravel(pr[:,3])
+        pcalls[:disp_c_nb,p1] = np.ravel(pr[:,0])+self.translate[0]
+        pcalls[:disp_c_nb,p2] = np.ravel(pr[:,2])+self.translate[1]
+        pcalls[:disp_c_nb,p3] = np.ravel(pr[:,3])
+        pcalls[:disp_c_nb,p4] = np.ravel(pr[:,3])
+        pcalls[:disp_c_nb,8] = np.ravel(-pr[:,1])
         
 
-        self.painter_methods[self.lines_labels,p1] = np.ravel(transformed_lines_positions[:,0])+self.translate[0]
-        self.painter_methods[self.lines_labels,p2] = -np.ravel(transformed_lines_positions[:,2])+self.translate[1]
-        self.painter_methods[self.lines_labels,p3] = np.ravel(transformed_lines_positions[:,3])+self.translate[0]
-        self.painter_methods[self.lines_labels,p4] = -np.ravel(transformed_lines_positions[:,5])+self.translate[1]
+        pcalls[disp_c_nb:disp_c_nb+disp_l_nb,p1] = np.ravel(transformed_lines_positions[:,0])+self.translate[0]
+        pcalls[disp_c_nb:disp_c_nb+disp_l_nb,p2] = -np.ravel(transformed_lines_positions[:,2])+self.translate[1]
+        pcalls[disp_c_nb:disp_c_nb+disp_l_nb,p3] = np.ravel(transformed_lines_positions[:,3])+self.translate[0]
+        pcalls[disp_c_nb:disp_c_nb+disp_l_nb,p4] = -np.ravel(transformed_lines_positions[:,5])+self.translate[1]
+        pcalls[disp_c_nb:disp_c_nb+disp_l_nb,8] = -np.ravel(transformed_lines_positions[:,1])
 
+        pcalls[disp_c_nb+disp_l_nb:,p1] = np.ravel(transformed_sticks_positions[:,0])+self.translate[0]
+        pcalls[disp_c_nb+disp_l_nb:,p2] = -np.ravel(transformed_sticks_positions[:,2])+self.translate[1]
+        pcalls[disp_c_nb+disp_l_nb:,p3] = np.ravel(transformed_sticks_positions[:,3])+self.translate[0]
+        pcalls[disp_c_nb+disp_l_nb:,p4] = -np.ravel(transformed_sticks_positions[:,5])+self.translate[1]
+        pcalls[disp_c_nb+disp_l_nb:,8] = -np.ravel(transformed_sticks_positions[:,1])
 
-        self.painter_methods[self.sticks_labels,p1] = np.ravel(transformed_sticks_positions[:,0])+self.translate[0]
-        self.painter_methods[self.sticks_labels,p2] = -np.ravel(transformed_sticks_positions[:,2])+self.translate[1]
-        self.painter_methods[self.sticks_labels,p3] = np.ravel(transformed_sticks_positions[:,3])+self.translate[0]
-        self.painter_methods[self.sticks_labels,p4] = -np.ravel(transformed_sticks_positions[:,5])+self.translate[1]
-
-        pcolor = 1
-        pthickness = 2
-        bcolor = 3
-        self.painter_methods[self.circles_labels, pcolor] = Qt.black
-        self.painter_methods[self.circles_labels, pthickness] = 1
-
-        self.painter_methods[self.circles_labels, bcolor] = self.colordef[self.circles[:,self.color_ind].astype(np.int)]
-
-        self.painter_methods[self.lines_labels, pcolor] = self.colordef[self.lines[:,self.color_ind].astype(np.int)]
-        self.painter_methods[self.lines_labels, pthickness] = 1
-        self.painter_methods[self.lines_labels, bcolor] = Qt.black
-
-        spainters = self.painter_methods[self.sticks_labels]
-        self.painter_methods[self.sticks_labels, pcolor] = self.colordef[self.sticks[:,self.color_ind].astype(np.int)]
-        self.painter_methods[self.sticks_labels, pthickness] = self.scale*self.sticks[:,self.size_ind]
-        self.painter_methods[self.sticks_labels, bcolor] = Qt.black
-                
         # 3 order according to z coord
         z_coords = np.zeros(self.obj_nb)
-        z_coords[self.circles_labels] = -transformed_circles_positions[:,1] 
-        z_coords[self.lines_labels] = -transformed_lines_positions[:,1] 
-        z_coords[self.sticks_labels] = -transformed_sticks_positions[:,1] 
+        z_coords[:disp_c_nb] = -np.ravel(transformed_circles_positions[:,1])
+        z_coords[disp_c_nb:disp_c_nb+disp_l_nb] = -np.ravel(transformed_lines_positions[:,1])
+        z_coords[disp_c_nb+disp_l_nb:] = -np.ravel(transformed_sticks_positions[:,1])
 
-        # 4 filter out layers
-        displayed_obj = np.zeros(self.obj_nb, dtype=np.bool)
-        displayed_nb = np.nonzero(self.layer_list)[0]
-        for d in displayed_nb:
-            displayed_obj = np.logical_or(displayed_obj, self.layers == d )
 
-        # 5 filter out selection
-        centerx = self.painter_methods[:,p1]
-        centery = self.painter_methods[:,p2]
-#        displayed_obj = np.logical_and(centerx>self.selection[0], displayed_obj)
-#        displayed_obj = np.logical_and(centerx<self.selection[2], displayed_obj)
-#        displayed_obj = np.logical_and(centery>self.selection[1], displayed_obj)
-#        displayed_obj = np.logical_and(centery<self.selection[3], displayed_obj)
+        self.ordering= np.argsort(pcalls[:,8])
+        pcalls = pcalls[self.ordering]
 
-        self.ordering= np.argsort(np.compress(displayed_obj,z_coords))
-        pcalls = np.take(np.compress(displayed_obj,self.painter_methods, axis=0),self.ordering, axis=0)
-        pcalls[ pcalls[:,0] == 1,0] = self.painter.drawEllipse 
-        pcalls[ pcalls[:,0] == 2,0] = self.painter.drawLine
-        
         return pcalls
 
 
@@ -189,7 +162,7 @@ class homerFrame(object):
         brush = QBrush()
         brush.setStyle(self.fidelity)
 
-        for [paintMethod, pcolor, pthickness, bcolor, paintArgs0, paintArgs1, paintArgs2, paintArgs3] in self.generatePainters():
+        for [paintMethod, pcolor, pthickness, bcolor, paintArgs0, paintArgs1, paintArgs2, paintArgs3, z] in self.generatePainters():
             pen.setColor(pcolor)
             pen.setWidthF(pthickness)
             painter.setPen(pen)
