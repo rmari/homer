@@ -157,7 +157,7 @@ class homerFrame(object):
         self.translate = translate
         self.scale = np.linalg.det(transform)**(1./3.)
         self.selection = np.array([selection.left(), selection.top(), selection.right(), selection.bottom()])
-        print self.selection
+#        print self.selection
         pen = QPen()
         brush = QBrush()
         brush.setStyle(self.fidelity)

@@ -392,8 +392,6 @@ class homerWidget(QGLWidget):
         selection_x = self.selection_corner1.x()-0.5*self.width()
         selection_y = self.selection_corner1.y()-0.5*self.height()
         selection_rect = QRectF(selection_x,selection_y,selection_width,selection_height)
-        print selection_rect
-        print self.selection_corner1, self.selection_corner2
 
         frame = self.infile.frames[self.frame_nb]
         frame.display(paint,self.transform, self.translation, self.layer_activity, self.fidelity,selection_rect)

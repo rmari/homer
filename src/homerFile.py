@@ -32,10 +32,12 @@ class homerFile:
         
         self.is_file=True
         self.fname=filename
-        self.chunksize = 500000
+        self.chunksize = 100000000
         self.frames = []
         self.init = True
         self.read_all = False
+        self.infile = open(self.fname,'r')
+
         
     def Lx(self):
         return self.max[0]-self.min[0]
@@ -50,11 +52,10 @@ class homerFile:
         if self.read_all:
             return False
 
-
         ftype = np.float32
-        regexp = r"(\D\s)(.+)"
-        in_raw_data = np.fromregex(self.fname, regexp, [('com', 'S1'), ('val', 'S1000')])
+        #        in_raw_data = np.fromregex(self.infile, regexp, [('com', 'S1'), ('val', 'S1000')])
 
+        in_raw_data = np.core.defchararray.partition(np.asarray(self.infile.readlines(self.chunksize), dtype=np.str_), ' ')[:,[0,2]]
 
         obj_nb = np.shape(in_raw_data)[0]
 
@@ -62,24 +63,24 @@ class homerFile:
         #attributes = {'r': np.zeros(obj_nb, dtype=ftype), '@': np.zeros(obj_nb, dtype=ftype), 'y': np.ones(obj_nb, dtype=ftype)} # size, color, layer
         all_att_mask = np.ones(obj_nb, dtype=np.bool)
         for at in ['r','@','y']:
-            att_mask = in_raw_data['com']==at
+            att_mask = in_raw_data[:,0]==at
             all_att_mask -= att_mask
             pos = np.nonzero(att_mask)[0]
             if len(pos)>0:
                 for i in range(len(pos)-1):
-                    attributes[at][pos[i]:pos[i+1]] = in_raw_data['val'][pos[i]]
-                attributes[at][pos[-1]:] = in_raw_data['val'][pos[-1]]
+                    attributes[at][pos[i]:pos[i+1]] = in_raw_data[:,1][pos[i]]
+                attributes[at][pos[-1]:] = in_raw_data[:,1][pos[-1]]
 
         in_raw_data = in_raw_data[all_att_mask]
         attributes = attributes[all_att_mask]
 
-        framebreaks = np.nonzero(in_raw_data['com']=='\n')
+        framebreaks = np.nonzero(in_raw_data[:,0]=='\n')
         # the regexp used to extract data from file considers every framebreak to be 
         # 'com'='\n' and 'val'='whatever comes on the next line'
         # so we have to treat specifically the lines coming right after framebreaks
-        splitcoms = np.asarray(list(np.core.defchararray.split(in_raw_data['val'][framebreaks], maxsplit=1)), dtype='S100')
-        in_raw_data['com'][framebreaks]=splitcoms[:,0]
-        in_raw_data['val'][framebreaks]=splitcoms[:,1]
+#        splitcoms = np.asarray(list(np.core.defchararray.split(in_raw_data['val'][framebreaks], maxsplit=1)), dtype='S100')
+#        in_raw_data['com'][framebreaks]=splitcoms[:,0]
+#        in_raw_data['val'][framebreaks]=splitcoms[:,1]
 
         # now split frames
         in_raw_data = np.split(in_raw_data, framebreaks[0])
@@ -93,18 +94,18 @@ class homerFile:
             frame = in_raw_data[i]
             attrs = attributes[i]
     
-            obj_masks = {o: frame['com']==o for o in obj_list}
+            obj_masks = {o: frame[:,0]==o for o in obj_list}
     
             o='c'
-            obj_vals[o] = np.genfromtxt(frame['val'][obj_masks[o]], dtype='3f32')
+            obj_vals[o] = np.genfromtxt(frame[:,1][obj_masks[o]], dtype='3f32')
             obj_attrs[o] = attrs[obj_masks[o]]
     
             o='s'
-            obj_vals[o] = np.genfromtxt(frame['val'][obj_masks[o]], dtype='6f32')
+            obj_vals[o] = np.genfromtxt(frame[:,1][obj_masks[o]], dtype='6f32')
             obj_attrs[o] = attrs[obj_masks[o]]
     
             o='l'
-            obj_vals[o] = np.genfromtxt(frame['val'][obj_masks[o]], dtype='6f32')
+            obj_vals[o] = np.genfromtxt(frame[:,1][obj_masks[o]], dtype='6f32')
             obj_attrs[o] = attrs[obj_masks[o]]
             self.frames.append(homerFrame.homerFrame(obj_vals, obj_attrs))
 
