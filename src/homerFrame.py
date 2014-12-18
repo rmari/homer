@@ -51,7 +51,7 @@ class homerFrame(object):
 
     def generatePainters(self):
 
-        # 2 filter out layers
+        #  filter out layers
         displayed_nb = np.nonzero(self.layer_list)[0]
 
         lines_nb = self.lines.shape[0]
@@ -66,6 +66,7 @@ class homerFrame(object):
         displayed_circles = np.zeros(circles_nb, dtype=np.bool)
         for d in displayed_nb:
             displayed_circles = np.logical_or(displayed_circles, self.circles_attrs['y'] == d )
+
 
             
         # 3 filter out selection
@@ -85,12 +86,11 @@ class homerFrame(object):
         transformed_sticks_sizes = self.scale*self.sticks_attrs['r'][displayed_sticks]
         transformed_circles_sizes = self.circles_attrs['r'][displayed_circles]*self.scale
 
-
-
         disp_l_nb = np.count_nonzero(displayed_lines)
         disp_c_nb = np.count_nonzero(displayed_circles)
         disp_s_nb = np.count_nonzero(displayed_sticks)
         disp_nb = disp_c_nb + disp_l_nb +  disp_s_nb
+#        print disp_l_nb, disp_c_nb, disp_s_nb, disp_nb
         pcalls = np.empty((disp_nb,9), dtype=np.object)
 
         pcalls[:disp_c_nb,0] = self.painter.drawEllipse
@@ -137,7 +137,7 @@ class homerFrame(object):
         pcalls[disp_c_nb+disp_l_nb:,8] = -np.ravel(transformed_sticks_positions[:,1])
 
         # 3 order according to z coord
-        z_coords = np.zeros(self.obj_nb)
+        z_coords = np.zeros(disp_nb)
         z_coords[:disp_c_nb] = -np.ravel(transformed_circles_positions[:,1])
         z_coords[disp_c_nb:disp_c_nb+disp_l_nb] = -np.ravel(transformed_lines_positions[:,1])
         z_coords[disp_c_nb+disp_l_nb:] = -np.ravel(transformed_sticks_positions[:,1])
