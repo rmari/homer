@@ -14,13 +14,13 @@ intentionally basic representation of 3D data.
 
 Homer is still in development stage, so some bugs or early design
 flaws are to be expected :) Also, so far not all of Yaplot features
-are available. As of v0.2, Yaplot-style command files containing
-lines, sticks and circles are processed by Homer. The layer, color and
-radius commands are supported. Most display features offered by Yaplot
-are available, the only notable exception being the perspective
-control. Also the possibility to display multiple input files is
-still very primitive in Homer. Two original features, translation of
-the field of view and a (primitive) selection system are offered.
+are available. As of v0.3, Yaplot-style command files containing
+lines, sticks, circles, polygons and texts are processed by Homer. The
+layer, color and radius commands are supported. Most display features
+offered by Yaplot are available, the only notable exception being the
+perspective control. Also the possibility to display multiple input
+files is still very primitive in Homer. As an original feature,
+on can translate the field of view.
 
 <h2> Installation </h2>
 
@@ -70,7 +70,6 @@ Meanwhile, a solution is to modify by hand the colordef array in the homerFrame 
 |---------|------------------------------|---------------------------|
 | Mouse left-button drag  | Rotate field of view | - |
 | Shift + Mouse left-button drag  | Translate field of view | - |
-| Ctrl + Mouse left-button drag  | Make a selection | - |
 | Tab | Reset rotation and translation | - |
 | * | Zoom in | - |
 | / | Zoom out | - |
