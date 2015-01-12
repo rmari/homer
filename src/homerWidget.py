@@ -60,7 +60,7 @@ class homerWidget(QGLWidget):
 
         self.fidelity = 0
         self.fidelity_min = 0
-        self.fidelity_max = 3
+        self.fidelity_max = 4
 
         self.installEventFilter(self)
 
@@ -71,10 +71,10 @@ class homerWidget(QGLWidget):
 
         self.prefactor = str()
 
-        #        self.offset = QPointF(-self.infile.min[0]*self.scale-0.45*self.windowSizeX, self.infile.min[2]*self.scale+0.45*self.windowSizeY)
         self.offset = QPointF(0,0)
-        self.translation = [self.offset.x()+0.5*self.width(), self.offset.y()+0.5*self.width()]
 
+        self.translation = [0, 0]
+        
         self.selection_corner1 = QPointF(0,0)
         self.selection_corner2 = QPointF(self.width(),self.height())
 
@@ -243,12 +243,12 @@ class homerWidget(QGLWidget):
             QCoreApplication.instance().quit()
             catched = True
         elif e == Qt.Key_Minus:
-            if self.fidelity < self.fidelity_max:
-                self.fidelity = self.fidelity + 1
-            catched = True
-        elif e == Qt.Key_Plus:
             if self.fidelity > self.fidelity_min:
                 self.fidelity = self.fidelity - 1
+            catched = True
+        elif e == Qt.Key_Plus:
+            if self.fidelity < self.fidelity_max:
+                self.fidelity = self.fidelity + 1
             catched = True
         elif e == Qt.Key_Space:
             self.timer.stop()
@@ -339,9 +339,9 @@ class homerWidget(QGLWidget):
             
             
     def writeLabels(self, paint):
-        print "goes here"
         pen = QPen()
-        rlocation = np.array([ -0.49*self.width(), -0.49*self.height() ])
+        rlocation = np.array([ 0.01*self.width(), 0.01*self.height() ])
+
         rsize = [ 120, 18 ]
 
         pen.setColor(Qt.black)
@@ -353,7 +353,7 @@ class homerWidget(QGLWidget):
         pen.setColor(Qt.black)
         paint.setPen(pen)
         rect = QRectF(rlocation[0], rlocation[1], rsize[0], rsize[1])
-        paint.drawText(rect, Qt.AlignLeft, "Texture "+str(self.fidelity_max-self.fidelity)+" (+ -)")
+        paint.drawText(rect, Qt.AlignLeft, "Texture "+str(self.fidelity)+" (+ -)")
 
         rlocation[1] = rlocation[1]+rsize[1]
         rsize = [ 95, 18 ]
@@ -385,9 +385,8 @@ class homerWidget(QGLWidget):
         paint.setRenderHint(QPainter.Antialiasing)
 
 
-#        paint.setTransform(QTransform().translate(0.5*self.width(), 0.5*self.height()))
-#        paint.translate(self.offset)
-        self.translation = [self.offset.x()+0.5*self.width(), self.offset.y()+0.5*self.width()]
+
+        self.translation = [self.offset.x()+0.5*self.width(), self.offset.y()+0.5*self.height()]
 
         selection_width = self.selection_corner2.x()-self.selection_corner1.x()
         selection_height = self.selection_corner2.y()-self.selection_corner1.y()
@@ -398,7 +397,7 @@ class homerWidget(QGLWidget):
         frame = self.infile.frames[self.frame_nb]
         frame.display(paint,self.transform, self.translation, self.layer_activity, self.fidelity,selection_rect)
 
-#        paint.translate(QPointF(-self.offset.x(),-self.offset.y()))
+
         if self.verbosity:
             self.writeLabels(paint)
             

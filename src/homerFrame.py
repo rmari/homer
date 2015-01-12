@@ -21,12 +21,12 @@ from PySide.QtGui import *
 from PySide.QtOpenGL import *
 import sys
 
-fidelity_scale = [ Qt.SolidPattern, Qt.Dense3Pattern, Qt.Dense6Pattern, Qt.NoBrush ]
+brush_fidelity = [ Qt.NoBrush, Qt.Dense6Pattern, Qt.Dense3Pattern, Qt.SolidPattern, Qt.SolidPattern]
 
 
 class homerFrame(object):
 
-#    __slots__ = [ 'pos2_ind', 'size_ind', 'fidelity', 'sticks', 'layers', 'lines_attrs', 'sticks_labels', 'pos1_ind', 'circles', 'circles_labels', 'layer_ind', 'obj_nb', 'painter_methods', 'painter', 'layer_list', 'color_ind', 'lines', 'colordef', 'ordering', 'transform', 'scale', 'selection', 'translate'] # saves some memory usage by avoiding dict of attributes
+    __slots__ = [ 'fidelity', 'sticks', 'sticks_attrs', 'circles', 'circles_attrs', 'lines', 'lines_attrs', 'polygon_sizes', 'polygon_coords', 'polygons_attrs', 'painter', 'layer_list', 'colordef', 'transform', 'scale', 'selection', 'translate'] # saves some memory usage by avoiding dict of attributes
 
     def __init__(self, obj_vals, obj_attrs):
         self.colordef = np.array([Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue, Qt.magenta, Qt.darkGreen, Qt.cyan, Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue, Qt.magenta, Qt.darkGreen, Qt.cyan])
@@ -41,11 +41,9 @@ class homerFrame(object):
         self.circles_attrs=obj_attrs['c']
         self.polygons_attrs=obj_attrs['p']
         
-        self.obj_nb = self.lines.shape[0] + self.sticks.shape[0] + self.circles.shape[0] + self.polygon_sizes.shape[0]
-
         ###
 
-        self.fidelity = fidelity_scale[0]
+        self.fidelity = 0
 
         self.scale = 1
 
@@ -77,8 +75,6 @@ class homerFrame(object):
 
             
         # 1bis filter out selection
-        #        centerx = self.painter_methods[:,p1]
-        #        centery = self.painter_methods[:,p2]
         #        displayed_obj = np.logical_and(centerx>self.selection[0], displayed_obj)
         #        displayed_obj = np.logical_and(centerx<self.selection[2], displayed_obj)
         #        displayed_obj = np.logical_and(centery>self.selection[1], displayed_obj)
@@ -127,11 +123,17 @@ class homerFrame(object):
         pcalls['drawMethod'][l_slice] = self.painter.drawLine
         pcalls['drawMethod'][s_slice] = self.painter.drawLine
         pcalls['drawMethod'][p_slice] = self.painter.drawPolygon
-        
-        pcalls['penColor'][c_slice] = Qt.black
+
+        if self.fidelity > 3:
+            pcalls['penColor'][c_slice] = Qt.black
+        else:
+            pcalls['penColor'][c_slice] = self.colordef[self.circles_attrs['@'][displayed_circles].astype(np.int)]
         pcalls['penColor'][l_slice] = self.colordef[self.lines_attrs['@'][displayed_lines].astype(np.int)]
         pcalls['penColor'][s_slice] = self.colordef[self.sticks_attrs['@'][displayed_sticks].astype(np.int)]
-        pcalls['penColor'][p_slice] = Qt.black
+        if self.fidelity > 3:
+            pcalls['penColor'][p_slice] = Qt.black
+        else:
+            pcalls['penColor'][p_slice] = self.colordef[self.polygons_attrs['@'][displayed_polygons].astype(np.int)]
 
         pcalls['penThickness'][c_slice] = 1
         pcalls['penThickness'][l_slice] = 1
@@ -203,14 +205,14 @@ class homerFrame(object):
 
             
         # 4 order according to z coord
-        self.ordering= np.argsort(pcalls['z'][:])
-        pcalls = pcalls[self.ordering]
+        ordering= np.argsort(pcalls['z'][:])
+        pcalls = pcalls[ordering]
 
         return pcalls
 
 
     def display(self, painter, transform, translate, layer_list, fidelity, selection):
-        self.fidelity = fidelity_scale[fidelity]
+        self.fidelity = fidelity
         self.painter = painter
         self.layer_list = layer_list
         self.transform = transform
@@ -220,8 +222,9 @@ class homerFrame(object):
 
         pen = QPen()
         brush = QBrush()
-        brush.setStyle(self.fidelity)
-
+        
+        brush.setStyle(brush_fidelity[self.fidelity])
+        
 
         a = 20
         pen.setColor(Qt.black)
@@ -230,7 +233,6 @@ class homerFrame(object):
         
         rect = QRectF(QPointF(0,0),QPointF(a,0))
         poly = QPolygonF([QPointF(0,0),QPointF(a,0),QPointF(a,a),QPointF(0,a)])
-        self.ordering = np.array([])
         
         for [paintMethod, pcolor, pthickness, bcolor, shapeMethod, shapeArgs, z] in self.generatePainters():
             pen.setColor(pcolor)
