@@ -33,19 +33,32 @@ class homerWidget(QGLWidget):
     def __init__(self, filename, parent=None):
 
         QGLWidget.__init__(self, QGLFormat(QGL.SampleBuffers), parent)
-        self.parent = parent        
+        self.parent = parent
+        
+
         self.timer = QBasicTimer()
 
         self.fname = filename
 
+        self.initWindow()
+        
         self.infile=homerFile.homerFile(self.fname)
         self.infile.read_chunk()
 
-#        self.scale = 0.7*self.width()/self.infile.Lx()
-        self.scale = 0.7*self.width()/20.
+        bd = self.infile.getBoundaries()
         
-        self.initWindow()
+        xmin = bd[0,0]
+        xmax = bd[0,1]
+        ymin = bd[1,0]
+        ymax = bd[1,1]
         
+        self.scale = 0.8*self.width()/(xmax-xmin)
+        print -self.scale*xmin,self.scale*ymax
+        self.init_offset = QPointF(-self.scale*xmin+0.1*self.width(),self.scale*ymax+0.1*self.width())
+
+        self.offset = self.init_offset
+        
+
         self.transform = self.scale*np.identity(3)
 
         self.frame_nb = 0
@@ -70,8 +83,6 @@ class homerWidget(QGLWidget):
         self.setPalette(pal)
 
         self.prefactor = str()
-
-        self.offset = QPointF(0,0)
 
         self.translation = [0, 0]
         
@@ -164,7 +175,7 @@ class homerWidget(QGLWidget):
 
         if e == Qt.Key_Tab:
             self.transform = self.scale*np.identity(3)
-            self.offset = QPointF(0,0)
+            self.offset = self.init_offset
             catched = True
         elif e == Qt.Key_F1:
             self.layerSwitch(0)
@@ -384,9 +395,7 @@ class homerWidget(QGLWidget):
         paint.begin(self)
         paint.setRenderHint(QPainter.Antialiasing)
 
-
-
-        self.translation = [self.offset.x()+0.5*self.width(), self.offset.y()+0.5*self.height()]
+        self.translation = [self.offset.x(), self.offset.y()]
 
         selection_width = self.selection_corner2.x()-self.selection_corner1.x()
         selection_height = self.selection_corner2.y()-self.selection_corner1.y()
@@ -395,6 +404,7 @@ class homerWidget(QGLWidget):
         selection_rect = QRectF(selection_x,selection_y,selection_width,selection_height)
 
         frame = self.infile.frames[self.frame_nb]
+#        print self.translation
         frame.display(paint,self.transform, self.translation, self.layer_activity, self.fidelity,selection_rect)
 
 

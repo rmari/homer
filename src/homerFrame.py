@@ -30,24 +30,58 @@ class homerFrame(object):
 
     def __init__(self, obj_vals, obj_attrs):
         self.colordef = np.array([Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue, Qt.magenta, Qt.darkGreen, Qt.cyan, Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue, Qt.magenta, Qt.darkGreen, Qt.cyan])
-
-        self.lines=obj_vals['l']
-        self.sticks=obj_vals['s']
-        self.circles=obj_vals['c']
-        self.polygon_sizes=obj_vals['p'][0]
-        self.polygon_coords=obj_vals['p'][1]
-        self.lines_attrs=obj_attrs['l']
-        self.sticks_attrs=obj_attrs['s']
-        self.circles_attrs=obj_attrs['c']
-        self.polygons_attrs=obj_attrs['p']
         
-        ###
+        obj_types = obj_vals.keys()
+        ftype = np.float32
+        empty_attrs = np.empty(0, dtype=[('r', ftype), ('@', ftype), ('y', ftype)])
+        if 'l' in obj_types:
+            self.lines=obj_vals['l']
+            self.lines_attrs=obj_attrs['l']
+        else:
+            self.lines = np.zeros((0,6))
+            self.lines_attrs=empty_attrs
+        if 's' in obj_types:
+            self.sticks=obj_vals['s']
+            self.sticks_attrs=obj_attrs['s']
+        else:
+            self.sticks=np.zeros((0,6))
+            self.sticks_attrs=empty_attrs
+        if 'c' in obj_types:
+            self.circles=obj_vals['c']
+            self.circles_attrs=obj_attrs['c']
+        else:
+            self.circles=np.zeros((0,3))
+            self.circles_attrs=empty_attrs
+        if 'p' in obj_types:
+            self.polygon_sizes=obj_vals['p'][0]
+            self.polygon_coords=obj_vals['p'][1]
+            self.polygons_attrs=obj_attrs['p']
+        else:
+            self.polygon_sizes=np.zeros((0,1))
+            self.polygon_coords=np.zeros((0,3))
+            self.polygons_attrs=empty_attrs
+
+
+            ###
 
         self.fidelity = 0
 
         self.scale = 1
 
 
+
+    def getBoundaries(self):
+        extrema_pos = np.zeros((2,2))
+
+        tobe_stacked = (np.reshape(self.lines,(-1,3)),np.reshape(self.sticks,(-1,3)),np.reshape(self.circles,(-1,3)),np.reshape(self.polygon_coords,(-1,3)))
+
+        all_pos = np.vstack( tobe_stacked )
+        extrema_pos[0,0] = np.min(all_pos[:,0])
+        extrema_pos[0,1] = np.max(all_pos[:,0])
+        extrema_pos[1,0] = np.min(all_pos[:,2])
+        extrema_pos[1,1] = np.max(all_pos[:,2])
+        
+        return extrema_pos
 
     def generatePainters(self):
 
@@ -58,20 +92,25 @@ class homerFrame(object):
         displayed_lines = np.zeros(lines_nb, dtype=np.bool)
         for d in displayed_nb:
             displayed_lines = np.logical_or(displayed_lines, self.lines_attrs['y'] == d )
+            
         sticks_nb = self.sticks.shape[0]
         displayed_sticks = np.zeros(sticks_nb, dtype=np.bool)
         for d in displayed_nb:
             displayed_sticks = np.logical_or(displayed_sticks, self.sticks_attrs['y'] == d )
+
         circles_nb = self.circles.shape[0]
         displayed_circles = np.zeros(circles_nb, dtype=np.bool)
         for d in displayed_nb:
             displayed_circles = np.logical_or(displayed_circles, self.circles_attrs['y'] == d )
+
         polygons_nb = self.polygon_sizes.shape[0]
         displayed_polygons = np.zeros(polygons_nb, dtype=np.bool)
-        for d in displayed_nb:
-            displayed_polygons = np.logical_or(displayed_polygons, self.polygons_attrs['y'] == d )
-        displayed_polygons_coords = np.repeat(displayed_polygons,self.polygon_sizes)
-
+        if polygons_nb:
+            for d in displayed_nb:
+                displayed_polygons = np.logical_or(displayed_polygons, self.polygons_attrs['y'] == d )
+                displayed_polygons_coords = np.repeat(displayed_polygons,self.polygon_sizes)
+        else:
+            displayed_polygons_coords = np.zeros(0,dtype=np.bool)
 
             
         # 1bis filter out selection
@@ -106,14 +145,17 @@ class homerFrame(object):
 
         
         # 2 apply geometrical transform to coords
-        transformed_lines_positions = np.hstack((np.dot(self.lines[displayed_lines,:3],self.transform),np.dot(self.lines[displayed_lines,3:6],self.transform)))
-        transformed_sticks_positions = np.hstack((np.dot(self.sticks[displayed_sticks,:3],self.transform), np.dot(self.sticks[displayed_sticks,3:6],self.transform)))
-        transformed_circles_positions =  np.dot(self.circles[displayed_circles,:3],self.transform)
-        transformed_polygons_positions =  np.dot(self.polygon_coords[displayed_polygons_coords],self.transform)
+        transformed_lines_positions = np.hstack((np.dot(self.lines[displayed_lines,:3],self.transform),np.dot(self.lines[displayed_lines,3:6],self.transform))) + np.hstack((self.translate,self.translate))
+        transformed_sticks_positions = np.hstack((np.dot(self.sticks[displayed_sticks,:3],self.transform), np.dot(self.sticks[displayed_sticks,3:6],self.transform))) + np.hstack((self.translate,self.translate))
+        transformed_circles_positions =  np.dot(self.circles[displayed_circles,:3],self.transform) + self.translate
+        transformed_polygons_positions =  np.dot(self.polygon_coords[displayed_polygons_coords],self.transform) + self.translate
 
+        print self.sticks[displayed_sticks,:3]
+        print displayed_sticks
+        print self.sticks_attrs['r'][displayed_sticks]
         transformed_sticks_sizes = self.scale*self.sticks_attrs['r'][displayed_sticks]
         transformed_circles_sizes = self.circles_attrs['r'][displayed_circles]*self.scale
-
+        print transformed_circles_positions
 
         # 3 create and fill the array of data needed to paint
         pcalls = np.empty(disp_nb, dtype=[('drawMethod',np.object),('penColor',np.object),('penThickness',np.object),('brushColor',np.object),('shapeMethod',np.object),('shapeArgs',np.ndarray),('z',np.float32)])
@@ -149,42 +191,26 @@ class homerFrame(object):
         if disp_c_nb > 0:
             pr = np.column_stack((transformed_circles_positions,transformed_circles_sizes))
             pr[:,0] = pr[:,0] - pr[:,3]
-            pr[:,2] = -pr[:,2] - pr[:,3]
+            pr[:,2] = pr[:,2] - pr[:,3]
             pr[:,3] = 2*pr[:,3]
-            a = np.ravel(pr[:,0])+self.translate[0]
-            b = np.ravel(pr[:,2])+self.translate[1]
-            c = np.ravel(pr[:,3])
-            d = np.ravel(pr[:,3])
 
             pcalls['shapeMethod'][c_slice] = QRectF
             
-            pcalls['shapeArgs'][c_slice] = np.split(np.column_stack((a,b,c,d)), disp_c_nb)
+            pcalls['shapeArgs'][c_slice] = np.split(pr[:,[0,2,3,3]], disp_c_nb)
             pcalls['z'][c_slice] = np.ravel(-pr[:,1])
             
-        
         if disp_l_nb > 0:
             pcalls['shapeMethod'][l_slice] = QRectF
-            a = np.ravel(transformed_lines_positions[:,0])+self.translate[0]
-            b = -np.ravel(transformed_lines_positions[:,2])+self.translate[1]
-            c = np.ravel(transformed_lines_positions[:,3])+self.translate[0]
-            d = -np.ravel(transformed_lines_positions[:,5])+self.translate[1]
-            pcalls['shapeArgs'][l_slice] = np.split(np.column_stack((a,b,c,d)),disp_l_nb)
+            pcalls['shapeArgs'][l_slice] = np.split(transformed_lines_positions[:,[0,2,3,5]],disp_l_nb)
             pcalls['z'][l_slice] = -np.ravel(transformed_lines_positions[:,1])
 
         if disp_s_nb > 0:
             pcalls['shapeMethod'][s_slice] = QRectF
-            a = np.ravel(transformed_sticks_positions[:,0])+self.translate[0]
-            b = -np.ravel(transformed_sticks_positions[:,2])+self.translate[1]
-            c = np.ravel(transformed_sticks_positions[:,3])+self.translate[0]
-            d = -np.ravel(transformed_sticks_positions[:,5])+self.translate[1]
-            pcalls['shapeArgs'][s_slice] =  np.split(np.column_stack((a,b,c,d)),disp_s_nb)
+            pcalls['shapeArgs'][s_slice] =  np.split(transformed_sticks_positions[:,[0,2,3,5]],disp_s_nb)
             pcalls['z'][s_slice] = -np.ravel(transformed_sticks_positions[:,1])
 
         if disp_p_nb > 0:
-
             pcalls['shapeMethod'][p_slice] = None
-            a = np.ravel(transformed_polygons_positions[:,0])+self.translate[0]
-            b = -np.ravel(transformed_polygons_positions[:,2])+self.translate[1]
             arg_array = np.empty(disp_p_nb,dtype=np.object)
             start = 0
             end = 0
@@ -195,7 +221,7 @@ class homerFrame(object):
                 end += ps
                 qpts = []
                 for j in range(start,end):
-                    qpts.append(QPointF(a[j], b[j]))
+                    qpts.append(QPointF(transformed_polygons_positions[j,0], transformed_polygons_positions[j,2]))
 
                 all_qpts.append(qpts)
 
@@ -216,7 +242,7 @@ class homerFrame(object):
         self.painter = painter
         self.layer_list = layer_list
         self.transform = transform
-        self.translate = translate
+        self.translate = np.array([translate[0],0,translate[1]])
         self.scale = np.linalg.det(transform)**(1./3.)
         self.selection = np.array([selection.left(), selection.top(), selection.right(), selection.bottom()])
 

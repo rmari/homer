@@ -37,16 +37,9 @@ class homerFile:
         self.read_all = False
         self.infile = open(self.fname,'r')
 
-        
-    def Lx(self):
-        return self.max[0]-self.min[0]
-
-    def Ly(self):
-        return self.max[1]-self.min[1]
-
-    def Lz(self):
-        return self.max[2]-self.min[2]
-
+    def getBoundaries(self):
+        return self.frames[0].getBoundaries()
+    
     def read_chunk(self):
         if self.read_all:
             return False
@@ -100,34 +93,45 @@ class homerFile:
             obj_masks = {o: frame[:,0]==o for o in obj_list}
     
             o='c'
-            obj_vals[o] = np.genfromtxt(frame[:,1][obj_masks[o]], dtype='3f32')
-            obj_attrs[o] = attrs[obj_masks[o]]
+            if np.count_nonzero(obj_masks[o]):
+                obj_vals[o] = np.genfromtxt(frame[:,1][obj_masks[o]], dtype='3f32')
+                obj_vals[o][:,2] = -obj_vals[o][:,2]
+                obj_attrs[o] = attrs[obj_masks[o]]
     
             o='s'
-            obj_vals[o] = np.genfromtxt(frame[:,1][obj_masks[o]], dtype='6f32')
-            obj_attrs[o] = attrs[obj_masks[o]]
+            if np.count_nonzero(obj_masks[o]):
+                obj_vals[o] = np.genfromtxt(frame[:,1][obj_masks[o]], dtype='6f32')
+                obj_vals[o][:,2] = -obj_vals[o][:,2]
+                obj_vals[o][:,5] = -obj_vals[o][:,5]
+                obj_attrs[o] = attrs[obj_masks[o]]
 
             
             o='l'
-            obj_vals[o] = np.genfromtxt(frame[:,1][obj_masks[o]], dtype='6f32')
-            obj_attrs[o] = attrs[obj_masks[o]]
+            if np.count_nonzero(obj_masks[o]):
+                obj_vals[o] = np.genfromtxt(frame[:,1][obj_masks[o]], dtype='6f32')
+                obj_vals[o][:,2] = -obj_vals[o][:,2]
+                obj_vals[o][:,5] = -obj_vals[o][:,5]
+                obj_attrs[o] = attrs[obj_masks[o]]
 
             o='p'
-            split_vals = np.core.defchararray.partition(frame[:,1][obj_masks[o]], ' ')
-            polygon_sizes = split_vals[:,0]
-            polygon_coords = split_vals[:,2]
-            
-            full_str = ''
-            for str_a in polygon_coords:
-                full_str +=str_a
-            
-            obj_vals[o] = (polygon_sizes.astype(np.int),np.reshape(np.fromstring(full_str, sep=' '),(-1,3)))
-            obj_attrs[o] = attrs[obj_masks[o]]
-            
+            if np.count_nonzero(obj_masks[o]):
+                split_vals = np.core.defchararray.partition(frame[:,1][obj_masks[o]], ' ')
+                polygon_sizes = split_vals[:,0]
+                polygon_coords = split_vals[:,2]
+                
+                full_str = ''
+                for str_a in polygon_coords:
+                    full_str +=str_a
+                    
+                    obj_vals[o] = (polygon_sizes.astype(np.int),np.reshape(np.fromstring(full_str, sep=' '),(-1,3)))
+                    obj_vals[o][1][:,2] = -obj_vals[o][1][:,2]
+                    obj_attrs[o] = attrs[obj_masks[o]]
+
             self.frames.append(homerFrame.homerFrame(obj_vals, obj_attrs))
 
         self.trailing_frame = in_raw_data[-1]
         self.trailing_attributes = attributes[-1]
+
         self.is_init = False
         return True
 
