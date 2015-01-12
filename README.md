@@ -46,6 +46,8 @@ Currently, Homer supports the following subset of Yaplot's data format:
 | l x1 y1 z1 x2 y2 z2 | Draw a line from 1 to 2 |
 | s x1 y1 z1 x2 y2 z2 | Draw a stick (line with thickness) from 1 to 2 |
 | c x y z | Draw a circle centered on x,y,z |
+| p n x1 y1 z1 ... xn yn zn | Draw a n-point polygone |
+| t x y z s | Print text string s on x,y,z |
 
 Default colors:
 

@@ -82,7 +82,7 @@ class homerFile:
         attributes = np.split(attributes, framebreaks)
 
         # and split according to object types
-        obj_list = ['c','s','l','p']
+        obj_list = ['c','s','l','p','t']
         obj_vals = dict()
         obj_attrs = dict()
         for i in range(len(in_raw_data)-1):
@@ -116,16 +116,30 @@ class homerFile:
             o='p'
             if np.count_nonzero(obj_masks[o]):
                 split_vals = np.core.defchararray.partition(frame[:,1][obj_masks[o]], ' ')
-                polygon_sizes = split_vals[:,0]
+                polygon_sizes = split_vals[:,0].astype(np.int)
                 polygon_coords = split_vals[:,2]
                 
                 full_str = ''
                 for str_a in polygon_coords:
                     full_str +=str_a
                     
-                    obj_vals[o] = (polygon_sizes.astype(np.int),np.reshape(np.fromstring(full_str, sep=' '),(-1,3)))
+                    obj_vals[o] = (polygon_sizes,np.reshape(np.fromstring(full_str, sep=' '),(-1,3)))
                     obj_vals[o][1][:,2] = -obj_vals[o][1][:,2]
                     obj_attrs[o] = attrs[obj_masks[o]]
+
+            o='t'
+            if np.count_nonzero(obj_masks[o]):
+                split_vals = np.core.defchararray.partition(frame[:,1][obj_masks[o]], ' ')
+                x = split_vals[:,0].astype(ftype)
+                split_vals = np.core.defchararray.partition(split_vals[:,2], ' ')
+                y = -split_vals[:,0].astype(ftype)
+                split_vals = np.core.defchararray.partition(split_vals[:,2], ' ')
+                z = split_vals[:,0].astype(ftype)
+                text = split_vals[:,2]
+                
+                obj_vals[o] = (np.reshape(np.hstack((x,y,z)),(-1,3)), text)
+                obj_attrs[o] = attrs[obj_masks[o]]
+
 
             self.frames.append(homerFrame.homerFrame(obj_vals, obj_attrs))
 

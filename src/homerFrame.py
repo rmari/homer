@@ -26,7 +26,7 @@ brush_fidelity = [ Qt.NoBrush, Qt.Dense6Pattern, Qt.Dense3Pattern, Qt.SolidPatte
 
 class homerFrame(object):
 
-    __slots__ = [ 'fidelity', 'sticks', 'sticks_attrs', 'circles', 'circles_attrs', 'lines', 'lines_attrs', 'polygon_sizes', 'polygon_coords', 'polygons_attrs', 'painter', 'layer_list', 'colordef', 'transform', 'scale', 'selection', 'translate'] # saves some memory usage by avoiding dict of attributes
+    __slots__ = [ 'fidelity', 'sticks', 'sticks_attrs', 'circles', 'circles_attrs', 'lines', 'lines_attrs', 'polygon_sizes', 'polygon_coords', 'polygons_attrs', 'texts_coords', 'texts_labels', 'texts_attrs', 'painter', 'layer_list', 'colordef', 'transform', 'scale', 'selection', 'translate'] # saves some memory usage by avoiding dict of attributes
 
     def __init__(self, obj_vals, obj_attrs):
         self.colordef = np.array([Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue, Qt.magenta, Qt.darkGreen, Qt.cyan, Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue, Qt.magenta, Qt.darkGreen, Qt.cyan])
@@ -60,7 +60,14 @@ class homerFrame(object):
             self.polygon_sizes=np.zeros((0,1))
             self.polygon_coords=np.zeros((0,3))
             self.polygons_attrs=empty_attrs
-
+        if 't' in obj_types:
+            self.texts_coords=obj_vals['t'][0]
+            self.texts_labels=obj_vals['t'][1]
+            self.texts_attrs=obj_attrs['t']
+        else:
+            self.texts_coords=np.zeros((0,3))
+            self.texts_labels=np.empty(0,dtype=np.str)
+            self.texts_attrs=empty_attrs
 
             ###
 
@@ -73,7 +80,7 @@ class homerFrame(object):
     def getBoundaries(self):
         extrema_pos = np.zeros((2,2))
 
-        tobe_stacked = (np.reshape(self.lines,(-1,3)),np.reshape(self.sticks,(-1,3)),np.reshape(self.circles,(-1,3)),np.reshape(self.polygon_coords,(-1,3)))
+        tobe_stacked = (np.reshape(self.lines,(-1,3)),np.reshape(self.sticks,(-1,3)),self.circles,self.polygon_coords, self.texts_coords)
 
         all_pos = np.vstack( tobe_stacked )
         extrema_pos[0,0] = np.min(all_pos[:,0])
@@ -112,6 +119,11 @@ class homerFrame(object):
         else:
             displayed_polygons_coords = np.zeros(0,dtype=np.bool)
 
+        texts_nb = self.texts_labels.shape[0]
+        displayed_texts = np.zeros(texts_nb, dtype=np.bool)
+        for d in displayed_nb:
+            displayed_texts = np.logical_or(displayed_texts, self.texts_attrs['y'] == d )
+
             
         # 1bis filter out selection
         #        displayed_obj = np.logical_and(centerx>self.selection[0], displayed_obj)
@@ -125,6 +137,7 @@ class homerFrame(object):
         disp_c_nb = np.count_nonzero(displayed_circles)
         disp_s_nb = np.count_nonzero(displayed_sticks)
         disp_p_nb = np.count_nonzero(displayed_polygons)
+        disp_t_nb = np.count_nonzero(displayed_texts)
         
         slice_start = 0
         slice_end = 0
@@ -139,6 +152,9 @@ class homerFrame(object):
         slice_start = slice_end
         slice_end += disp_p_nb
         p_slice = slice(slice_start,slice_end)
+        slice_start = slice_end
+        slice_end += disp_t_nb
+        t_slice = slice(slice_start,slice_end)
 
         disp_nb = slice_end
 
@@ -149,6 +165,8 @@ class homerFrame(object):
         transformed_sticks_positions = np.hstack((np.dot(self.sticks[displayed_sticks,:3],self.transform), np.dot(self.sticks[displayed_sticks,3:6],self.transform))) + np.hstack((self.translate,self.translate))
         transformed_circles_positions =  np.dot(self.circles[displayed_circles,:3],self.transform) + self.translate
         transformed_polygons_positions =  np.dot(self.polygon_coords[displayed_polygons_coords],self.transform) + self.translate
+
+        transformed_texts_positions =  np.dot(self.texts_coords[displayed_texts],self.transform) + self.translate
 
         transformed_sticks_sizes = self.scale*self.sticks_attrs['r'][displayed_sticks]
         transformed_circles_sizes = self.circles_attrs['r'][displayed_circles]*self.scale
@@ -161,6 +179,7 @@ class homerFrame(object):
         pcalls['drawMethod'][l_slice] = self.painter.drawLine
         pcalls['drawMethod'][s_slice] = self.painter.drawLine
         pcalls['drawMethod'][p_slice] = self.painter.drawPolygon
+        pcalls['drawMethod'][t_slice] = self.painter.drawText
 
         if self.fidelity > 3:
             pcalls['penColor'][c_slice] = Qt.black
@@ -172,17 +191,20 @@ class homerFrame(object):
             pcalls['penColor'][p_slice] = Qt.black
         else:
             pcalls['penColor'][p_slice] = self.colordef[self.polygons_attrs['@'][displayed_polygons].astype(np.int)]
-
+        pcalls['penColor'][t_slice] = self.colordef[self.texts_attrs['@'][displayed_texts].astype(np.int)]
+            
         pcalls['penThickness'][c_slice] = 1
         pcalls['penThickness'][l_slice] = 1
         pcalls['penThickness'][s_slice] = self.scale*self.sticks_attrs['r'][displayed_sticks]
         pcalls['penThickness'][p_slice] = 1
+        pcalls['penThickness'][t_slice] = 1
 
         pcalls['brushColor'][c_slice] = self.colordef[self.circles_attrs['@'][displayed_circles].astype(np.int)]
         pcalls['brushColor'][l_slice] = Qt.black
         pcalls['brushColor'][s_slice] = Qt.black
         pcalls['brushColor'][p_slice] = self.colordef[self.polygons_attrs['@'][displayed_polygons].astype(np.int)]
-
+        pcalls['brushColor'][t_slice] = Qt.black
+        
         # 3bis generate associated qt geometric shape coords
         if disp_c_nb > 0:
             pr = np.column_stack((transformed_circles_positions,transformed_circles_sizes))
@@ -225,6 +247,10 @@ class homerFrame(object):
             z_vertices_indices = np.cumsum(self.polygon_sizes[displayed_polygons])-1
             pcalls['z'][p_slice] = -np.ravel(transformed_polygons_positions[z_vertices_indices,1])
 
+        if disp_t_nb > 0:
+            pcalls['shapeMethod'][t_slice] = self.texts_labels[displayed_texts]
+            pcalls['shapeArgs'][t_slice] = np.split(transformed_texts_positions[:,[0,2]], disp_t_nb)
+            pcalls['z'][t_slice] = -np.ravel(transformed_texts_positions[:,1])
             
         # 4 order according to z coord
         ordering= np.argsort(pcalls['z'][:])
@@ -273,6 +299,9 @@ class homerFrame(object):
                 paintMethod(p1,p2,p3,p4)
             if paintMethod == self.painter.drawPolygon:
                 paintMethod(shapeArgs)
+            if paintMethod == self.painter.drawText:
+                [p1,p2] = shapeArgs
+                paintMethod(p1,p2,shapeMethod)
             
 
 
