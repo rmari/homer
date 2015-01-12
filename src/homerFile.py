@@ -25,14 +25,13 @@ from PySide.QtGui import *
 from PySide.QtOpenGL import *
 import homerFrame
 
-command_coding = { 'y':0, '@':1, 'r':3, 'c':4, 'l':5, 's':6 }
 
 class homerFile:
     def __init__(self, filename):
         
         self.is_file=True
         self.fname=filename
-        self.chunksize = 1000000#10000000
+        self.chunksize = 5000000#10000000
         self.frames = []
         self.is_init = True
         self.read_all = False
@@ -61,13 +60,13 @@ class homerFile:
         
         obj_nb = np.shape(in_raw_data)[0]
 
+        # attributes array, to propagate size, color and layer to each object 
         attributes = np.zeros(obj_nb, dtype=[('r', ftype), ('@', ftype), ('y', ftype)])
-
         all_att_mask = np.ones(obj_nb, dtype=np.bool)
         for at in ['r','@','y']:
             att_mask = in_raw_data[:,0]==at
             all_att_mask -= att_mask
-            pos = np.nonzero(att_mask)[0]
+            pos = np.nonzero(att_mask)[0] # locate the attributes changes
             if not self.is_init:
                 attributes[at][:pos[0]] = self.trailing_attributes[at][-1]
                 
@@ -79,8 +78,6 @@ class homerFile:
         in_raw_data = in_raw_data[all_att_mask]
         attributes = attributes[all_att_mask]
         if not self.is_init:
-            print self.trailing_frame.shape,in_raw_data.shape
-            print self.trailing_attributes.shape,attributes.shape
             in_raw_data = np.vstack((self.trailing_frame,in_raw_data))
             attributes = np.concatenate((self.trailing_attributes,attributes))
         
@@ -92,7 +89,7 @@ class homerFile:
         attributes = np.split(attributes, framebreaks)
 
         # and split according to object types
-        obj_list = ['c','s','l']
+        obj_list = ['c','s','l','p']
         obj_vals = dict()
         obj_attrs = dict()
         for i in range(len(in_raw_data)-1):
@@ -109,16 +106,28 @@ class homerFile:
             o='s'
             obj_vals[o] = np.genfromtxt(frame[:,1][obj_masks[o]], dtype='6f32')
             obj_attrs[o] = attrs[obj_masks[o]]
-    
+
+            
             o='l'
             obj_vals[o] = np.genfromtxt(frame[:,1][obj_masks[o]], dtype='6f32')
             obj_attrs[o] = attrs[obj_masks[o]]
+
+            o='p'
+            split_vals = np.core.defchararray.partition(frame[:,1][obj_masks[o]], ' ')
+            polygon_sizes = split_vals[:,0]
+            polygon_coords = split_vals[:,2]
+            
+            full_str = ''
+            for str_a in polygon_coords:
+                full_str +=str_a
+            
+            obj_vals[o] = (polygon_sizes.astype(np.int),np.reshape(np.fromstring(full_str, sep=' '),(-1,3)))
+            obj_attrs[o] = attrs[obj_masks[o]]
+            
             self.frames.append(homerFrame.homerFrame(obj_vals, obj_attrs))
 
         self.trailing_frame = in_raw_data[-1]
         self.trailing_attributes = attributes[-1]
-        print self.trailing_frame
-        print np.any(self.trailing_frame[:,0]=='\n')
         self.is_init = False
         return True
 

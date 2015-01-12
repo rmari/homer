@@ -339,6 +339,7 @@ class homerWidget(QGLWidget):
             
             
     def writeLabels(self, paint):
+        print "goes here"
         pen = QPen()
         rlocation = np.array([ -0.49*self.width(), -0.49*self.height() ])
         rsize = [ 120, 18 ]
@@ -365,6 +366,7 @@ class homerWidget(QGLWidget):
             paint.setPen(pen)
             paint.drawText(rect, Qt.AlignLeft, self.layer_labels[i])
 
+            
     @Slot(int)
     def slaveUpdate(self, master_label):
         self.is_slave = True
@@ -399,7 +401,7 @@ class homerWidget(QGLWidget):
 #        paint.translate(QPointF(-self.offset.x(),-self.offset.y()))
         if self.verbosity:
             self.writeLabels(paint)
-
+            
         paint.end()
 
         if len(self.relatives) and not self.is_slave:

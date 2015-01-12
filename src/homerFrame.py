@@ -21,7 +21,6 @@ from PySide.QtGui import *
 from PySide.QtOpenGL import *
 import sys
 
-command_coding = { 'y':0, '@':1, 'r':3, 'c':4, 'l':5, 's':6 }
 fidelity_scale = [ Qt.SolidPattern, Qt.Dense3Pattern, Qt.Dense6Pattern, Qt.NoBrush ]
 
 
@@ -35,11 +34,14 @@ class homerFrame(object):
         self.lines=obj_vals['l']
         self.sticks=obj_vals['s']
         self.circles=obj_vals['c']
+        self.polygon_sizes=obj_vals['p'][0]
+        self.polygon_coords=obj_vals['p'][1]
         self.lines_attrs=obj_attrs['l']
         self.sticks_attrs=obj_attrs['s']
         self.circles_attrs=obj_attrs['c']
+        self.polygons_attrs=obj_attrs['p']
         
-        self.obj_nb = self.lines.shape[0] + self.sticks.shape[0] + self.circles.shape[0]
+        self.obj_nb = self.lines.shape[0] + self.sticks.shape[0] + self.circles.shape[0] + self.polygon_sizes.shape[0]
 
         ###
 
@@ -66,10 +68,15 @@ class homerFrame(object):
         displayed_circles = np.zeros(circles_nb, dtype=np.bool)
         for d in displayed_nb:
             displayed_circles = np.logical_or(displayed_circles, self.circles_attrs['y'] == d )
+        polygons_nb = self.polygon_sizes.shape[0]
+        displayed_polygons = np.zeros(polygons_nb, dtype=np.bool)
+        for d in displayed_nb:
+            displayed_polygons = np.logical_or(displayed_polygons, self.polygons_attrs['y'] == d )
+        displayed_polygons_coords = np.repeat(displayed_polygons,self.polygon_sizes)
 
 
             
-        # 3 filter out selection
+        # 1bis filter out selection
         #        centerx = self.painter_methods[:,p1]
         #        centery = self.painter_methods[:,p2]
         #        displayed_obj = np.logical_and(centerx>self.selection[0], displayed_obj)
@@ -78,72 +85,125 @@ class homerFrame(object):
         #        displayed_obj = np.logical_and(centery<self.selection[3], displayed_obj)
 
 
-        # 1 apply geometrical transform to coords
-        transformed_lines_positions = np.hstack((np.dot(self.lines[displayed_lines,:3],self.transform),np.dot(self.lines[displayed_lines,3:6],self.transform)))
-        transformed_sticks_positions = np.hstack((np.dot(self.sticks[displayed_sticks,:3],self.transform), np.dot(self.sticks[displayed_sticks,3:6],self.transform)))
-        transformed_circles_positions =  np.dot(self.circles[displayed_circles,:3],self.transform)
-
-        transformed_sticks_sizes = self.scale*self.sticks_attrs['r'][displayed_sticks]
-        transformed_circles_sizes = self.circles_attrs['r'][displayed_circles]*self.scale
 
         disp_l_nb = np.count_nonzero(displayed_lines)
         disp_c_nb = np.count_nonzero(displayed_circles)
         disp_s_nb = np.count_nonzero(displayed_sticks)
-        disp_nb = disp_c_nb + disp_l_nb +  disp_s_nb
-#        print disp_l_nb, disp_c_nb, disp_s_nb, disp_nb
-        pcalls = np.empty((disp_nb,9), dtype=np.object)
-
-        pcalls[:disp_c_nb,0] = self.painter.drawEllipse
-        pcalls[disp_c_nb:,0] = self.painter.drawLine
-
-        pcalls[:disp_c_nb,1] = Qt.black      
-        pcalls[disp_c_nb:disp_c_nb+disp_l_nb,1] = self.colordef[self.lines_attrs['@'][displayed_lines].astype(np.int)]
-        pcalls[disp_c_nb+disp_l_nb:,1] = self.colordef[self.sticks_attrs['@'][displayed_sticks].astype(np.int)]
-
-        pcalls[:disp_c_nb,2] = 1
-        pcalls[disp_c_nb:disp_c_nb+disp_l_nb,2] = 1
-        pcalls[disp_c_nb+disp_l_nb:,2] = self.scale*self.sticks_attrs['r'][displayed_sticks] 
-
-        pcalls[:disp_c_nb,3] = self.colordef[self.circles_attrs['@'][displayed_circles].astype(np.int)]
-        pcalls[disp_c_nb:disp_c_nb+disp_l_nb,3] = Qt.black
-        pcalls[disp_c_nb+disp_l_nb:,3] = Qt.black
-
-        # 2 generate associated qt geometric shapes
-        pr = np.column_stack((transformed_circles_positions,transformed_circles_sizes))
-        pr[:,0] = pr[:,0] - pr[:,3]
-        pr[:,2] = -pr[:,2] - pr[:,3]
-        pr[:,3] = 2*pr[:,3]
-        p1 = 4
-        p2 = 5
-        p3 = 6
-        p4 = 7
-        pcalls[:disp_c_nb,p1] = np.ravel(pr[:,0])+self.translate[0]
-        pcalls[:disp_c_nb,p2] = np.ravel(pr[:,2])+self.translate[1]
-        pcalls[:disp_c_nb,p3] = np.ravel(pr[:,3])
-        pcalls[:disp_c_nb,p4] = np.ravel(pr[:,3])
-        pcalls[:disp_c_nb,8] = np.ravel(-pr[:,1])
+        disp_p_nb = np.count_nonzero(displayed_polygons)
         
+        slice_start = 0
+        slice_end = 0
+        slice_end += disp_c_nb
+        c_slice = slice(slice_start,slice_end)
+        slice_start = slice_end
+        slice_end += disp_l_nb
+        l_slice = slice(slice_start,slice_end)
+        slice_start = slice_end
+        slice_end += disp_s_nb
+        s_slice = slice(slice_start,slice_end)
+        slice_start = slice_end
+        slice_end += disp_p_nb
+        p_slice = slice(slice_start,slice_end)
 
-        pcalls[disp_c_nb:disp_c_nb+disp_l_nb,p1] = np.ravel(transformed_lines_positions[:,0])+self.translate[0]
-        pcalls[disp_c_nb:disp_c_nb+disp_l_nb,p2] = -np.ravel(transformed_lines_positions[:,2])+self.translate[1]
-        pcalls[disp_c_nb:disp_c_nb+disp_l_nb,p3] = np.ravel(transformed_lines_positions[:,3])+self.translate[0]
-        pcalls[disp_c_nb:disp_c_nb+disp_l_nb,p4] = -np.ravel(transformed_lines_positions[:,5])+self.translate[1]
-        pcalls[disp_c_nb:disp_c_nb+disp_l_nb,8] = -np.ravel(transformed_lines_positions[:,1])
-
-        pcalls[disp_c_nb+disp_l_nb:,p1] = np.ravel(transformed_sticks_positions[:,0])+self.translate[0]
-        pcalls[disp_c_nb+disp_l_nb:,p2] = -np.ravel(transformed_sticks_positions[:,2])+self.translate[1]
-        pcalls[disp_c_nb+disp_l_nb:,p3] = np.ravel(transformed_sticks_positions[:,3])+self.translate[0]
-        pcalls[disp_c_nb+disp_l_nb:,p4] = -np.ravel(transformed_sticks_positions[:,5])+self.translate[1]
-        pcalls[disp_c_nb+disp_l_nb:,8] = -np.ravel(transformed_sticks_positions[:,1])
-
-        # 3 order according to z coord
-        z_coords = np.zeros(disp_nb)
-        z_coords[:disp_c_nb] = -np.ravel(transformed_circles_positions[:,1])
-        z_coords[disp_c_nb:disp_c_nb+disp_l_nb] = -np.ravel(transformed_lines_positions[:,1])
-        z_coords[disp_c_nb+disp_l_nb:] = -np.ravel(transformed_sticks_positions[:,1])
+        disp_nb = slice_end
 
 
-        self.ordering= np.argsort(pcalls[:,8])
+        
+        # 2 apply geometrical transform to coords
+        transformed_lines_positions = np.hstack((np.dot(self.lines[displayed_lines,:3],self.transform),np.dot(self.lines[displayed_lines,3:6],self.transform)))
+        transformed_sticks_positions = np.hstack((np.dot(self.sticks[displayed_sticks,:3],self.transform), np.dot(self.sticks[displayed_sticks,3:6],self.transform)))
+        transformed_circles_positions =  np.dot(self.circles[displayed_circles,:3],self.transform)
+        transformed_polygons_positions =  np.dot(self.polygon_coords[displayed_polygons_coords],self.transform)
+
+        transformed_sticks_sizes = self.scale*self.sticks_attrs['r'][displayed_sticks]
+        transformed_circles_sizes = self.circles_attrs['r'][displayed_circles]*self.scale
+
+
+        # 3 create and fill the array of data needed to paint
+        pcalls = np.empty(disp_nb, dtype=[('drawMethod',np.object),('penColor',np.object),('penThickness',np.object),('brushColor',np.object),('shapeMethod',np.object),('shapeArgs',np.ndarray),('z',np.float32)])
+
+
+        pcalls['drawMethod'][c_slice] = self.painter.drawEllipse
+        pcalls['drawMethod'][l_slice] = self.painter.drawLine
+        pcalls['drawMethod'][s_slice] = self.painter.drawLine
+        pcalls['drawMethod'][p_slice] = self.painter.drawPolygon
+        
+        pcalls['penColor'][c_slice] = Qt.black
+        pcalls['penColor'][l_slice] = self.colordef[self.lines_attrs['@'][displayed_lines].astype(np.int)]
+        pcalls['penColor'][s_slice] = self.colordef[self.sticks_attrs['@'][displayed_sticks].astype(np.int)]
+        pcalls['penColor'][p_slice] = Qt.black
+
+        pcalls['penThickness'][c_slice] = 1
+        pcalls['penThickness'][l_slice] = 1
+        pcalls['penThickness'][s_slice] = self.scale*self.sticks_attrs['r'][displayed_sticks]
+        pcalls['penThickness'][p_slice] = 1
+
+        pcalls['brushColor'][c_slice] = self.colordef[self.circles_attrs['@'][displayed_circles].astype(np.int)]
+        pcalls['brushColor'][l_slice] = Qt.black
+        pcalls['brushColor'][s_slice] = Qt.black
+        pcalls['brushColor'][p_slice] = self.colordef[self.polygons_attrs['@'][displayed_polygons].astype(np.int)]
+
+        # 3bis generate associated qt geometric shape coords
+        if disp_c_nb > 0:
+            pr = np.column_stack((transformed_circles_positions,transformed_circles_sizes))
+            pr[:,0] = pr[:,0] - pr[:,3]
+            pr[:,2] = -pr[:,2] - pr[:,3]
+            pr[:,3] = 2*pr[:,3]
+            a = np.ravel(pr[:,0])+self.translate[0]
+            b = np.ravel(pr[:,2])+self.translate[1]
+            c = np.ravel(pr[:,3])
+            d = np.ravel(pr[:,3])
+
+            pcalls['shapeMethod'][c_slice] = QRectF
+            
+            pcalls['shapeArgs'][c_slice] = np.split(np.column_stack((a,b,c,d)), disp_c_nb)
+            pcalls['z'][c_slice] = np.ravel(-pr[:,1])
+            
+        
+        if disp_l_nb > 0:
+            pcalls['shapeMethod'][l_slice] = QRectF
+            a = np.ravel(transformed_lines_positions[:,0])+self.translate[0]
+            b = -np.ravel(transformed_lines_positions[:,2])+self.translate[1]
+            c = np.ravel(transformed_lines_positions[:,3])+self.translate[0]
+            d = -np.ravel(transformed_lines_positions[:,5])+self.translate[1]
+            pcalls['shapeArgs'][l_slice] = np.split(np.column_stack((a,b,c,d)),disp_l_nb)
+            pcalls['z'][l_slice] = -np.ravel(transformed_lines_positions[:,1])
+
+        if disp_s_nb > 0:
+            pcalls['shapeMethod'][s_slice] = QRectF
+            a = np.ravel(transformed_sticks_positions[:,0])+self.translate[0]
+            b = -np.ravel(transformed_sticks_positions[:,2])+self.translate[1]
+            c = np.ravel(transformed_sticks_positions[:,3])+self.translate[0]
+            d = -np.ravel(transformed_sticks_positions[:,5])+self.translate[1]
+            pcalls['shapeArgs'][s_slice] =  np.split(np.column_stack((a,b,c,d)),disp_s_nb)
+            pcalls['z'][s_slice] = -np.ravel(transformed_sticks_positions[:,1])
+
+        if disp_p_nb > 0:
+
+            pcalls['shapeMethod'][p_slice] = None
+            a = np.ravel(transformed_polygons_positions[:,0])+self.translate[0]
+            b = -np.ravel(transformed_polygons_positions[:,2])+self.translate[1]
+            arg_array = np.empty(disp_p_nb,dtype=np.object)
+            start = 0
+            end = 0
+
+            all_qpts = []
+            for ps in self.polygon_sizes[displayed_polygons]:
+                start=end
+                end += ps
+                qpts = []
+                for j in range(start,end):
+                    qpts.append(QPointF(a[j], b[j]))
+
+                all_qpts.append(qpts)
+
+            pcalls['shapeArgs'][p_slice] = all_qpts
+            z_vertices_indices = np.cumsum(self.polygon_sizes[displayed_polygons])-1
+            pcalls['z'][p_slice] = -np.ravel(transformed_polygons_positions[z_vertices_indices,1])
+
+            
+        # 4 order according to z coord
+        self.ordering= np.argsort(pcalls['z'][:])
         pcalls = pcalls[self.ordering]
 
         return pcalls
@@ -157,22 +217,41 @@ class homerFrame(object):
         self.translate = translate
         self.scale = np.linalg.det(transform)**(1./3.)
         self.selection = np.array([selection.left(), selection.top(), selection.right(), selection.bottom()])
-#        print self.selection
+
         pen = QPen()
         brush = QBrush()
         brush.setStyle(self.fidelity)
 
-        for [paintMethod, pcolor, pthickness, bcolor, paintArgs0, paintArgs1, paintArgs2, paintArgs3, z] in self.generatePainters():
+
+        a = 20
+        pen.setColor(Qt.black)
+        pen.setWidthF(10.)
+        painter.setPen(pen)
+        
+        rect = QRectF(QPointF(0,0),QPointF(a,0))
+        poly = QPolygonF([QPointF(0,0),QPointF(a,0),QPointF(a,a),QPointF(0,a)])
+        self.ordering = np.array([])
+        
+        for [paintMethod, pcolor, pthickness, bcolor, shapeMethod, shapeArgs, z] in self.generatePainters():
             pen.setColor(pcolor)
             pen.setWidthF(pthickness)
             painter.setPen(pen)
-
+            
             brush.setColor(bcolor)
             painter.setBrush(brush)
+            shapeArgs = np.ravel(shapeArgs)
 
-            paintMethod(paintArgs0, paintArgs1, paintArgs2, paintArgs3)
-    
-        self.ordering = np.array([])
+            if paintMethod == self.painter.drawEllipse:
+                [p1,p2,p3,p4] = shapeArgs
+                paintMethod(p1,p2,p3,p4)
+            if paintMethod == self.painter.drawLine:
+                [p1,p2,p3,p4] = shapeArgs
+                paintMethod(p1,p2,p3,p4)
+            if paintMethod == self.painter.drawPolygon:
+                paintMethod(shapeArgs)
+            
 
 
 
+
+        
