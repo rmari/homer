@@ -1,6 +1,6 @@
 <h1> Homer </h1>
 
-Version 0.2, Sept. 13, 2014
+Version 0.3, Jan. 12, 2015
 
 ![Homer](./img/homer_1.png)
 
