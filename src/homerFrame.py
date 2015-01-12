@@ -150,12 +150,8 @@ class homerFrame(object):
         transformed_circles_positions =  np.dot(self.circles[displayed_circles,:3],self.transform) + self.translate
         transformed_polygons_positions =  np.dot(self.polygon_coords[displayed_polygons_coords],self.transform) + self.translate
 
-        print self.sticks[displayed_sticks,:3]
-        print displayed_sticks
-        print self.sticks_attrs['r'][displayed_sticks]
         transformed_sticks_sizes = self.scale*self.sticks_attrs['r'][displayed_sticks]
         transformed_circles_sizes = self.circles_attrs['r'][displayed_circles]*self.scale
-        print transformed_circles_positions
 
         # 3 create and fill the array of data needed to paint
         pcalls = np.empty(disp_nb, dtype=[('drawMethod',np.object),('penColor',np.object),('penThickness',np.object),('brushColor',np.object),('shapeMethod',np.object),('shapeArgs',np.ndarray),('z',np.float32)])
