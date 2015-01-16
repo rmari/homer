@@ -29,7 +29,7 @@ class homerFrame(object):
     __slots__ = [ 'fidelity', 'sticks', 'sticks_attrs', 'circles', 'circles_attrs', 'lines', 'lines_attrs', 'polygon_sizes', 'polygon_coords', 'polygons_attrs', 'texts_coords', 'texts_labels', 'texts_attrs', 'painter', 'layer_list', 'colordef', 'transform', 'scale', 'selection', 'translate'] # saves some memory usage by avoiding dict of attributes
 
     def __init__(self, obj_vals, obj_attrs):
-        self.colordef = np.array([Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue, Qt.magenta, Qt.darkGreen, Qt.cyan, Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue, Qt.magenta, Qt.darkGreen, Qt.cyan])
+        self.colordef = np.array([Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue, Qt.magenta, Qt.darkGreen, Qt.cyan, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue, Qt.magenta, Qt.darkGreen, Qt.cyan])
         
         obj_types = obj_vals.keys()
         ftype = np.float32
