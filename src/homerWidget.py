@@ -337,7 +337,7 @@ class homerWidget(QGLWidget):
             generator = np.mat([[cosAngleY, -sinAngleY, 0], [sinAngleY, cosAngleY, 0], [0, 0, 1]])
             self.transform = generator*self.transform
             
-            angleX = -4*(self.current_point.y() - self.previous_point.y())/self.height()
+            angleX = 4*(self.current_point.y() - self.previous_point.y())/self.height()
             
             sinAngleX = np.sin(angleX)
             cosAngleX = np.cos(angleX)
