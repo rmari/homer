@@ -18,7 +18,6 @@
 from string import *
 import sys
 import numpy as np
-#import pandas as pd
 import io
 from PySide.QtCore import *
 from PySide.QtGui import *
