@@ -24,7 +24,7 @@ on can translate the field of view.
 
 <h2> Installation </h2>
 
-Homer needs a Python 2.7 interpreter and the numpy, pandas and PySide
+Homer needs a Python 2.7 interpreter and the numpy and PySide
 packages.
 
 You can run Homer as follows:
