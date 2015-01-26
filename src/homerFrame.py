@@ -22,6 +22,7 @@ from PySide.QtOpenGL import *
 import sys
 
 brush_fidelity = [ Qt.NoBrush, Qt.Dense6Pattern, Qt.Dense3Pattern, Qt.SolidPattern, Qt.SolidPattern]
+pen_fidelity = [ Qt.DotLine, Qt.DashLine, Qt.DashLine, Qt.SolidLine, Qt.SolidLine]
 
 
 class homerFrame(object):
@@ -272,7 +273,7 @@ class homerFrame(object):
         brush = QBrush()
         
         brush.setStyle(brush_fidelity[self.fidelity])
-        
+        pf = pen_fidelity[self.fidelity]
 
         a = 20
         pen.setColor(Qt.black)
@@ -285,22 +286,30 @@ class homerFrame(object):
         for [paintMethod, pcolor, pthickness, bcolor, shapeMethod, shapeArgs, z] in self.generatePainters():
             pen.setColor(pcolor)
             pen.setWidthF(pthickness)
-            painter.setPen(pen)
             
             brush.setColor(bcolor)
-            painter.setBrush(brush)
             shapeArgs = np.ravel(shapeArgs)
 
             if paintMethod == self.painter.drawEllipse:
                 [p1,p2,p3,p4] = shapeArgs
+                painter.setPen(pen)
+                painter.setBrush(brush)
                 paintMethod(p1,p2,p3,p4)
             if paintMethod == self.painter.drawLine:
                 [p1,p2,p3,p4] = shapeArgs
+                pen.setStyle(pf)
+                painter.setPen(pen)
+                painter.setBrush(brush)
                 paintMethod(p1,p2,p3,p4)
+                pen.setStyle(Qt.SolidLine)
             if paintMethod == self.painter.drawPolygon:
+                painter.setPen(pen)
+                painter.setBrush(brush)
                 paintMethod(shapeArgs)
             if paintMethod == self.painter.drawText:
                 [p1,p2] = shapeArgs
+                painter.setPen(pen)
+                painter.setBrush(brush)
                 paintMethod(p1,p2,shapeMethod)
             
 
