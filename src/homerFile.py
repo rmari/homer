@@ -93,13 +93,13 @@ class homerFile:
     
             o='c'
             if np.count_nonzero(obj_masks[o]):
-                obj_vals[o] = np.genfromtxt(frame[:,1][obj_masks[o]], dtype='3f32')
+                obj_vals[o] = np.reshape(np.genfromtxt(frame[:,1][obj_masks[o]], dtype='3f32'),(-1,3))
                 obj_vals[o][:,2] = -obj_vals[o][:,2]
                 obj_attrs[o] = attrs[obj_masks[o]]
     
             o='s'
             if np.count_nonzero(obj_masks[o]):
-                obj_vals[o] = np.genfromtxt(frame[:,1][obj_masks[o]], dtype='6f32')
+                obj_vals[o] = np.reshape(np.genfromtxt(frame[:,1][obj_masks[o]], dtype='6f32'),(-1,6))
                 obj_vals[o][:,2] = -obj_vals[o][:,2]
                 obj_vals[o][:,5] = -obj_vals[o][:,5]
                 obj_attrs[o] = attrs[obj_masks[o]]
@@ -107,7 +107,7 @@ class homerFile:
             
             o='l'
             if np.count_nonzero(obj_masks[o]):
-                obj_vals[o] = np.genfromtxt(frame[:,1][obj_masks[o]], dtype='6f32')
+                obj_vals[o] = np.reshape(np.genfromtxt(frame[:,1][obj_masks[o]], dtype='6f32'),(-1,6))
                 obj_vals[o][:,2] = -obj_vals[o][:,2]
                 obj_vals[o][:,5] = -obj_vals[o][:,5]
                 obj_attrs[o] = attrs[obj_masks[o]]
