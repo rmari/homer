@@ -32,9 +32,10 @@ class homerFile:
         self.fname=filename
         self.chunksize = 5000000#10000000
         self.frames = []
-        self.is_init = True
         self.read_all = False
         self.infile = open(self.fname,'r')
+        self.trailing_frame = []
+        self.trailing_attributes = []
 
     def getBoundaries(self):
         return self.frames[0].getBoundaries()
@@ -45,11 +46,20 @@ class homerFile:
 
         ftype = np.float32
 
-        in_raw_data = np.core.defchararray.partition(np.asarray(self.infile.readlines(self.chunksize), dtype=np.str_), ' ')[:,[0,2]]
-        while not np.any(in_raw_data[:,0]=='\n'):
-            b = np.core.defchararray.partition(np.asarray(self.infile.readlines(self.chunksize), dtype=np.str_), ' ')[:,[0,2]]
-            in_raw_data=np.vstack((in_raw_data,b))
+        in_raw_data = np.core.defchararray.partition(np.asarray(self.infile.readlines(self.chunksize), dtype=np.str_), ' ')
+        if in_raw_data.shape[0] == 0:
+            self.read_all = True
+            return False
         
+        in_raw_data = in_raw_data[:,[0,2]]
+                
+        while not np.any(in_raw_data[:,0]=='\n'):
+            b =  np.core.defchararray.partition(np.asarray(self.infile.readlines(self.chunksize), dtype=np.str_), ' ')
+            if b.shape[0] == 0:
+                break
+            b = b[:,[0,2]]
+            in_raw_data=np.vstack((in_raw_data,b))
+
         obj_nb = np.shape(in_raw_data)[0]
 
         # attributes array, to propagate size, color and layer to each object 
@@ -59,7 +69,7 @@ class homerFile:
             att_mask = in_raw_data[:,0]==at
             all_att_mask -= att_mask
             pos = np.nonzero(att_mask)[0] # locate the attributes changes
-            if not self.is_init:
+            if len(self.trailing_attributes):
                 attributes[at][:pos[0]] = self.trailing_attributes[at][-1]
                 
             if len(pos)>0:
@@ -69,14 +79,12 @@ class homerFile:
 
         in_raw_data = in_raw_data[all_att_mask]
         attributes = attributes[all_att_mask]
-        if not self.is_init:
+        if len(self.trailing_frame):
             in_raw_data = np.vstack((self.trailing_frame,in_raw_data))
             attributes = np.concatenate((self.trailing_attributes,attributes))
-        
-        framebreaks = np.nonzero(in_raw_data[:,0]=='\n')[0]+1
 
-        
         # now split frames
+        framebreaks = np.nonzero(in_raw_data[:,0]=='\n')[0]+1
         in_raw_data = np.split(in_raw_data, framebreaks)
         attributes = np.split(attributes, framebreaks)
 
@@ -84,7 +92,15 @@ class homerFile:
         obj_list = ['c','s','l','p','t']
         obj_vals = dict()
         obj_attrs = dict()
-        for i in range(len(in_raw_data)-1):
+
+        
+
+        if len(in_raw_data)>1:
+            frange = range(len(in_raw_data)-1)
+        else:
+            frange = [0]
+
+        for i in frange:
             
             frame = in_raw_data[i][:-1]
             attrs = attributes[i][:-1]
@@ -142,9 +158,14 @@ class homerFile:
 
             self.frames.append(homerFrame.homerFrame(obj_vals, obj_attrs))
 
-        self.trailing_frame = in_raw_data[-1]
-        self.trailing_attributes = attributes[-1]
-
+        if len(in_raw_data)>1:
+            self.trailing_frame = in_raw_data[-1]
+            self.trailing_attributes = attributes[-1]
+        else:
+            self.trailing_frame = []
+            self.trailing_attributes = []
+            
+            
         self.is_init = False
         return True
 

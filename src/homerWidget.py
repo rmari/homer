@@ -53,7 +53,7 @@ class homerWidget(QGLWidget):
         ymax = bd[1,1]
         
         self.scale = 0.8*self.width()/(xmax-xmin)
-        print -self.scale*xmin,self.scale*ymax
+#        print -self.scale*xmin,self.scale*ymax
         self.init_offset = QPointF(-self.scale*xmin+0.1*self.width(),self.scale*ymax+0.1*self.width())
 
         self.offset = self.init_offset
