@@ -27,10 +27,9 @@ pen_fidelity = [ Qt.DotLine, Qt.DashLine, Qt.DashLine, Qt.SolidLine, Qt.SolidLin
 
 class homerFrame(object):
 
-    __slots__ = [ 'fidelity', 'sticks', 'sticks_attrs', 'circles', 'circles_attrs', 'lines', 'lines_attrs', 'polygon_sizes', 'polygon_coords', 'polygons_attrs', 'texts_coords', 'texts_labels', 'texts_attrs', 'painter', 'layer_list', 'colordef', 'transform', 'scale', 'selection', 'translate'] # saves some memory usage by avoiding dict of attributes
+    __slots__ = [ 'fidelity', 'sticks', 'sticks_attrs', 'circles', 'circles_attrs', 'lines', 'lines_attrs', 'polygon_sizes', 'polygon_coords', 'polygons_attrs', 'texts_coords', 'texts_labels', 'texts_attrs', 'painter', 'layer_list', 'transform', 'scale', 'selection', 'translate'] # saves some memory usage by avoiding dict of attributes
 
     def __init__(self, obj_vals, obj_attrs):
-        self.colordef = np.array([Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue, Qt.magenta, Qt.darkGreen, Qt.cyan, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue, Qt.magenta, Qt.darkGreen, Qt.cyan])
         
         obj_types = obj_vals.keys()
         ftype = np.float32
@@ -185,25 +184,26 @@ class homerFrame(object):
         if self.fidelity > 3:
             pcalls['penColor'][c_slice] = Qt.black
         else:
-            pcalls['penColor'][c_slice] = self.colordef[self.circles_attrs['@'][displayed_circles].astype(np.int)]
-        pcalls['penColor'][l_slice] = self.colordef[self.lines_attrs['@'][displayed_lines].astype(np.int)]
-        pcalls['penColor'][s_slice] = self.colordef[self.sticks_attrs['@'][displayed_sticks].astype(np.int)]
+            pcalls['penColor'][c_slice] = self.circles_attrs['@'][displayed_circles]
+        pcalls['penColor'][l_slice] = self.lines_attrs['@'][displayed_lines]
+        pcalls['penColor'][s_slice] = self.sticks_attrs['@'][displayed_sticks]
+
         if self.fidelity > 3:
             pcalls['penColor'][p_slice] = Qt.black
         else:
-            pcalls['penColor'][p_slice] = self.colordef[self.polygons_attrs['@'][displayed_polygons].astype(np.int)]
-        pcalls['penColor'][t_slice] = self.colordef[self.texts_attrs['@'][displayed_texts].astype(np.int)]
-            
+            pcalls['penColor'][p_slice] = self.polygons_attrs['@'][displayed_polygons]
+        pcalls['penColor'][t_slice] = self.texts_attrs['@'][displayed_texts]
+        
         pcalls['penThickness'][c_slice] = 1
         pcalls['penThickness'][l_slice] = 1
         pcalls['penThickness'][s_slice] = self.scale*self.sticks_attrs['r'][displayed_sticks]
         pcalls['penThickness'][p_slice] = 1
         pcalls['penThickness'][t_slice] = 1
 
-        pcalls['brushColor'][c_slice] = self.colordef[self.circles_attrs['@'][displayed_circles].astype(np.int)]
+        pcalls['brushColor'][c_slice] = self.circles_attrs['@'][displayed_circles]
         pcalls['brushColor'][l_slice] = Qt.black
         pcalls['brushColor'][s_slice] = Qt.black
-        pcalls['brushColor'][p_slice] = self.colordef[self.polygons_attrs['@'][displayed_polygons].astype(np.int)]
+        pcalls['brushColor'][p_slice] = self.polygons_attrs['@'][displayed_polygons]
         pcalls['brushColor'][t_slice] = Qt.black
         
         # 3bis generate associated qt geometric shape coords

@@ -16,7 +16,7 @@
 #
 
 from string import *
-import sys
+import sys, os
 import numpy as np
 import io
 from PySide.QtCore import *
@@ -24,6 +24,13 @@ from PySide.QtGui import *
 from PySide.QtOpenGL import *
 import homerFrame
 
+color_fname = "homer_palette.py"
+if os.path.isfile(color_fname):
+    sys.path.append(".")
+    import homer_palette
+    color_palette = np.array(homer_palette.color_palette)
+else:
+    color_palette = np.array([Qt.black, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue, Qt.magenta, Qt.darkGreen, Qt.cyan, Qt.gray, Qt.white, Qt.green, Qt.yellow, Qt.red, Qt.blue, Qt.magenta, Qt.darkGreen, Qt.cyan])
 
 class homerFile:
     def __init__(self, filename):
@@ -62,10 +69,9 @@ class homerFile:
 
         obj_nb = np.shape(in_raw_data)[0]
 
-        # attributes array, to propagate size, color and layer to each object 
-        attributes = np.zeros(obj_nb, dtype=[('r', ftype), ('@', ftype), ('y', ftype)])
+        attributes = np.zeros(obj_nb, dtype=[('r', ftype), ('@', np.object), ('y', ftype)])
         all_att_mask = np.ones(obj_nb, dtype=np.bool)
-        for at in ['r','@','y']:
+        for at in ['r','y']:
             att_mask = in_raw_data[:,0]==at
             all_att_mask -= att_mask
             pos = np.nonzero(att_mask)[0] # locate the attributes changes
@@ -76,8 +82,21 @@ class homerFile:
                 for i in range(len(pos)-1):
                     attributes[at][pos[i]:pos[i+1]] = in_raw_data[:,1][pos[i]]
                 attributes[at][pos[-1]:] = in_raw_data[:,1][pos[-1]]
+                
+        at = '@' # special case: color change
+        att_mask = in_raw_data[:,0]==at
+        all_att_mask -= att_mask
+        pos = np.nonzero(att_mask)[0] # locate the attributes changes
+        if len(self.trailing_attributes):
+            attributes[at][:pos[0]] = self.trailing_attributes[at][-1]
+                
+        if len(pos)>0:
+            for i in range(len(pos)-1):
+                attributes[at][pos[i]:pos[i+1]] = color_palette[in_raw_data[:,1][pos[i]].astype(np.int)]
+            attributes[at][pos[-1]:] = color_palette[in_raw_data[:,1][pos[-1]].astype(np.int)]
 
-        in_raw_data = in_raw_data[all_att_mask]
+        
+        in_raw_data = in_raw_data[all_att_mask] # remove the lines defining color, size, layer, etc
         attributes = attributes[all_att_mask]
         if len(self.trailing_frame):
             in_raw_data = np.vstack((self.trailing_frame,in_raw_data))
