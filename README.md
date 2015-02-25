@@ -72,7 +72,7 @@ from PySide.QtCore import Qt
 
 color_palette = [Qt.black, Qt.gray, ... ]
 ```
-The number of colors is unlimited, but must be a [Qt color](http://qt-project.org/doc/qt-4.8/qcolor.html).
+The number of colors is unlimited. Colors must be [Qt colors](http://qt-project.org/doc/qt-4.8/qcolor.html).
 
 Meanwhile, a solution is to modify by hand the colordef array in the homerFrame class.
 
