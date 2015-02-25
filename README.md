@@ -6,7 +6,7 @@ Version 0.3, Jan. 12, 2015
 
 Homer is a program to visualize computer simulations data (typically
 Molecular Dynamics data) in an easy manner. It is developed to replace
-Yaplot (https://github.com/vitroid/Yaplot), mainly because Yaplot's
+[Yaplot](https://github.com/vitroid/Yaplot), mainly because Yaplot's
 code depends on X, which can make it hard to install
 on a recent machine. Homer is thus mostly a clone of Yaplot, based on
 the same idea of a simple set of commands interpreted to render an
@@ -40,7 +40,7 @@ Currently, Homer supports the following subset of Yaplot's data format:
 | Command | Result |
 |---------|--------|
 | Empty line | New frame |
-| @ [0-6] | Set the color of following objects (see default color palette below) |
+| @ [0-9] | Set the color of following objects (see default color palette below) |
 | y [1-12] | Set the layer of following objects |
 | r x | Set the thickness/radius of following objects to x |
 | l x1 y1 z1 x2 y2 z2 | Draw a line from 1 to 2 |
@@ -60,8 +60,20 @@ Default colors:
 | 4 | Qt.yellow |
 | 5 | Qt.red |
 | 6 | Qt.blue |
+| 7 | Qt.magenta |
+| 8 | Qt.darkGreen |
+| 9 | Qt.cyan |
 
-User-defined colors will be introduced in a near-future.
+User can override this default palette. Just create a file called
+`homer_palette.py" in the directory where you launch homer. In this
+file, you can define a color palette as, for example:
+```
+from PySide.QtCore import Qt
+
+color_palette = [Qt.black, Qt.gray, ... ]
+```
+The number of colors is unlimited, but must be a [Qt color](http://qt-project.org/doc/qt-4.8/qcolor.html).
+
 Meanwhile, a solution is to modify by hand the colordef array in the homerFrame class.
 
 <h2> Control commands </h2>
