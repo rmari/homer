@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 #    Copyright 2014 Romain Mari
 #    This file is part of Homer.
 #

@@ -163,13 +163,12 @@ class homerFile:
 
             o='t'
             if np.count_nonzero(obj_masks[o]):
-                split_vals = np.core.defchararray.partition(frame[:,1][obj_masks[o]], ' ')
-                x = split_vals[:,0].astype(ftype)
-                split_vals = np.core.defchararray.partition(split_vals[:,2], ' ')
-                y = -split_vals[:,0].astype(ftype)
-                split_vals = np.core.defchararray.partition(split_vals[:,2], ' ')
-                z = split_vals[:,0].astype(ftype)
-                text = split_vals[:,2]
+                split_vals = np.asarray(np.core.defchararray.split(frame[:,1][obj_masks[o]], maxsplit=3))                
+                x = np.array([a[0] for a in split_vals], dtype=ftype) # split returns array of lists, sorry :(
+                y = np.array([a[1] for a in split_vals], dtype=ftype) # split returns array of lists, sorry :(
+                y = -y
+                z = np.array([a[2] for a in split_vals], dtype=ftype) # split returns array of lists, sorry :(
+                text = np.array([a[3] for a in split_vals], dtype=np.str) # split returns array of lists, sorry :(
                 
                 obj_vals[o] = (np.reshape(np.hstack((x,y,z)),(-1,3)), text)
                 obj_attrs[o] = attrs[obj_masks[o]]

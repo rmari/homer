@@ -23,7 +23,7 @@ import numpy as np
 import sys, os
 
 import homerFile
-
+import homerScene
 
 class homerWidget(QGLWidget):
 
@@ -35,7 +35,8 @@ class homerWidget(QGLWidget):
         QGLWidget.__init__(self, QGLFormat(QGL.SampleBuffers), parent)
         self.parent = parent
         
-
+        scene = homerScene.homerScene(self)
+        
         self.timer = QBasicTimer()
 
         self.fname = filename
