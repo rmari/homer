@@ -90,11 +90,14 @@ class homerWidget(QGLWidget):
         self.selection_corner1 = QPointF(0,0)
         self.selection_corner2 = QPointF(self.width(),self.height())
 
+        self.target_layer = "all"
+
         self.relatives = []
 
         self.verbosity = True
         self.speed=0
         self.is_slave = False
+
         self.show()
 
     def initWindow(self):
@@ -292,7 +295,13 @@ class homerWidget(QGLWidget):
                 pass
             self.update()
             catched = True
-
+        elif e == Qt.Key_L:
+            try:
+                l_nb = int(self.prefactor)
+                self.target_layer = l_nb
+            except ValueError:
+                self.target_layer = "all"
+            catched = True
 
         t = event.text()
         try:
@@ -301,8 +310,7 @@ class homerWidget(QGLWidget):
         except ValueError:
             if catched:
                 self.prefactor = ""
-
-
+                
         self.update()
         return catched
 
@@ -352,17 +360,32 @@ class homerWidget(QGLWidget):
             
     def writeLabels(self, paint):
         pen = QPen()
+
         rlocation = np.array([ 0.01*self.width(), 0.01*self.height() ])
 
-        rsize = [ 120, 18 ]
+        bgcolor = QColor(0,0,0,150)
+        wratio = 0.8
+        rect = QRectF(0,0, 100, 280)
+        brush = QBrush()
+        brush.setColor(bgcolor)
+        brush.setStyle(Qt.SolidPattern)
+        paint.setBrush(brush)
+        pen.setColor(bgcolor)
+        paint.setPen(pen)
+        paint.drawRect(rect)
+        
+        activecolor = Qt.white
+        inactivecolor = Qt.gray
 
-        pen.setColor(Qt.black)
+        rsize = [ 120, 18 ]
+        
+        pen.setColor(activecolor)
         paint.setPen(pen)
         rect = QRectF(rlocation[0], rlocation[1], rsize[0], rsize[1])
         paint.drawText(rect, Qt.AlignLeft, "Frame "+str(self.frame_nb+1)+" (n p)")
         rlocation[1] = rlocation[1]+rsize[1]
         rsize = [ 95, 18 ]
-        pen.setColor(Qt.black)
+        pen.setColor(activecolor)
         paint.setPen(pen)
         rect = QRectF(rlocation[0], rlocation[1], rsize[0], rsize[1])
         paint.drawText(rect, Qt.AlignLeft, "Texture "+str(self.fidelity)+" (+ -)")
@@ -372,12 +395,37 @@ class homerWidget(QGLWidget):
         for i in range(self.layer_nb):
             rect = QRectF(rlocation[0], rlocation[1]+(i+1)*rsize[1], rsize[0], rsize[1])
             if self.layer_activity[i] == True:
-                pen.setColor(Qt.black)
+                pen.setColor(activecolor)
             else:
-                pen.setColor(Qt.lightGray)
+                pen.setColor(inactivecolor)
             paint.setPen(pen)
             paint.drawText(rect, Qt.AlignLeft, self.layer_labels[i])
 
+        infoheight = 15
+        bgcolor = QColor(0,0,0,200)
+        wratio = 0.8
+        rect = QRectF(0, self.height()-infoheight, wratio*self.width(), infoheight)
+        brush = QBrush()
+        brush.setColor(bgcolor)
+        brush.setStyle(Qt.SolidPattern)
+        paint.setBrush(brush)
+        pen.setColor(bgcolor)
+        paint.setPen(pen)
+        paint.drawRect(rect)
+        pen.setColor(activecolor)
+        paint.setPen(pen)        
+        paint.drawText(rect, Qt.AlignLeft, self.prefactor)
+
+        rect = QRectF(wratio*self.width(), self.height()-infoheight, self.width(), infoheight)
+        pen.setColor(bgcolor)
+        paint.setPen(pen)
+        paint.drawRect(rect)
+        pen.setColor(Qt.red)
+        paint.setPen(pen)
+        if self.target_layer != "all":
+            paint.drawText(rect, Qt.AlignLeft, "Layer "+str(self.target_layer))
+        else:
+            paint.drawText(rect, Qt.AlignLeft, "All layers")
             
     @Slot(int)
     def slaveUpdate(self, master_label):

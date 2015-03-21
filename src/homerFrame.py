@@ -312,8 +312,3 @@ class homerFrame(object):
                 painter.setBrush(brush)
                 paintMethod(p1,p2,shapeMethod)
             
-
-
-
-
-        
