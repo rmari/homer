@@ -361,7 +361,7 @@ class homerWidget(QGLWidget):
     def writeLabels(self, paint):
         pen = QPen()
 
-        rlocation = np.array([ 0.01*self.width(), 0.01*self.height() ])
+        rlocation = np.array([ 5, 5 ])
 
         bgcolor = QColor(0,0,0,150)
         wratio = 0.8
@@ -401,10 +401,11 @@ class homerWidget(QGLWidget):
             paint.setPen(pen)
             paint.drawText(rect, Qt.AlignLeft, self.layer_labels[i])
 
-        infoheight = 15
-        bgcolor = QColor(0,0,0,200)
+        infoheight = 16
+        bgcolor = QColor(30,30,30,200)
         wratio = 0.8
-        rect = QRectF(0, self.height()-infoheight, wratio*self.width(), infoheight)
+        xdivide = wratio*self.width()
+        rect = QRectF(0, self.height()-infoheight+2, xdivide, infoheight+2)
         brush = QBrush()
         brush.setColor(bgcolor)
         brush.setStyle(Qt.SolidPattern)
@@ -414,13 +415,19 @@ class homerWidget(QGLWidget):
         paint.drawRect(rect)
         pen.setColor(activecolor)
         paint.setPen(pen)        
-        paint.drawText(rect, Qt.AlignLeft, self.prefactor)
+        rect = QRectF(0, self.height()-infoheight+2, xdivide-4, infoheight+2)
+        paint.drawText(rect, Qt.AlignRight, self.prefactor)
 
-        rect = QRectF(wratio*self.width(), self.height()-infoheight, self.width(), infoheight)
+        rect = QRectF(xdivide, self.height()-infoheight+2, self.width(), infoheight+2)
+        bgcolor = QColor(0,0,0,200)
+        brush.setColor(bgcolor)
+        brush.setStyle(Qt.SolidPattern)
+        paint.setBrush(brush)
         pen.setColor(bgcolor)
         paint.setPen(pen)
         paint.drawRect(rect)
-        pen.setColor(Qt.red)
+        rect = QRectF(xdivide+4, self.height()-infoheight+2, self.width(), infoheight+2)
+        pen.setColor(QColor(200,50,0))
         paint.setPen(pen)
         if self.target_layer != "all":
             paint.drawText(rect, Qt.AlignLeft, "Layer "+str(self.target_layer))
