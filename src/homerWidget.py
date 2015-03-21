@@ -79,7 +79,7 @@ class homerWidget(QGLWidget):
         self.installEventFilter(self)
 
         pal = QPalette()
-        pal.setColor(QPalette.Window, Qt.gray)
+        pal.setColor(QPalette.Window, homerFile.color_palette[1])
         self.setAutoFillBackground(True)
         self.setPalette(pal)
 
