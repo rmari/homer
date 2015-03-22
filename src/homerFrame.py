@@ -282,7 +282,7 @@ class homerFrame(object):
         
         rect = QRectF(QPointF(0,0),QPointF(a,0))
         poly = QPolygonF([QPointF(0,0),QPointF(a,0),QPointF(a,a),QPointF(0,a)])
-        
+
         for [paintMethod, pcolor, pthickness, bcolor, shapeMethod, shapeArgs, z] in self.generatePainters():
             pen.setColor(pcolor)
             pen.setWidthF(pthickness)

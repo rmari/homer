@@ -54,7 +54,7 @@ class homerWidget(QGLWidget):
         ymax = bd[1,1]
         
         self.scale = 0.8*self.width()/(xmax-xmin)
-#        print -self.scale*xmin,self.scale*ymax
+
         self.init_offset = QPointF(-self.scale*xmin+0.1*self.width(),self.scale*ymax+0.1*self.width())
 
         self.offset = self.init_offset
@@ -310,7 +310,6 @@ class homerWidget(QGLWidget):
         except ValueError:
             if catched:
                 self.prefactor = ""
-                
         self.update()
         return catched
 
@@ -365,7 +364,7 @@ class homerWidget(QGLWidget):
 
         bgcolor = QColor(0,0,0,150)
         wratio = 0.8
-        rect = QRectF(0,0, 100, 280)
+        rect = QRectF(0,0, 102, 280)
         brush = QBrush()
         brush.setColor(bgcolor)
         brush.setStyle(Qt.SolidPattern)
@@ -460,13 +459,11 @@ class homerWidget(QGLWidget):
         selection_rect = QRectF(selection_x,selection_y,selection_width,selection_height)
 
         frame = self.infile.frames[self.frame_nb]
-#        print self.translation
         frame.display(paint,self.transform, self.translation, self.layer_activity, self.fidelity,selection_rect)
-
 
         if self.verbosity:
             self.writeLabels(paint)
-            
+
         paint.end()
 
         if len(self.relatives) and not self.is_slave:
