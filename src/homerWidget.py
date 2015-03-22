@@ -72,7 +72,7 @@ class homerWidget(QGLWidget):
             label = "Layer "+str(i+1)+" (F"+str(i+1)+")"
             self.layer_labels.append(label)
 
-        self.fidelity = 0
+        self.fidelity = 4
         self.fidelity_min = 0
         self.fidelity_max = 4
 
