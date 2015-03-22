@@ -426,7 +426,7 @@ class homerWidget(QGLWidget):
         paint.setPen(pen)
         paint.drawRect(rect)
         rect = QRectF(xdivide+4, self.height()-infoheight+2, self.width(), infoheight+2)
-        pen.setColor(QColor(200,50,0))
+        pen.setColor(QColor(220,100,0))
         paint.setPen(pen)
         if self.target_layer != "all":
             paint.drawText(rect, Qt.AlignLeft, "Layer "+str(self.target_layer))
