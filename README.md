@@ -71,7 +71,7 @@ file, you can define a color palette as, for example:
 from PySide.QtCore import Qt
 from PySide.QtGui import QColor
 
-color_palette = [ Qt.black, Qt.gray, Qcolor(200,200,200,100) ]
+color_palette = [ Qt.black, Qt.gray, Qcolor(200,200,200,100), ... ]
 ```
 The number of colors is unlimited. Colors must be [Qt colors](http://qt-project.org/doc/qt-4.8/qcolor.html).
 
