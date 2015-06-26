@@ -25,7 +25,7 @@ on can translate the field of view.
 <h2> Installation </h2>
 
 Homer needs a Python 2.7 interpreter and the numpy and PySide
-packages.
+packages. You can install these packages individually or get them through a Python distribution like [Anaconda](https://store.continuum.io/cshop/anaconda/) or [Enthought](https://www.enthought.com/products/epd/).
 
 You can run Homer as follows:
 
