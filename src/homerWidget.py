@@ -58,9 +58,15 @@ class homerWidget(QGLWidget):
         self.init_offset = QPointF(-self.scale*xmin+0.1*self.width(),self.scale*ymax+0.1*self.width())
 
         self.offset = self.init_offset
-        
 
-        self.transform = self.scale*np.identity(3)
+        color_fname = "homer_config.py"
+        if os.path.isfile(color_fname):
+            sys.path.append(".")
+            import homer_config
+            self.init_transform = np.array(homer_config.init_transform)
+        else:
+            self.init_transform = np.identity(3)
+        self.transform = self.scale*self.init_transform
 
         self.frame_nb = 0
 
@@ -177,8 +183,10 @@ class homerWidget(QGLWidget):
         e = event.key()
         m = event.modifiers()
 
-        if e == Qt.Key_Tab:
-            self.transform = self.scale*np.identity(3)
+        if e == Qt.Key_Tab and m != Qt.SHIFT:
+            self.transform = self.scale*self.init_transform
+            catched = True
+        elif e == Qt.Key_Tab and m == Qt.SHIFT:
             self.offset = self.init_offset
             catched = True
         elif e == Qt.Key_F1:

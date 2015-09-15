@@ -266,7 +266,7 @@ class homerFrame(object):
         self.layer_list = layer_list
         self.transform = transform
         self.translate = np.array([translate[0],0,translate[1]])
-        self.scale = np.linalg.det(transform)**(1./3.)
+        self.scale = np.fabs(np.linalg.det(transform))**(1./3.)
         self.selection = np.array([selection.left(), selection.top(), selection.right(), selection.bottom()])
 
         pen = QPen()
