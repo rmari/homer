@@ -34,25 +34,25 @@ class homerWidget(QGLWidget):
 
         QGLWidget.__init__(self, QGLFormat(QGL.SampleBuffers), parent)
         self.parent = parent
-        
+
         scene = homerScene.homerScene(self)
-        
+
         self.timer = QBasicTimer()
 
         self.fname = filename
 
         self.initWindow()
-        
+
         self.infile=homerFile.homerFile(self.fname)
         self.infile.read_chunk()
 
         bd = self.infile.getBoundaries()
-        
+
         xmin = bd[0,0]
         xmax = bd[0,1]
         ymin = bd[1,0]
         ymax = bd[1,1]
-        
+
         self.scale = 0.8*self.width()/(xmax-xmin)
 
         self.init_offset = QPointF(-self.scale*xmin+0.1*self.width(),self.scale*ymax+0.1*self.width())
@@ -72,7 +72,7 @@ class homerWidget(QGLWidget):
 
         self.layer_nb=12
         self.layer_activity = np.ones(self.layer_nb, dtype=np.bool)
-        self.layer_labels = [] 
+        self.layer_labels = []
 
         for i in range(self.layer_nb):
             label = "Layer "+str(i+1)+" (F"+str(i+1)+")"
@@ -92,7 +92,7 @@ class homerWidget(QGLWidget):
         self.prefactor = str()
 
         self.translation = [0, 0]
-        
+
         self.selection_corner1 = QPointF(0,0)
         self.selection_corner2 = QPointF(self.width(),self.height())
 
@@ -119,7 +119,7 @@ class homerWidget(QGLWidget):
         self.setWindowTitle("Homer - "+self.fname)
         path = os.path.dirname(os.path.abspath(__file__))
         self.setWindowIcon(QIcon(path+'/../img/icon.png'))
-        
+
     def setRelatives(self,relatives, own_label):
         self.relatives = relatives
         self.label = own_label
@@ -134,12 +134,12 @@ class homerWidget(QGLWidget):
     @Slot()
     def slaveReadChunk(self):
         self.infile.read_chunk()
-        
+
     def readChunk(self):
         new_frames = self.infile.read_chunk()
         self.read_chunk.emit()
         return new_frames
-            
+
     def incrementOneFrame(self):
         if(self.frame_nb < len(self.infile.frames)-1):
             self.frame_nb = self.frame_nb+1
@@ -151,7 +151,7 @@ class homerWidget(QGLWidget):
                 return True
             else:
                 return False
-        
+
     def incrementFrame(self,inc_nb):
         count = 1
         while self.incrementOneFrame() and count<inc_nb:
@@ -170,13 +170,13 @@ class homerWidget(QGLWidget):
                 self.incrementOneFrame()
             else:
                 self.decrementFrame(1)
-            self.update() 
+            self.update()
         else:
             QWidget.timerEvent(self, event)
 
     def layerSwitch(self,label):
         self.layer_activity[label] = -self.layer_activity[label]
-        
+
 
     def keyPressEvent(self, event):
         catched = False
@@ -337,7 +337,7 @@ class homerWidget(QGLWidget):
             else:
                 self.rotate = True
 
-                
+
     def mouseMoveEvent(self, event):
         self.previous_point = self.current_point
         self.current_point = event.posF()
@@ -347,14 +347,14 @@ class homerWidget(QGLWidget):
             self.offset = QPointF(translateX, translateY)
         elif self.rotate:
             angleY = -4*(self.current_point.x() - self.previous_point.x())/self.width()
-            
+
             sinAngleY = np.sin(angleY)
             cosAngleY = np.cos(angleY)
             generator = np.mat([[cosAngleY, -sinAngleY, 0], [sinAngleY, cosAngleY, 0], [0, 0, 1]])
             self.transform = generator*self.transform
-            
+
             angleX = 4*(self.current_point.y() - self.previous_point.y())/self.height()
-            
+
             sinAngleX = np.sin(angleX)
             cosAngleX = np.cos(angleX)
             generator = np.mat([[1, 0, 0], [0, cosAngleX, -sinAngleX], [0, sinAngleX, cosAngleX]])
@@ -363,8 +363,8 @@ class homerWidget(QGLWidget):
             self.selection_corner2 = self.current_point
 
         self.update()
-            
-            
+
+
     def writeLabels(self, paint):
         pen = QPen()
 
@@ -372,7 +372,7 @@ class homerWidget(QGLWidget):
 
         bgcolor = QColor(0,0,0,150)
         wratio = 0.8
-        rect = QRectF(0,0, 102, 280)
+        rect = QRectF(0,0, 120, 280)
         brush = QBrush()
         brush.setColor(bgcolor)
         brush.setStyle(Qt.SolidPattern)
@@ -380,12 +380,12 @@ class homerWidget(QGLWidget):
         pen.setColor(bgcolor)
         paint.setPen(pen)
         paint.drawRect(rect)
-        
+
         activecolor = Qt.white
         inactivecolor = Qt.gray
 
         rsize = [ 120, 18 ]
-        
+
         pen.setColor(activecolor)
         paint.setPen(pen)
         rect = QRectF(rlocation[0], rlocation[1], rsize[0], rsize[1])
@@ -398,7 +398,7 @@ class homerWidget(QGLWidget):
         paint.drawText(rect, Qt.AlignLeft, "Texture "+str(self.fidelity)+" (+ -)")
 
         rlocation[1] = rlocation[1]+rsize[1]
-        rsize = [ 95, 18 ]
+        rsize = [ 100, 18 ]
         for i in range(self.layer_nb):
             rect = QRectF(rlocation[0], rlocation[1]+(i+1)*rsize[1], rsize[0], rsize[1])
             if self.layer_activity[i] == True:
@@ -421,7 +421,7 @@ class homerWidget(QGLWidget):
         paint.setPen(pen)
         paint.drawRect(rect)
         pen.setColor(activecolor)
-        paint.setPen(pen)        
+        paint.setPen(pen)
         rect = QRectF(0, self.height()-infoheight+2, xdivide-4, infoheight+2)
         paint.drawText(rect, Qt.AlignRight, self.prefactor)
 
@@ -440,7 +440,7 @@ class homerWidget(QGLWidget):
             paint.drawText(rect, Qt.AlignLeft, "Layer "+str(self.target_layer))
         else:
             paint.drawText(rect, Qt.AlignLeft, "All layers")
-            
+
     @Slot(int)
     def slaveUpdate(self, master_label):
         self.is_slave = True
