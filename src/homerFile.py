@@ -34,7 +34,7 @@ else:
 
 class homerFile:
     def __init__(self, filename):
-        
+
         self.is_file=True
         self.fname=filename
         self.chunksize = 5000000#10000000
@@ -46,7 +46,7 @@ class homerFile:
 
     def getBoundaries(self):
         return self.frames[0].getBoundaries()
-    
+
     def read_chunk(self):
         if self.read_all:
             return False
@@ -57,9 +57,9 @@ class homerFile:
         if in_raw_data.shape[0] == 0:
             self.read_all = True
             return False
-        
+
         in_raw_data = in_raw_data[:,[0,2]]
-                
+
         while not np.any(in_raw_data[:,0]=='\n'):
             b =  np.core.defchararray.partition(np.asarray(self.infile.readlines(self.chunksize), dtype=np.str_), ' ')
             if b.shape[0] == 0:
@@ -77,25 +77,25 @@ class homerFile:
             pos = np.nonzero(att_mask)[0] # locate the attributes changes
             if len(self.trailing_attributes):
                 attributes[at][:pos[0]] = self.trailing_attributes[at][-1]
-                
+
             if len(pos)>0:
                 for i in range(len(pos)-1):
                     attributes[at][pos[i]:pos[i+1]] = in_raw_data[:,1][pos[i]]
                 attributes[at][pos[-1]:] = in_raw_data[:,1][pos[-1]]
-                
+
         at = '@' # special case: color change
         att_mask = in_raw_data[:,0]==at
         all_att_mask -= att_mask
         pos = np.nonzero(att_mask)[0] # locate the attributes changes
         if len(self.trailing_attributes):
             attributes[at][:pos[0]] = self.trailing_attributes[at][-1]
-                
+
         if len(pos)>0:
             for i in range(len(pos)-1):
                 attributes[at][pos[i]:pos[i+1]] = color_palette[in_raw_data[:,1][pos[i]].astype(np.int)]
             attributes[at][pos[-1]:] = color_palette[in_raw_data[:,1][pos[-1]].astype(np.int)]
 
-        
+
         in_raw_data = in_raw_data[all_att_mask] # remove the lines defining color, size, layer, etc
         attributes = attributes[all_att_mask]
         if len(self.trailing_frame):
@@ -112,7 +112,7 @@ class homerFile:
         obj_vals = dict()
         obj_attrs = dict()
 
-        
+
 
         if len(in_raw_data)>1:
             frange = range(len(in_raw_data)-1)
@@ -120,18 +120,18 @@ class homerFile:
             frange = [0]
 
         for i in frange:
-            
+
             frame = in_raw_data[i][:-1]
             attrs = attributes[i][:-1]
-    
+
             obj_masks = {o: frame[:,0]==o for o in obj_list}
-    
+
             o='c'
             if np.count_nonzero(obj_masks[o]):
                 obj_vals[o] = np.reshape(np.genfromtxt(frame[:,1][obj_masks[o]], dtype='3f32'),(-1,3))
                 obj_vals[o][:,2] = -obj_vals[o][:,2]
                 obj_attrs[o] = attrs[obj_masks[o]]
-    
+
             o='s'
             if np.count_nonzero(obj_masks[o]):
                 obj_vals[o] = np.reshape(np.genfromtxt(frame[:,1][obj_masks[o]], dtype='6f32'),(-1,6))
@@ -139,7 +139,7 @@ class homerFile:
                 obj_vals[o][:,5] = -obj_vals[o][:,5]
                 obj_attrs[o] = attrs[obj_masks[o]]
 
-            
+
             o='l'
             if np.count_nonzero(obj_masks[o]):
                 obj_vals[o] = np.reshape(np.genfromtxt(frame[:,1][obj_masks[o]], dtype='6f32'),(-1,6))
@@ -152,24 +152,25 @@ class homerFile:
                 split_vals = np.core.defchararray.partition(frame[:,1][obj_masks[o]], ' ')
                 polygon_sizes = split_vals[:,0].astype(np.int)
                 polygon_coords = split_vals[:,2]
-                
+
                 full_str = ''
                 for str_a in polygon_coords:
                     full_str +=str_a
-                    
+
                     obj_vals[o] = (polygon_sizes,np.reshape(np.fromstring(full_str, sep=' '),(-1,3)))
                     obj_vals[o][1][:,2] = -obj_vals[o][1][:,2]
                     obj_attrs[o] = attrs[obj_masks[o]]
 
             o='t'
             if np.count_nonzero(obj_masks[o]):
-                split_vals = np.asarray(np.core.defchararray.split(frame[:,1][obj_masks[o]], maxsplit=3))                
+                split_vals = np.asarray(np.core.defchararray.split(frame[:,1][obj_masks[o]], maxsplit=3))
                 x = np.array([a[0] for a in split_vals], dtype=ftype) # split returns array of lists, sorry :(
                 y = np.array([a[1] for a in split_vals], dtype=ftype) # split returns array of lists, sorry :(
-                y = -y
+#                y = -y
                 z = np.array([a[2] for a in split_vals], dtype=ftype) # split returns array of lists, sorry :(
+                z = -z
                 text = np.array([a[3] for a in split_vals], dtype=np.str) # split returns array of lists, sorry :(
-                
+
                 obj_vals[o] = (np.reshape(np.hstack((x,y,z)),(-1,3)), text)
                 obj_attrs[o] = attrs[obj_masks[o]]
 
@@ -182,8 +183,7 @@ class homerFile:
         else:
             self.trailing_frame = []
             self.trailing_attributes = []
-            
-            
+
+
         self.is_init = False
         return True
-

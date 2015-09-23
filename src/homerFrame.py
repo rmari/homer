@@ -30,7 +30,7 @@ class homerFrame(object):
     __slots__ = [ 'fidelity', 'sticks', 'sticks_attrs', 'circles', 'circles_attrs', 'lines', 'lines_attrs', 'polygon_sizes', 'polygon_coords', 'polygons_attrs', 'texts_coords', 'texts_labels', 'texts_attrs', 'painter', 'layer_list', 'transform', 'scale', 'selection', 'translate'] # saves some memory usage by avoiding dict of attributes
 
     def __init__(self, obj_vals, obj_attrs):
-        
+
         obj_types = obj_vals.keys()
         ftype = np.float32
         empty_attrs = np.empty(0, dtype=[('r', ftype), ('@', ftype), ('y', ftype)])
@@ -87,7 +87,7 @@ class homerFrame(object):
         extrema_pos[0,1] = np.max(all_pos[:,0])
         extrema_pos[1,0] = np.min(all_pos[:,2])
         extrema_pos[1,1] = np.max(all_pos[:,2])
-        
+
         return extrema_pos
 
     def generatePainters(self):
@@ -99,7 +99,7 @@ class homerFrame(object):
         displayed_lines = np.zeros(lines_nb, dtype=np.bool)
         for d in displayed_nb:
             displayed_lines = np.logical_or(displayed_lines, self.lines_attrs['y'] == d )
-            
+
         sticks_nb = self.sticks.shape[0]
         displayed_sticks = np.zeros(sticks_nb, dtype=np.bool)
         for d in displayed_nb:
@@ -124,7 +124,7 @@ class homerFrame(object):
         for d in displayed_nb:
             displayed_texts = np.logical_or(displayed_texts, self.texts_attrs['y'] == d )
 
-            
+
         # 1bis filter out selection
         #        displayed_obj = np.logical_and(centerx>self.selection[0], displayed_obj)
         #        displayed_obj = np.logical_and(centerx<self.selection[2], displayed_obj)
@@ -138,7 +138,7 @@ class homerFrame(object):
         disp_s_nb = np.count_nonzero(displayed_sticks)
         disp_p_nb = np.count_nonzero(displayed_polygons)
         disp_t_nb = np.count_nonzero(displayed_texts)
-        
+
         slice_start = 0
         slice_end = 0
         slice_end += disp_c_nb
@@ -159,14 +159,15 @@ class homerFrame(object):
         disp_nb = slice_end
 
 
-        
+
         # 2 apply geometrical transform to coords
         transformed_lines_positions = np.hstack((np.dot(self.lines[displayed_lines,:3],self.transform),np.dot(self.lines[displayed_lines,3:6],self.transform))) + np.hstack((self.translate,self.translate))
         transformed_sticks_positions = np.hstack((np.dot(self.sticks[displayed_sticks,:3],self.transform), np.dot(self.sticks[displayed_sticks,3:6],self.transform))) + np.hstack((self.translate,self.translate))
         transformed_circles_positions =  np.dot(self.circles[displayed_circles,:3],self.transform) + self.translate
         transformed_polygons_positions =  np.dot(self.polygon_coords[displayed_polygons_coords],self.transform) + self.translate
-
+        # print "ss ", self.sticks[displayed_sticks,:6], transformed_sticks_positions
         transformed_texts_positions =  np.dot(self.texts_coords[displayed_texts],self.transform) + self.translate
+        # print "txts ", self.texts_coords[displayed_texts], transformed_texts_positions
 
         transformed_sticks_sizes = self.scale*self.sticks_attrs['r'][displayed_sticks]
         transformed_circles_sizes = self.circles_attrs['r'][displayed_circles]*self.scale
@@ -193,7 +194,7 @@ class homerFrame(object):
         else:
             pcalls['penColor'][p_slice] = self.polygons_attrs['@'][displayed_polygons]
         pcalls['penColor'][t_slice] = self.texts_attrs['@'][displayed_texts]
-        
+
         pcalls['penThickness'][c_slice] = 1
         pcalls['penThickness'][l_slice] = 1
         pcalls['penThickness'][s_slice] = self.scale*self.sticks_attrs['r'][displayed_sticks]
@@ -205,7 +206,7 @@ class homerFrame(object):
         pcalls['brushColor'][s_slice] = Qt.black
         pcalls['brushColor'][p_slice] = self.polygons_attrs['@'][displayed_polygons]
         pcalls['brushColor'][t_slice] = Qt.black
-        
+
         # 3bis generate associated qt geometric shape coords
         if disp_c_nb > 0:
             pr = np.column_stack((transformed_circles_positions,transformed_circles_sizes))
@@ -214,10 +215,10 @@ class homerFrame(object):
             pr[:,3] = 2*pr[:,3]
 
             pcalls['shapeMethod'][c_slice] = QRectF
-            
+
             pcalls['shapeArgs'][c_slice] = np.split(pr[:,[0,2,3,3]], disp_c_nb)
             pcalls['z'][c_slice] = np.ravel(-pr[:,1])
-            
+
         if disp_l_nb > 0:
             pcalls['shapeMethod'][l_slice] = QRectF
             pcalls['shapeArgs'][l_slice] = np.split(transformed_lines_positions[:,[0,2,3,5]],disp_l_nb)
@@ -252,7 +253,7 @@ class homerFrame(object):
             pcalls['shapeMethod'][t_slice] = self.texts_labels[displayed_texts]
             pcalls['shapeArgs'][t_slice] = np.split(transformed_texts_positions[:,[0,2]], disp_t_nb)
             pcalls['z'][t_slice] = -np.ravel(transformed_texts_positions[:,1])
-            
+
         # 4 order according to z coord
         ordering= np.argsort(pcalls['z'][:])
         pcalls = pcalls[ordering]
@@ -271,7 +272,7 @@ class homerFrame(object):
 
         pen = QPen()
         brush = QBrush()
-        
+
         brush.setStyle(brush_fidelity[self.fidelity])
         pf = pen_fidelity[self.fidelity]
 
@@ -279,14 +280,14 @@ class homerFrame(object):
         pen.setColor(Qt.black)
         pen.setWidthF(10.)
         painter.setPen(pen)
-        
+
         rect = QRectF(QPointF(0,0),QPointF(a,0))
         poly = QPolygonF([QPointF(0,0),QPointF(a,0),QPointF(a,a),QPointF(0,a)])
 
         for [paintMethod, pcolor, pthickness, bcolor, shapeMethod, shapeArgs, z] in self.generatePainters():
             pen.setColor(pcolor)
             pen.setWidthF(pthickness)
-            
+
             brush.setColor(bcolor)
             shapeArgs = np.ravel(shapeArgs)
 
@@ -311,4 +312,3 @@ class homerFrame(object):
                 painter.setPen(pen)
                 painter.setBrush(brush)
                 paintMethod(p1,p2,shapeMethod)
-            
