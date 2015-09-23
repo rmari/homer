@@ -108,7 +108,7 @@ class homerFile:
         attributes = np.split(attributes, framebreaks)
 
         # and split according to object types
-        obj_list = ['c','s','l','p','t']
+        obj_list = ['c','s','l','p','t', 'tt']
         obj_vals = dict()
         obj_attrs = dict()
 
@@ -169,11 +169,16 @@ class homerFile:
 #                y = -y
                 z = np.array([a[2] for a in split_vals], dtype=ftype) # split returns array of lists, sorry :(
                 z = -z
-                text = np.array([a[3] for a in split_vals], dtype=np.str) # split returns array of lists, sorry :(
+                text = np.core.defchararray.strip(np.array([a[3] for a in split_vals], dtype=np.str),"\n") # split returns array of lists, sorry :(
 
                 obj_vals[o] = (np.reshape(np.hstack((x,y,z)),(-1,3)), text)
                 obj_attrs[o] = attrs[obj_masks[o]]
 
+            o='tt'
+            if np.count_nonzero(obj_masks[o]):
+                text = np.core.defchararray.strip(frame[:,1][obj_masks[o]], "\n")
+                obj_vals[o] = text
+                obj_attrs[o] = attrs[obj_masks[o]]
 
             self.frames.append(homerFrame.homerFrame(obj_vals, obj_attrs))
 

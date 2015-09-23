@@ -27,7 +27,7 @@ pen_fidelity = [ Qt.DotLine, Qt.DashLine, Qt.DashLine, Qt.SolidLine, Qt.SolidLin
 
 class homerFrame(object):
 
-    __slots__ = [ 'fidelity', 'sticks', 'sticks_attrs', 'circles', 'circles_attrs', 'lines', 'lines_attrs', 'polygon_sizes', 'polygon_coords', 'polygons_attrs', 'texts_coords', 'texts_labels', 'texts_attrs', 'painter', 'layer_list', 'transform', 'scale', 'selection', 'translate'] # saves some memory usage by avoiding dict of attributes
+    __slots__ = [ 'fidelity', 'sticks', 'sticks_attrs', 'circles', 'circles_attrs', 'lines', 'lines_attrs', 'polygon_sizes', 'polygon_coords', 'polygons_attrs', 'texts_coords', 'texts_labels', 'texts_attrs', 'title_coords', 'title_label', 'title_attrs', 'painter', 'layer_list', 'transform', 'scale', 'selection', 'translate'] # saves some memory usage by avoiding dict of attributes
 
     def __init__(self, obj_vals, obj_attrs):
 
@@ -68,7 +68,14 @@ class homerFrame(object):
             self.texts_coords=np.zeros((0,3))
             self.texts_labels=np.empty(0,dtype=np.str)
             self.texts_attrs=empty_attrs
-
+        if 'tt' in obj_types:
+            self.title_coords=np.array([150,20])
+            self.title_label=obj_vals['tt']
+            self.title_attrs=obj_attrs['tt']
+        else:
+            self.title_coords=np.zeros((0,3))
+            self.title_label=np.empty(0,dtype=np.str)
+            self.title_attrs=empty_attrs
             ###
 
         self.fidelity = 0
@@ -124,6 +131,11 @@ class homerFrame(object):
         for d in displayed_nb:
             displayed_texts = np.logical_or(displayed_texts, self.texts_attrs['y'] == d )
 
+        title_nb = self.title_label.shape[0]
+        if title_nb:
+            displayed_title = self.title_attrs['y'] in displayed_nb
+        else:
+            displayed_title = False
 
         # 1bis filter out selection
         #        displayed_obj = np.logical_and(centerx>self.selection[0], displayed_obj)
@@ -138,6 +150,7 @@ class homerFrame(object):
         disp_s_nb = np.count_nonzero(displayed_sticks)
         disp_p_nb = np.count_nonzero(displayed_polygons)
         disp_t_nb = np.count_nonzero(displayed_texts)
+        disp_tt_nb = np.count_nonzero([displayed_title])
 
         slice_start = 0
         slice_end = 0
@@ -155,7 +168,9 @@ class homerFrame(object):
         slice_start = slice_end
         slice_end += disp_t_nb
         t_slice = slice(slice_start,slice_end)
-
+        slice_start = slice_end
+        slice_end += disp_tt_nb
+        tt_slice = slice(slice_start,slice_end)
         disp_nb = slice_end
 
 
@@ -181,6 +196,7 @@ class homerFrame(object):
         pcalls['drawMethod'][s_slice] = self.painter.drawLine
         pcalls['drawMethod'][p_slice] = self.painter.drawPolygon
         pcalls['drawMethod'][t_slice] = self.painter.drawText
+        pcalls['drawMethod'][tt_slice] = self.painter.drawText
 
         if self.fidelity > 3:
             pcalls['penColor'][c_slice] = Qt.black
@@ -194,18 +210,21 @@ class homerFrame(object):
         else:
             pcalls['penColor'][p_slice] = self.polygons_attrs['@'][displayed_polygons]
         pcalls['penColor'][t_slice] = self.texts_attrs['@'][displayed_texts]
+        pcalls['penColor'][tt_slice] = self.title_attrs['@']
 
         pcalls['penThickness'][c_slice] = 1
         pcalls['penThickness'][l_slice] = 1
         pcalls['penThickness'][s_slice] = self.scale*self.sticks_attrs['r'][displayed_sticks]
         pcalls['penThickness'][p_slice] = 1
         pcalls['penThickness'][t_slice] = 1
+        pcalls['penThickness'][tt_slice] = 2
 
         pcalls['brushColor'][c_slice] = self.circles_attrs['@'][displayed_circles]
         pcalls['brushColor'][l_slice] = Qt.black
         pcalls['brushColor'][s_slice] = Qt.black
         pcalls['brushColor'][p_slice] = self.polygons_attrs['@'][displayed_polygons]
         pcalls['brushColor'][t_slice] = Qt.black
+        pcalls['brushColor'][tt_slice] = Qt.black
 
         # 3bis generate associated qt geometric shape coords
         if disp_c_nb > 0:
@@ -253,6 +272,11 @@ class homerFrame(object):
             pcalls['shapeMethod'][t_slice] = self.texts_labels[displayed_texts]
             pcalls['shapeArgs'][t_slice] = np.split(transformed_texts_positions[:,[0,2]], disp_t_nb)
             pcalls['z'][t_slice] = -np.ravel(transformed_texts_positions[:,1])
+
+        if disp_tt_nb > 0:
+            pcalls['shapeMethod'][tt_slice] = self.title_label
+            pcalls['shapeArgs'][tt_slice] = [self.title_coords]
+            pcalls['z'][tt_slice] = 0
 
         # 4 order according to z coord
         ordering= np.argsort(pcalls['z'][:])
