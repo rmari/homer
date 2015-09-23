@@ -368,11 +368,11 @@ class homerWidget(QGLWidget):
     def writeLabels(self, paint):
         pen = QPen()
 
-        rlocation = np.array([ 5, 5 ])
+        rlocation = np.array([ 15, 15 ])
 
         bgcolor = QColor(0,0,0,150)
         wratio = 0.8
-        rect = QRectF(0,0, 120, 280)
+        rect = QRectF(0,0, 140, 300)
         brush = QBrush()
         brush.setColor(bgcolor)
         brush.setStyle(Qt.SolidPattern)
@@ -408,7 +408,7 @@ class homerWidget(QGLWidget):
             paint.setPen(pen)
             paint.drawText(rect, Qt.AlignLeft, self.layer_labels[i])
 
-        infoheight = 16
+        infoheight = 20
         bgcolor = QColor(30,30,30,200)
         wratio = 0.8
         xdivide = wratio*self.width()
