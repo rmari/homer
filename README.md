@@ -48,6 +48,7 @@ Currently, Homer supports the following subset of Yaplot's data format:
 | c x y z | Draw a circle centered on x,y,z |
 | p n x1 y1 z1 ... xn yn zn | Draw a n-point polygone |
 | t x y z s | Print text string s on x,y,z |
+| tt s | Print title string s |
 
 Default colors:
 
@@ -74,8 +75,6 @@ from PySide.QtGui import QColor
 color_palette = [ Qt.black, Qt.gray, Qcolor(200,200,200,100), ... ]
 ```
 The number of colors is unlimited. Colors must be [Qt colors](http://qt-project.org/doc/qt-4.8/qcolor.html).
-
-Meanwhile, a solution is to modify by hand the colordef array in the homerFrame class.
 
 <h2> Control commands </h2>
 
