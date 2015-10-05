@@ -180,9 +180,8 @@ class homerFrame(object):
         transformed_sticks_positions = np.hstack((np.dot(self.sticks[displayed_sticks,:3],self.transform), np.dot(self.sticks[displayed_sticks,3:6],self.transform))) + np.hstack((self.translate,self.translate))
         transformed_circles_positions =  np.dot(self.circles[displayed_circles,:3],self.transform) + self.translate
         transformed_polygons_positions =  np.dot(self.polygon_coords[displayed_polygons_coords],self.transform) + self.translate
-        # print "ss ", self.sticks[displayed_sticks,:6], transformed_sticks_positions
         transformed_texts_positions =  np.dot(self.texts_coords[displayed_texts],self.transform) + self.translate
-        # print "txts ", self.texts_coords[displayed_texts], transformed_texts_positions
+
 
         transformed_sticks_sizes = self.scale*self.sticks_attrs['r'][displayed_sticks]
         transformed_circles_sizes = self.circles_attrs['r'][displayed_circles]*self.scale

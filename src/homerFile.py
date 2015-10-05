@@ -171,7 +171,7 @@ class homerFile:
                 z = -z
                 text = np.core.defchararray.strip(np.array([a[3] for a in split_vals], dtype=np.str),"\n") # split returns array of lists, sorry :(
 
-                obj_vals[o] = (np.reshape(np.hstack((x,y,z)),(-1,3)), text)
+                obj_vals[o] = (np.column_stack((x,y,z)), text)
                 obj_attrs[o] = attrs[obj_masks[o]]
 
             o='tt'
