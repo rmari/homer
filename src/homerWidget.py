@@ -310,6 +310,34 @@ class homerWidget(QGLWidget):
             except ValueError:
                 self.target_layer = "all"
             catched = True
+        elif e == Qt.Key_Up and m != Qt.SHIFT:
+            angleX = 0.1
+            sinAngleX = np.sin(angleX)
+            cosAngleX = np.cos(angleX)
+            generator = np.mat([[1, 0, 0], [0, cosAngleX, -sinAngleX], [0, sinAngleX, cosAngleX]])
+            self.transform = generator*self.transform
+            catched = True
+        elif e == Qt.Key_Down and m != Qt.SHIFT:
+            angleX = -0.1
+            sinAngleX = np.sin(angleX)
+            cosAngleX = np.cos(angleX)
+            generator = np.mat([[1, 0, 0], [0, cosAngleX, -sinAngleX], [0, sinAngleX, cosAngleX]])
+            self.transform = generator*self.transform
+            catched = True
+        elif e == Qt.Key_Left and m != Qt.SHIFT:
+            angleY = -0.1
+            sinAngleY = np.sin(angleY)
+            cosAngleY = np.cos(angleY)
+            generator = np.mat([[cosAngleY, -sinAngleY, 0], [sinAngleY, cosAngleY, 0], [0, 0, 1]])
+            self.transform = generator*self.transform
+            catched = True
+        elif e == Qt.Key_Right and m != Qt.SHIFT:
+            angleY = 0.1
+            sinAngleY = np.sin(angleY)
+            cosAngleY = np.cos(angleY)
+            generator = np.mat([[cosAngleY, -sinAngleY, 0], [sinAngleY, cosAngleY, 0], [0, 0, 1]])
+            self.transform = generator*self.transform
+            catched = True
 
         t = event.text()
         try:
