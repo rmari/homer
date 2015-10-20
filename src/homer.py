@@ -31,7 +31,7 @@ def init():
     
     arg_nb_min=2
     if len(sys.argv) < arg_nb_min :
-        print "   Utilisation: ", sys.argv[0], "INPUT_FILES"
+        print("   Utilisation: ", sys.argv[0], "INPUT_FILES")
         exit(1)
         
     return sys.argv[1:]
