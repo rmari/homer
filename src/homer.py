@@ -17,10 +17,10 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import print_function
 from PySide.QtCore import *
 from PySide.QtGui import *
 from PySide.QtOpenGL import *
-import numpy as np
 
 import sys, os
 
@@ -31,7 +31,7 @@ def init():
     
     arg_nb_min=2
     if len(sys.argv) < arg_nb_min :
-        print("   Utilisation: ", sys.argv[0], "INPUT_FILES")
+        print("\n   Utilisation: ", sys.argv[0], "INPUT_FILE\n")
         exit(1)
         
     return sys.argv[1:]
