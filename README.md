@@ -1,6 +1,6 @@
 <h1> Homer </h1>
 
-Version 0.3, Jan. 12, 2015
+Version 0.4, Feb. 3, 2016
 
 ![Homer](./img/homer_1.png)
 
@@ -12,20 +12,20 @@ on a recent machine. Homer is thus mostly a clone of Yaplot, based on
 the same idea of a simple set of commands interpreted to render an
 intentionally basic representation of 3D data.
 
-Homer is still in development stage, so some bugs or early design
-flaws are to be expected :) Also, so far not all of Yaplot features
-are available. As of v0.3, Yaplot-style command files containing
+So far not all of Yaplot features
+are available. As of v0.4, Yaplot-style command files containing
 lines, sticks, circles, polygons and texts are processed by Homer. The
 layer, color and radius commands are supported. Most display features
 offered by Yaplot are available, the only notable exception being the
 perspective control. Also the possibility to display multiple input
 files is still very primitive in Homer. As an original feature,
-on can translate the field of view.
+on can translate the field of view, or add a title text.
 
 <h2> Installation </h2>
 
 Homer needs a Python 2.7 interpreter and the numpy and PySide
 packages. You can install these packages individually or get them through a Python distribution like [Anaconda](https://store.continuum.io/cshop/anaconda/) or [Enthought](https://www.enthought.com/products/epd/).
+
 
 You can run Homer as follows:
 
