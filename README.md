@@ -95,4 +95,6 @@ The number of colors is unlimited. Colors must be [Qt colors](http://qt-project.
 | g | Move to the first frame | Move to frame i |
 | G | Move to the last frame | - |
 | [F1 - F12] | Switch on/off layer [1-12] | - |
-| v | Switch on/off top left information text | - |
+| v | Switch on/off information text | - |
+| Up-Down-Left-Right | Rotate field of view | - |
+| Shift + Up-Down-Left-Right | Rotate field of view by 90 deg | - |
