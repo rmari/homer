@@ -109,10 +109,6 @@ class homerFile:
 
         # and split according to object types
         obj_list = ['c','s','l','p','t', 'tt']
-        obj_vals = dict()
-        obj_attrs = dict()
-
-
 
         if len(in_raw_data)>1:
             frange = range(len(in_raw_data)-1)
@@ -120,7 +116,8 @@ class homerFile:
             frange = [0]
 
         for i in frange:
-
+            obj_vals = dict()
+            obj_attrs = dict()
             frame = in_raw_data[i][:-1]
             attrs = attributes[i][:-1]
 
@@ -179,7 +176,6 @@ class homerFile:
                 text = np.core.defchararray.strip(frame[:,1][obj_masks[o]], "\n")
                 obj_vals[o] = text
                 obj_attrs[o] = attrs[obj_masks[o]]
-
             self.frames.append(homerFrame.homerFrame(obj_vals, obj_attrs))
 
         if len(in_raw_data)>1:
