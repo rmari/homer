@@ -174,54 +174,50 @@ class homerWidget(QGLWidget):
     def layerSwitch(self,label):
         self.layer_activity[label] = -self.layer_activity[label]
 
-
-    def keyPressEvent(self, event):
-        catched = False
-        e = event.key()
-        m = event.modifiers()
-
+    def handleKey(self,e,m):
+        caught = False
         if e == Qt.Key_Tab and m != Qt.SHIFT:
             self.transform = self.scale*self.init_transform
-            catched = True
+            caught = True
         elif e == Qt.Key_Tab and m == Qt.SHIFT:
             self.offset = self.init_offset
-            catched = True
+            caught = True
         elif e == Qt.Key_F1:
             self.layerSwitch(0)
-            catched = True
+            caught = True
         elif e == Qt.Key_F2:
             self.layerSwitch(1)
-            catched = True
+            caught = True
         elif e == Qt.Key_F3:
             self.layerSwitch(2)
-            catched = True
+            caught = True
         elif e == Qt.Key_F4:
             self.layerSwitch(3)
-            catched = True
+            caught = True
         elif e == Qt.Key_F5:
             self.layerSwitch(4)
-            catched = True
+            caught = True
         elif e == Qt.Key_F6:
             self.layerSwitch(5)
-            catched = True
+            caught = True
         elif e == Qt.Key_F7:
             self.layerSwitch(6)
-            catched = True
+            caught = True
         elif e == Qt.Key_F8:
             self.layerSwitch(7)
-            catched = True
+            caught = True
         elif e == Qt.Key_F9:
             self.layerSwitch(8)
-            catched = True
+            caught = True
         elif e == Qt.Key_F10:
             self.layerSwitch(9)
-            catched = True
+            caught = True
         elif e == Qt.Key_F11:
             self.layerSwitch(10)
-            catched = True
+            caught = True
         elif e == Qt.Key_F12:
             self.layerSwitch(11)
-            catched = True
+            caught = True
         elif e == Qt.Key_N and m != Qt.SHIFT:
             if self.timer.isActive():
                 self.timer.stop()
@@ -230,7 +226,7 @@ class homerWidget(QGLWidget):
                 self.incrementFrame(inc_nb)
             except ValueError:
                 self.incrementFrame(1)
-            catched = True
+            caught = True
         elif e == Qt.Key_P and m != Qt.SHIFT:
             if self.timer.isActive():
                 self.timer.stop()
@@ -239,7 +235,7 @@ class homerWidget(QGLWidget):
                 self.decrementFrame(dec_nb)
             except ValueError:
                 self.decrementFrame(1)
-            catched = True
+            caught = True
         elif e == Qt.Key_G and m != Qt.SHIFT:
             if self.timer.isActive():
                 self.timer.stop()
@@ -248,34 +244,34 @@ class homerWidget(QGLWidget):
                 self.frame_nb = f_nb
             except ValueError:
                 self.frame_nb = 0
-            catched = True
+            caught = True
         elif e == Qt.Key_Asterisk:
             factor = 1.05
             self.scale *= factor
             self.transform = factor*self.transform
-            catched = True
+            caught = True
         elif e == Qt.Key_Slash:
             factor = 1.05
             self.scale /= factor
             self.transform = self.transform/factor
-            catched = True
+            caught = True
         elif e == Qt.Key_Q:
             QCoreApplication.instance().quit()
-            catched = True
+            caught = True
         elif e == Qt.Key_Minus:
             if self.fidelity > self.fidelity_min:
                 self.fidelity = self.fidelity - 1
-            catched = True
+            caught = True
         elif e == Qt.Key_Plus:
             if self.fidelity < self.fidelity_max:
                 self.fidelity = self.fidelity + 1
-            catched = True
+            caught = True
         elif e == Qt.Key_Space:
             self.timer.stop()
-            catched = True
+            caught = True
         elif e == Qt.Key_V:
             self.verbosity = not self.verbosity
-            catched = True
+            caught = True
         elif e == Qt.Key_N and m == Qt.SHIFT:
             try:
                 inc_nb = int(self.prefactor)
@@ -285,7 +281,7 @@ class homerWidget(QGLWidget):
             self.forward_anim = True
             self.start()
             event.accept()
-            catched = True
+            caught = True
         elif e == Qt.Key_P and m == Qt.SHIFT:
             try:
                 inc_nb = int(self.prefactor)
@@ -294,19 +290,19 @@ class homerWidget(QGLWidget):
                 pass
             self.forward_anim = False
             self.start()
-            catched = True
+            caught = True
         elif e == Qt.Key_G and m == Qt.SHIFT:
             while self.incrementOneFrame():
                 pass
             self.update()
-            catched = True
+            caught = True
         elif e == Qt.Key_L:
             try:
                 l_nb = int(self.prefactor)
                 self.target_layer = l_nb
             except ValueError:
                 self.target_layer = "all"
-            catched = True
+            caught = True
         elif e == Qt.Key_Up:
             if m != Qt.SHIFT:
                 angleX = -0.1
@@ -316,7 +312,7 @@ class homerWidget(QGLWidget):
             cosAngleX = np.cos(angleX)
             generator = np.mat([[1, 0, 0], [0, cosAngleX, -sinAngleX], [0, sinAngleX, cosAngleX]])
             self.transform = generator*self.transform
-            catched = True
+            caught = True
         elif e == Qt.Key_Down:
             if m != Qt.SHIFT:
                 angleX = 0.1
@@ -326,7 +322,7 @@ class homerWidget(QGLWidget):
             cosAngleX = np.cos(angleX)
             generator = np.mat([[1, 0, 0], [0, cosAngleX, -sinAngleX], [0, sinAngleX, cosAngleX]])
             self.transform = generator*self.transform
-            catched = True
+            caught = True
         elif e == Qt.Key_Left:
             if m != Qt.SHIFT:
                 angleY = 0.1
@@ -336,7 +332,7 @@ class homerWidget(QGLWidget):
             cosAngleY = np.cos(angleY)
             generator = np.mat([[cosAngleY, -sinAngleY, 0], [sinAngleY, cosAngleY, 0], [0, 0, 1]])
             self.transform = generator*self.transform
-            catched = True
+            caught = True
         elif e == Qt.Key_Right:
             if m != Qt.SHIFT:
                 angleY = -0.1
@@ -346,17 +342,31 @@ class homerWidget(QGLWidget):
             cosAngleY = np.cos(angleY)
             generator = np.mat([[cosAngleY, -sinAngleY, 0], [sinAngleY, cosAngleY, 0], [0, 0, 1]])
             self.transform = generator*self.transform
-            catched = True
+            caught = True
+        return caught
+
+    def keyPressEvent(self, event):
+        e = event.key()
+        m = event.modifiers()
+        
+        if e == Qt.Key_Return: # repeat previous action
+            e,m, self.prefactor = self.old_e, self.old_m, self.old_prefactor 
+
+        self.old_e, self.old_m, self.old_prefactor = e,m, self.prefactor
+
+        caught = self.handleKey(e,m)
 
         t = event.text()
-        try:
-            i = int(t)
-            self.prefactor = self.prefactor + t
-        except ValueError:
-            if catched:
-                self.prefactor = ""
+        if e != Qt.Key_Return:
+            try:
+                i = int(t)
+                self.prefactor = self.prefactor + t
+            except ValueError:
+                if caught:
+                    self.prefactor = ""
+
         self.update()
-        return catched
+        return caught
 
 
     def mousePressEvent(self, event):
