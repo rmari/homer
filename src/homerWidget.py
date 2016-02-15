@@ -240,7 +240,7 @@ class homerWidget(QGLWidget):
             if self.timer.isActive():
                 self.timer.stop()
             try:
-                f_nb = int(self.prefactor)
+                f_nb = int(self.prefactor)-1
                 self.frame_nb = f_nb
             except ValueError:
                 self.frame_nb = 0
