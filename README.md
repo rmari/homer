@@ -98,3 +98,4 @@ The number of colors is unlimited. Colors must be [Qt colors](http://qt-project.
 | v | Switch on/off information text | - |
 | Up-Down-Left-Right | Rotate field of view | - |
 | Shift + Up-Down-Left-Right | Rotate field of view by 90 deg | - |
+| Return | Repeat previous command |
