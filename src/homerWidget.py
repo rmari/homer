@@ -40,15 +40,15 @@ class homerWidget(QGLWidget):
 
         self.initWindow()
 
-        self.infile=homerFile.homerFile(self.fname)
+        self.infile = homerFile.homerFile(self.fname)
         self.infile.read_chunk()
 
         bd = self.infile.getBoundaries()
 
-        xmin = bd[0,0]
-        xmax = bd[0,1]
-        ymin = bd[1,0]
-        ymax = bd[1,1]
+        xmin = bd[0, 0]
+        xmax = bd[0, 1]
+        ymin = bd[1, 0]
+        ymax = bd[1, 1]
 
         self.scale = 0.8*self.width()/(xmax-xmin)
 
@@ -67,7 +67,7 @@ class homerWidget(QGLWidget):
 
         self.frame_nb = 0
 
-        self.layer_nb=12
+        self.layer_nb = 12
         self.layer_activity = np.ones(self.layer_nb, dtype=np.bool)
         self.layer_labels = []
 
@@ -90,34 +90,35 @@ class homerWidget(QGLWidget):
 
         self.translation = [0, 0]
 
-        self.selection_corner1 = QPointF(0,0)
-        self.selection_corner2 = QPointF(self.width(),self.height())
+        self.selection_corner1 = QPointF(0, 0)
+        self.selection_corner2 = QPointF(self.width(), self.height())
 
         self.target_layer = "all"
 
         self.relatives = []
 
         self.verbosity = True
-        self.speed=0
+        self.speed = 0
         self.is_slave = False
 
         self.show()
 
     def initWindow(self):
-#        ratio = self.infile.Lz()/self.infile.Lx()
+        #  ratio = self.infile.Lz()/self.infile.Lx()
         ratio = 1
         self.windowSizeX = 500
         self.windowSizeY = self.windowSizeX*ratio
         self.windowLocationX = 400
         self.windowLocationY = self.windowLocationX
 
-        self.setGeometry(self.windowLocationX, self.windowLocationY, self.windowSizeX, self.windowSizeY)
+        self.setGeometry(self.windowLocationX, self.windowLocationY,
+                         self.windowSizeX, self.windowSizeY)
 
         self.setWindowTitle("Homer - "+self.fname)
         path = os.path.dirname(os.path.abspath(__file__))
         self.setWindowIcon(QIcon(path+'/../img/icon.png'))
 
-    def setRelatives(self,relatives, own_label):
+    def setRelatives(self, relatives, own_label):
         self.relatives = relatives
         self.label = own_label
         for r in self.relatives:
@@ -126,7 +127,7 @@ class homerWidget(QGLWidget):
                 r.read_chunk.connect(self.slaveReadChunk)
 
     def start(self):
-        self.timer.start(self.speed,self)
+        self.timer.start(self.speed, self)
 
     @Slot()
     def slaveReadChunk(self):
@@ -136,6 +137,14 @@ class homerWidget(QGLWidget):
         new_frames = self.infile.read_chunk()
         self.read_chunk.emit()
         return new_frames
+
+    def goToFrame(self, nb):
+        while nb > len(self.infile.frames)-1:
+            new_frames = self.readChunk()
+            if not new_frames:
+                self.frame_nb = len(self.infile.frames)-1
+                return
+        self.frame_nb = nb
 
     def incrementOneFrame(self):
         if(self.frame_nb < len(self.infile.frames)-1):
@@ -149,9 +158,9 @@ class homerWidget(QGLWidget):
             else:
                 return False
 
-    def incrementFrame(self,inc_nb):
+    def incrementFrame(self, inc_nb):
         count = 1
-        while self.incrementOneFrame() and count<inc_nb:
+        while self.incrementOneFrame() and count < inc_nb:
             count = count+1
 
     def decrementFrame(self, dec_nb):
@@ -171,10 +180,10 @@ class homerWidget(QGLWidget):
         else:
             QWidget.timerEvent(self, event)
 
-    def layerSwitch(self,label):
+    def layerSwitch(self, label):
         self.layer_activity[label] = -self.layer_activity[label]
 
-    def handleKey(self,e,m):
+    def handleKey(self, e, m):
         caught = False
         if e == Qt.Key_Tab and m != Qt.SHIFT:
             self.transform = self.scale*self.init_transform
@@ -241,7 +250,7 @@ class homerWidget(QGLWidget):
                 self.timer.stop()
             try:
                 f_nb = int(self.prefactor)-1
-                self.frame_nb = f_nb
+                self.goToFrame(f_nb)
             except ValueError:
                 self.frame_nb = 0
             caught = True
@@ -275,7 +284,7 @@ class homerWidget(QGLWidget):
         elif e == Qt.Key_N and m == Qt.SHIFT:
             try:
                 inc_nb = int(self.prefactor)
-                self.speed = int(1000./inc_nb) # timer timeout in msec
+                self.speed = int(1000./inc_nb)  # timer timeout in msec
             except ValueError:
                 pass
             self.forward_anim = True
@@ -285,7 +294,7 @@ class homerWidget(QGLWidget):
         elif e == Qt.Key_P and m == Qt.SHIFT:
             try:
                 inc_nb = int(self.prefactor)
-                self.speed = int(1000./inc_nb) # timer timeout in msec
+                self.speed = int(1000./inc_nb)  # timer timeout in msec
             except ValueError:
                 pass
             self.forward_anim = False
@@ -348,9 +357,9 @@ class homerWidget(QGLWidget):
     def keyPressEvent(self, event):
         e = event.key()
         m = event.modifiers()
-        
+
         if e == Qt.Key_Return: # repeat previous action
-            e,m, self.prefactor = self.old_e, self.old_m, self.old_prefactor 
+            e,m, self.prefactor = self.old_e, self.old_m, self.old_prefactor
 
         self.old_e, self.old_m, self.old_prefactor = e,m, self.prefactor
 
