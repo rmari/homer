@@ -305,7 +305,6 @@ class homerWidget(QGLWidget):
             else:
                 angleX = 0.5*np.pi
             self.setXRotation(angleX)
-            self.transform = generator*self.transform
             caught = True
         elif e == Qt.Key_Left:
             if m != Qt.SHIFT:
