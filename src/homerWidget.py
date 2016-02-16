@@ -20,9 +20,11 @@ from PySide.QtGui import *
 from PySide.QtOpenGL import *
 import numpy as np
 
-import sys, os
+import sys
+import os
 
 import homerFile
+
 
 class homerWidget(QGLWidget):
 
@@ -47,12 +49,12 @@ class homerWidget(QGLWidget):
 
         xmin = bd[0, 0]
         xmax = bd[0, 1]
-        ymin = bd[1, 0]
         ymax = bd[1, 1]
 
         self.scale = 0.8*self.width()/(xmax-xmin)
 
-        self.init_offset = QPointF(-self.scale*xmin+0.1*self.width(),self.scale*ymax+0.1*self.width())
+        self.init_offset = QPointF(-self.scale*xmin+0.1*self.width(),
+                                   self.scale*ymax+0.1*self.width())
 
         self.offset = self.init_offset
 
@@ -138,22 +140,26 @@ class homerWidget(QGLWidget):
         self.read_chunk.emit()
         return new_frames
 
+    def switchFrameNb(self, new_frame_nb):
+        self.former_frame_nb = self.frame_nb
+        self.frame_nb = new_frame_nb
+
     def goToFrame(self, nb):
         while nb > len(self.infile.frames)-1:
             new_frames = self.readChunk()
             if not new_frames:
-                self.frame_nb = len(self.infile.frames)-1
+                self.switchFrameNb(len(self.infile.frames)-1)
                 return
-        self.frame_nb = nb
+        self.switchFrameNb(nb)
 
     def incrementOneFrame(self):
         if(self.frame_nb < len(self.infile.frames)-1):
-            self.frame_nb = self.frame_nb+1
+            self.switchFrameNb(self.frame_nb+1)
             return True
         else:
             new_frames = self.readChunk()
             if new_frames:
-                self.frame_nb = self.frame_nb+1
+                self.switchFrameNb(self.frame_nb+1)
                 return True
             else:
                 return False
@@ -165,10 +171,26 @@ class homerWidget(QGLWidget):
 
     def decrementFrame(self, dec_nb):
         if(self.frame_nb >= dec_nb):
-            self.frame_nb = self.frame_nb-dec_nb
+            self.switchFrameNb(self.frame_nb-dec_nb)
             return True
         else:
             return False
+
+    def setXRotation(self, angleX):
+        sinAngleX = np.sin(angleX)
+        cosAngleX = np.cos(angleX)
+        generator = np.mat([[1, 0, 0],
+                            [0, cosAngleX, -sinAngleX],
+                            [0, sinAngleX, cosAngleX]])
+        self.transform = generator*self.transform
+
+    def setYRotation(self, angleY):
+        sinAngleY = np.sin(angleY)
+        cosAngleY = np.cos(angleY)
+        generator = np.mat([[cosAngleY, -sinAngleY, 0],
+                            [sinAngleY, cosAngleY, 0],
+                            [0, 0, 1]])
+        self.transform = generator*self.transform
 
     def timerEvent(self, event):
         if event.timerId() == self.timer.timerId():
@@ -183,7 +205,68 @@ class homerWidget(QGLWidget):
     def layerSwitch(self, label):
         self.layer_activity[label] = -self.layer_activity[label]
 
-    def handleKey(self, e, m):
+    def handleFrameSwitchKey(self, e, m):
+        caught = False
+        stop_anim = True
+        if e == Qt.Key_N and m != Qt.SHIFT:
+            try:
+                inc_nb = int(self.prefactor)
+                self.incrementFrame(inc_nb)
+            except ValueError:
+                self.incrementFrame(1)
+            caught = True
+        elif e == Qt.Key_P and m != Qt.SHIFT:
+            try:
+                dec_nb = int(self.prefactor)
+                self.decrementFrame(dec_nb)
+            except ValueError:
+                self.decrementFrame(1)
+            caught = True
+        elif e == Qt.Key_G and m != Qt.SHIFT:
+            try:
+                f_nb = int(self.prefactor)-1
+                self.goToFrame(f_nb)
+            except ValueError:
+                self.switchFrameNb(0)
+            caught = True
+        elif e == Qt.Key_Z:
+            self.switchFrameNb(self.former_frame_nb)
+            caught = True
+        elif e == Qt.Key_N and m == Qt.SHIFT:
+            try:
+                inc_nb = int(self.prefactor)
+                self.speed = int(1000./inc_nb)  # timer timeout in msec
+            except ValueError:
+                pass
+            self.forward_anim = True
+            self.start()
+            caught = True
+            stop_anim = False
+        elif e == Qt.Key_P and m == Qt.SHIFT:
+            try:
+                inc_nb = int(self.prefactor)
+                self.speed = int(1000./inc_nb)  # timer timeout in msec
+            except ValueError:
+                pass
+            self.forward_anim = False
+            self.start()
+            caught = True
+            stop_anim = False
+        elif e == Qt.Key_G and m == Qt.SHIFT:
+            while self.incrementOneFrame():
+                pass
+            self.update()
+            caught = True
+        elif e == Qt.Key_Space:
+            caught = True
+
+        if caught and stop_anim:
+            if self.timer.isActive():
+                self.timer.stop()
+
+        return caught
+
+    def handlePointOfViewKey(self, e, m):
         caught = False
         if e == Qt.Key_Tab and m != Qt.SHIFT:
             self.transform = self.scale*self.init_transform
@@ -191,7 +274,60 @@ class homerWidget(QGLWidget):
         elif e == Qt.Key_Tab and m == Qt.SHIFT:
             self.offset = self.init_offset
             caught = True
-        elif e == Qt.Key_F1:
+        elif e == Qt.Key_Asterisk:
+            factor = 1.05
+            self.scale *= factor
+            self.transform = factor*self.transform
+            caught = True
+        elif e == Qt.Key_Slash:
+            factor = 1.05
+            self.scale /= factor
+            self.transform = self.transform/factor
+            caught = True
+        elif e == Qt.Key_Minus:
+            if self.fidelity > self.fidelity_min:
+                self.fidelity = self.fidelity - 1
+            caught = True
+        elif e == Qt.Key_Plus:
+            if self.fidelity < self.fidelity_max:
+                self.fidelity = self.fidelity + 1
+            caught = True
+        elif e == Qt.Key_Up:
+            if m != Qt.SHIFT:
+                angleX = -0.1
+            else:
+                angleX = -0.5*np.pi
+            self.setXRotation(angleX)
+            caught = True
+        elif e == Qt.Key_Down:
+            if m != Qt.SHIFT:
+                angleX = 0.1
+            else:
+                angleX = 0.5*np.pi
+            self.setXRotation(angleX)
+            self.transform = generator*self.transform
+            caught = True
+        elif e == Qt.Key_Left:
+            if m != Qt.SHIFT:
+                angleY = 0.1
+            else:
+                angleY = 0.5*np.pi
+            self.setYRotation(angleY)
+            caught = True
+        elif e == Qt.Key_Right:
+            if m != Qt.SHIFT:
+                angleY = -0.1
+            else:
+                angleY = -0.5*np.pi
+            self.setYRotation(angleY)
+            caught = True
+
+        return caught
+
+    def handleLayerKey(self, e, m):
+        caught = False
+
+        if e == Qt.Key_F1:
             self.layerSwitch(0)
             caught = True
         elif e == Qt.Key_F2:
@@ -227,84 +363,6 @@ class homerWidget(QGLWidget):
         elif e == Qt.Key_F12:
             self.layerSwitch(11)
             caught = True
-        elif e == Qt.Key_N and m != Qt.SHIFT:
-            if self.timer.isActive():
-                self.timer.stop()
-            try:
-                inc_nb = int(self.prefactor)
-                self.incrementFrame(inc_nb)
-            except ValueError:
-                self.incrementFrame(1)
-            caught = True
-        elif e == Qt.Key_P and m != Qt.SHIFT:
-            if self.timer.isActive():
-                self.timer.stop()
-            try:
-                dec_nb = int(self.prefactor)
-                self.decrementFrame(dec_nb)
-            except ValueError:
-                self.decrementFrame(1)
-            caught = True
-        elif e == Qt.Key_G and m != Qt.SHIFT:
-            if self.timer.isActive():
-                self.timer.stop()
-            try:
-                f_nb = int(self.prefactor)-1
-                self.goToFrame(f_nb)
-            except ValueError:
-                self.frame_nb = 0
-            caught = True
-        elif e == Qt.Key_Asterisk:
-            factor = 1.05
-            self.scale *= factor
-            self.transform = factor*self.transform
-            caught = True
-        elif e == Qt.Key_Slash:
-            factor = 1.05
-            self.scale /= factor
-            self.transform = self.transform/factor
-            caught = True
-        elif e == Qt.Key_Q:
-            QCoreApplication.instance().quit()
-            caught = True
-        elif e == Qt.Key_Minus:
-            if self.fidelity > self.fidelity_min:
-                self.fidelity = self.fidelity - 1
-            caught = True
-        elif e == Qt.Key_Plus:
-            if self.fidelity < self.fidelity_max:
-                self.fidelity = self.fidelity + 1
-            caught = True
-        elif e == Qt.Key_Space:
-            self.timer.stop()
-            caught = True
-        elif e == Qt.Key_V:
-            self.verbosity = not self.verbosity
-            caught = True
-        elif e == Qt.Key_N and m == Qt.SHIFT:
-            try:
-                inc_nb = int(self.prefactor)
-                self.speed = int(1000./inc_nb)  # timer timeout in msec
-            except ValueError:
-                pass
-            self.forward_anim = True
-            self.start()
-            event.accept()
-            caught = True
-        elif e == Qt.Key_P and m == Qt.SHIFT:
-            try:
-                inc_nb = int(self.prefactor)
-                self.speed = int(1000./inc_nb)  # timer timeout in msec
-            except ValueError:
-                pass
-            self.forward_anim = False
-            self.start()
-            caught = True
-        elif e == Qt.Key_G and m == Qt.SHIFT:
-            while self.incrementOneFrame():
-                pass
-            self.update()
-            caught = True
         elif e == Qt.Key_L:
             try:
                 l_nb = int(self.prefactor)
@@ -312,58 +370,32 @@ class homerWidget(QGLWidget):
             except ValueError:
                 self.target_layer = "all"
             caught = True
-        elif e == Qt.Key_Up:
-            if m != Qt.SHIFT:
-                angleX = -0.1
-            else:
-                angleX = -0.5*np.pi
-            sinAngleX = np.sin(angleX)
-            cosAngleX = np.cos(angleX)
-            generator = np.mat([[1, 0, 0], [0, cosAngleX, -sinAngleX], [0, sinAngleX, cosAngleX]])
-            self.transform = generator*self.transform
+        return caught
+
+    def handleKey(self, e, m):
+
+        if e == Qt.Key_Q:
+            QCoreApplication.instance().quit()
             caught = True
-        elif e == Qt.Key_Down:
-            if m != Qt.SHIFT:
-                angleX = 0.1
-            else:
-                angleX = 0.5*np.pi
-            sinAngleX = np.sin(angleX)
-            cosAngleX = np.cos(angleX)
-            generator = np.mat([[1, 0, 0], [0, cosAngleX, -sinAngleX], [0, sinAngleX, cosAngleX]])
-            self.transform = generator*self.transform
+        elif e == Qt.Key_V:
+            self.verbosity = not self.verbosity
             caught = True
-        elif e == Qt.Key_Left:
-            if m != Qt.SHIFT:
-                angleY = 0.1
-            else:
-                angleY = 0.5*np.pi
-            sinAngleY = np.sin(angleY)
-            cosAngleY = np.cos(angleY)
-            generator = np.mat([[cosAngleY, -sinAngleY, 0], [sinAngleY, cosAngleY, 0], [0, 0, 1]])
-            self.transform = generator*self.transform
-            caught = True
-        elif e == Qt.Key_Right:
-            if m != Qt.SHIFT:
-                angleY = -0.1
-            else:
-                angleY = -0.5*np.pi
-            sinAngleY = np.sin(angleY)
-            cosAngleY = np.cos(angleY)
-            generator = np.mat([[cosAngleY, -sinAngleY, 0], [sinAngleY, cosAngleY, 0], [0, 0, 1]])
-            self.transform = generator*self.transform
-            caught = True
+        else:
+            caught = self.handleLayerKey(e, m)
+            if not caught:
+                caught = self.handlePointOfViewKey(e, m)
+            if not caught:
+                caught = self.handleFrameSwitchKey(e, m)
+
         return caught
 
     def keyPressEvent(self, event):
         e = event.key()
         m = event.modifiers()
-
-        if e == Qt.Key_Return: # repeat previous action
-            e,m, self.prefactor = self.old_e, self.old_m, self.old_prefactor
-
-        self.old_e, self.old_m, self.old_prefactor = e,m, self.prefactor
-
-        caught = self.handleKey(e,m)
+        if e == Qt.Key_Return:  # repeat previous action
+            e, m, self.prefactor = self.old_e, self.old_m, self.old_prefactor
+        self.old_prefactor = self.prefactor
+        caught = self.handleKey(e, m)
 
         t = event.text()
         if e != Qt.Key_Return:
@@ -374,9 +406,11 @@ class homerWidget(QGLWidget):
                 if caught:
                     self.prefactor = ""
 
+        if caught:
+            self.old_e, self.old_m = e, m
+
         self.update()
         return caught
-
 
     def mousePressEvent(self, event):
         modifier = QApplication.keyboardModifiers()
@@ -393,42 +427,46 @@ class homerWidget(QGLWidget):
             else:
                 self.rotate = True
 
-
     def mouseMoveEvent(self, event):
         self.previous_point = self.current_point
         self.current_point = event.posF()
         if self.translate:
-            translateX = self.offset.x() + (self.current_point.x() - self.previous_point.x())
-            translateY = self.offset.y() + (self.current_point.y() - self.previous_point.y())
+            translateX = self.offset.x()\
+                         + (self.current_point.x() - self.previous_point.x())
+            translateY = self.offset.y()\
+                         + (self.current_point.y() - self.previous_point.y())
             self.offset = QPointF(translateX, translateY)
         elif self.rotate:
             angleY = -4*(self.current_point.x() - self.previous_point.x())/self.width()
 
             sinAngleY = np.sin(angleY)
             cosAngleY = np.cos(angleY)
-            generator = np.mat([[cosAngleY, -sinAngleY, 0], [sinAngleY, cosAngleY, 0], [0, 0, 1]])
+            generator = np.mat([[cosAngleY, -sinAngleY, 0],
+                                [sinAngleY, cosAngleY, 0],
+                                [0, 0, 1]])
             self.transform = generator*self.transform
 
             angleX = 4*(self.current_point.y() - self.previous_point.y())/self.height()
 
             sinAngleX = np.sin(angleX)
             cosAngleX = np.cos(angleX)
-            generator = np.mat([[1, 0, 0], [0, cosAngleX, -sinAngleX], [0, sinAngleX, cosAngleX]])
+            generator = np.mat([[1, 0, 0],
+                                [0, cosAngleX, -sinAngleX],
+                                [0, sinAngleX, cosAngleX]])
             self.transform = generator*self.transform
-        elif self.select: # rotate
+        elif self.select:  # rotate
             self.selection_corner2 = self.current_point
 
         self.update()
 
-
     def writeLabels(self, paint):
         pen = QPen()
 
-        rlocation = np.array([ 15, 15 ])
+        rlocation = np.array([15, 15])
 
-        bgcolor = QColor(0,0,0,150)
+        bgcolor = QColor(0, 0, 0, 150)
         wratio = 0.8
-        rect = QRectF(0,0, 140, 300)
+        rect = QRectF(0, 0, 140, 300)
         brush = QBrush()
         brush.setColor(bgcolor)
         brush.setStyle(Qt.SolidPattern)
@@ -440,24 +478,27 @@ class homerWidget(QGLWidget):
         activecolor = Qt.white
         inactivecolor = Qt.gray
 
-        rsize = [ 120, 18 ]
+        rsize = [120, 18]
 
         pen.setColor(activecolor)
         paint.setPen(pen)
         rect = QRectF(rlocation[0], rlocation[1], rsize[0], rsize[1])
-        paint.drawText(rect, Qt.AlignLeft, "Frame "+str(self.frame_nb+1)+" (n p)")
+        paint.drawText(rect, Qt.AlignLeft,
+                       "Frame "+str(self.frame_nb+1)+" (n p)")
         rlocation[1] = rlocation[1]+rsize[1]
-        rsize = [ 95, 18 ]
+        rsize = [95, 18]
         pen.setColor(activecolor)
         paint.setPen(pen)
         rect = QRectF(rlocation[0], rlocation[1], rsize[0], rsize[1])
-        paint.drawText(rect, Qt.AlignLeft, "Texture "+str(self.fidelity)+" (+ -)")
+        paint.drawText(rect, Qt.AlignLeft,
+                       "Texture "+str(self.fidelity)+" (+ -)")
 
         rlocation[1] = rlocation[1]+rsize[1]
-        rsize = [ 100, 18 ]
+        rsize = [100, 18]
         for i in range(self.layer_nb):
-            rect = QRectF(rlocation[0], rlocation[1]+(i+1)*rsize[1], rsize[0], rsize[1])
-            if self.layer_activity[i] == True:
+            rect = QRectF(rlocation[0], rlocation[1]+(i+1)*rsize[1],
+                          rsize[0], rsize[1])
+            if self.layer_activity[i] is True:
                 pen.setColor(activecolor)
             else:
                 pen.setColor(inactivecolor)
@@ -465,7 +506,7 @@ class homerWidget(QGLWidget):
             paint.drawText(rect, Qt.AlignLeft, self.layer_labels[i])
 
         infoheight = 20
-        bgcolor = QColor(30,30,30,200)
+        bgcolor = QColor(30, 30, 30, 200)
         wratio = 0.8
         xdivide = wratio*self.width()
         rect = QRectF(0, self.height()-infoheight+2, xdivide, infoheight+2)
@@ -481,16 +522,18 @@ class homerWidget(QGLWidget):
         rect = QRectF(0, self.height()-infoheight+2, xdivide-4, infoheight+2)
         paint.drawText(rect, Qt.AlignRight, self.prefactor)
 
-        rect = QRectF(xdivide, self.height()-infoheight+2, self.width(), infoheight+2)
-        bgcolor = QColor(0,0,0,200)
+        rect = QRectF(xdivide, self.height()-infoheight+2,
+                      self.width(), infoheight+2)
+        bgcolor = QColor(0, 0, 0, 200)
         brush.setColor(bgcolor)
         brush.setStyle(Qt.SolidPattern)
         paint.setBrush(brush)
         pen.setColor(bgcolor)
         paint.setPen(pen)
         paint.drawRect(rect)
-        rect = QRectF(xdivide+4, self.height()-infoheight+2, self.width(), infoheight+2)
-        pen.setColor(QColor(220,100,0))
+        rect = QRectF(xdivide+4, self.height()-infoheight+2,
+                      self.width(), infoheight+2)
+        pen.setColor(QColor(220, 100, 0))
         paint.setPen(pen)
         if self.target_layer != "all":
             paint.drawText(rect, Qt.AlignLeft, "Layer "+str(self.target_layer))
@@ -502,9 +545,9 @@ class homerWidget(QGLWidget):
         self.is_slave = True
         master = self.relatives[master_label]
 
-        self.transform=master.transform
+        self.transform = master.transform
         self.offset = master.offset
-        self.frame_nb = master.frame_nb
+        self.switchFrameNb(master.frame_nb)
         self.layer_activity = master.layer_activity
         self.fidelity = master.fidelity
         self.update()
@@ -517,13 +560,16 @@ class homerWidget(QGLWidget):
         self.translation = [self.offset.x(), self.offset.y()]
 
         selection_width = self.selection_corner2.x()-self.selection_corner1.x()
-        selection_height = self.selection_corner2.y()-self.selection_corner1.y()
+        selection_height = self.selection_corner2.y()\
+                          - self.selection_corner1.y()
         selection_x = self.selection_corner1.x()-0.5*self.width()
         selection_y = self.selection_corner1.y()-0.5*self.height()
-        selection_rect = QRectF(selection_x,selection_y,selection_width,selection_height)
+        selection_rect = QRectF(selection_x, selection_y,
+                                selection_width, selection_height)
 
         frame = self.infile.frames[self.frame_nb]
-        frame.display(paint,self.transform, self.translation, self.layer_activity, self.fidelity,selection_rect)
+        frame.display(paint, self.transform, self.translation,
+                      self.layer_activity, self.fidelity, selection_rect)
 
         if self.verbosity:
             self.writeLabels(paint)
