@@ -14,10 +14,10 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
-from PySide.QtCore import *
-from PySide.QtGui import *
-from PySide.QtOpenGL import *
+from __future__ import division
+import PySide.QtCore as QtCore
+import PySide.QtGui as QtGui
+import PySide.QtOpenGL as QtOpenGL
 import numpy as np
 
 import sys
@@ -26,17 +26,18 @@ import os
 import homerFile
 
 
-class homerWidget(QGLWidget):
+class homerWidget(QtOpenGL.QGLWidget):
 
-    updated = Signal(int)
-    read_chunk = Signal()
+    updated = QtCore.Signal(int)
+    read_chunk = QtCore.Signal()
 
     def __init__(self, filename, parent=None):
 
-        QGLWidget.__init__(self, QGLFormat(QGL.SampleBuffers), parent)
+        QtOpenGL.QGLWidget.__init__(
+            self, QtOpenGL.QGLFormat(QtOpenGL.QGL.SampleBuffers), parent)
         self.parent = parent
 
-        self.timer = QBasicTimer()
+        self.timer = QtCore.QBasicTimer()
 
         self.fname = filename
 
@@ -53,8 +54,8 @@ class homerWidget(QGLWidget):
 
         self.scale = 0.8*self.width()/(xmax-xmin)
 
-        self.init_offset = QPointF(-self.scale*xmin+0.1*self.width(),
-                                   self.scale*ymax+0.1*self.width())
+        self.init_offset = QtCore.QPointF(-self.scale*xmin+0.1*self.width(),
+                                          self.scale*ymax+0.1*self.width())
 
         self.offset = self.init_offset
 
@@ -83,8 +84,8 @@ class homerWidget(QGLWidget):
 
         self.installEventFilter(self)
 
-        pal = QPalette()
-        pal.setColor(QPalette.Window, homerFile.color_palette[1])
+        pal = QtGui.QPalette()
+        pal.setColor(QtGui.QPalette.Window, homerFile.color_palette[1])
         self.setAutoFillBackground(True)
         self.setPalette(pal)
 
@@ -92,8 +93,8 @@ class homerWidget(QGLWidget):
 
         self.translation = [0, 0]
 
-        self.selection_corner1 = QPointF(0, 0)
-        self.selection_corner2 = QPointF(self.width(), self.height())
+        self.selection_corner1 = QtCore.QPointF(0, 0)
+        self.selection_corner2 = QtCore.QPointF(self.width(), self.height())
 
         self.target_layer = "all"
 
@@ -118,7 +119,7 @@ class homerWidget(QGLWidget):
 
         self.setWindowTitle("Homer - "+self.fname)
         path = os.path.dirname(os.path.abspath(__file__))
-        self.setWindowIcon(QIcon(path+'/../img/icon.png'))
+        self.setWindowIcon(QtGui.QIcon(path+'/../img/icon.png'))
 
     def setRelatives(self, relatives, own_label):
         self.relatives = relatives
@@ -131,7 +132,7 @@ class homerWidget(QGLWidget):
     def start(self):
         self.timer.start(self.speed, self)
 
-    @Slot()
+    @QtCore.Slot()
     def slaveReadChunk(self):
         self.infile.read_chunk()
 
@@ -200,7 +201,7 @@ class homerWidget(QGLWidget):
                 self.decrementFrame(1)
             self.update()
         else:
-            QWidget.timerEvent(self, event)
+            QtGui.QWidget.timerEvent(self, event)
 
     def layerSwitch(self, label):
         self.layer_activity[label] = -self.layer_activity[label]
@@ -208,31 +209,31 @@ class homerWidget(QGLWidget):
     def handleFrameSwitchKey(self, e, m):
         caught = False
         stop_anim = True
-        if e == Qt.Key_N and m != Qt.SHIFT:
+        if e == QtCore.Qt.Key_N and m != QtCore.Qt.SHIFT:
             try:
                 inc_nb = int(self.prefactor)
                 self.incrementFrame(inc_nb)
             except ValueError:
                 self.incrementFrame(1)
             caught = True
-        elif e == Qt.Key_P and m != Qt.SHIFT:
+        elif e == QtCore.Qt.Key_P and m != QtCore.Qt.SHIFT:
             try:
                 dec_nb = int(self.prefactor)
                 self.decrementFrame(dec_nb)
             except ValueError:
                 self.decrementFrame(1)
             caught = True
-        elif e == Qt.Key_G and m != Qt.SHIFT:
+        elif e == QtCore.Qt.Key_G and m != QtCore.Qt.SHIFT:
             try:
                 f_nb = int(self.prefactor)-1
                 self.goToFrame(f_nb)
             except ValueError:
                 self.switchFrameNb(0)
             caught = True
-        elif e == Qt.Key_Z:
+        elif e == QtCore.Qt.Key_Z:
             self.switchFrameNb(self.former_frame_nb)
             caught = True
-        elif e == Qt.Key_N and m == Qt.SHIFT:
+        elif e == QtCore.Qt.Key_N and m == QtCore.Qt.SHIFT:
             try:
                 inc_nb = int(self.prefactor)
                 self.speed = int(1000./inc_nb)  # timer timeout in msec
@@ -242,7 +243,7 @@ class homerWidget(QGLWidget):
             self.start()
             caught = True
             stop_anim = False
-        elif e == Qt.Key_P and m == Qt.SHIFT:
+        elif e == QtCore.Qt.Key_P and m == QtCore.Qt.SHIFT:
             try:
                 inc_nb = int(self.prefactor)
                 self.speed = int(1000./inc_nb)  # timer timeout in msec
@@ -252,12 +253,12 @@ class homerWidget(QGLWidget):
             self.start()
             caught = True
             stop_anim = False
-        elif e == Qt.Key_G and m == Qt.SHIFT:
+        elif e == QtCore.Qt.Key_G and m == QtCore.Qt.SHIFT:
             while self.incrementOneFrame():
                 pass
             self.update()
             caught = True
-        elif e == Qt.Key_Space:
+        elif e == QtCore.Qt.Key_Space:
             caught = True
 
         if caught and stop_anim:
@@ -268,53 +269,53 @@ class homerWidget(QGLWidget):
 
     def handlePointOfViewKey(self, e, m):
         caught = False
-        if e == Qt.Key_Tab and m != Qt.SHIFT:
+        if e == QtCore.Qt.Key_Tab and m != QtCore.Qt.SHIFT:
             self.transform = self.scale*self.init_transform
             caught = True
-        elif e == Qt.Key_Tab and m == Qt.SHIFT:
+        elif e == QtCore.Qt.Key_Tab and m == QtCore.Qt.SHIFT:
             self.offset = self.init_offset
             caught = True
-        elif e == Qt.Key_Asterisk:
+        elif e == QtCore.Qt.Key_Asterisk:
             factor = 1.05
             self.scale *= factor
             self.transform = factor*self.transform
             caught = True
-        elif e == Qt.Key_Slash:
+        elif e == QtCore.Qt.Key_Slash:
             factor = 1.05
             self.scale /= factor
             self.transform = self.transform/factor
             caught = True
-        elif e == Qt.Key_Minus:
+        elif e == QtCore.Qt.Key_Minus:
             if self.fidelity > self.fidelity_min:
                 self.fidelity = self.fidelity - 1
             caught = True
-        elif e == Qt.Key_Plus:
+        elif e == QtCore.Qt.Key_Plus:
             if self.fidelity < self.fidelity_max:
                 self.fidelity = self.fidelity + 1
             caught = True
-        elif e == Qt.Key_Up:
-            if m != Qt.SHIFT:
+        elif e == QtCore.Qt.Key_Up:
+            if m != QtCore.Qt.SHIFT:
                 angleX = -0.1
             else:
                 angleX = -0.5*np.pi
             self.setXRotation(angleX)
             caught = True
-        elif e == Qt.Key_Down:
-            if m != Qt.SHIFT:
+        elif e == QtCore.Qt.Key_Down:
+            if m != QtCore.Qt.SHIFT:
                 angleX = 0.1
             else:
                 angleX = 0.5*np.pi
             self.setXRotation(angleX)
             caught = True
-        elif e == Qt.Key_Left:
-            if m != Qt.SHIFT:
+        elif e == QtCore.Qt.Key_Left:
+            if m != QtCore.Qt.SHIFT:
                 angleY = 0.1
             else:
                 angleY = 0.5*np.pi
             self.setYRotation(angleY)
             caught = True
-        elif e == Qt.Key_Right:
-            if m != Qt.SHIFT:
+        elif e == QtCore.Qt.Key_Right:
+            if m != QtCore.Qt.SHIFT:
                 angleY = -0.1
             else:
                 angleY = -0.5*np.pi
@@ -326,43 +327,43 @@ class homerWidget(QGLWidget):
     def handleLayerKey(self, e, m):
         caught = False
 
-        if e == Qt.Key_F1:
+        if e == QtCore.Qt.Key_F1:
             self.layerSwitch(0)
             caught = True
-        elif e == Qt.Key_F2:
+        elif e == QtCore.Qt.Key_F2:
             self.layerSwitch(1)
             caught = True
-        elif e == Qt.Key_F3:
+        elif e == QtCore.Qt.Key_F3:
             self.layerSwitch(2)
             caught = True
-        elif e == Qt.Key_F4:
+        elif e == QtCore.Qt.Key_F4:
             self.layerSwitch(3)
             caught = True
-        elif e == Qt.Key_F5:
+        elif e == QtCore.Qt.Key_F5:
             self.layerSwitch(4)
             caught = True
-        elif e == Qt.Key_F6:
+        elif e == QtCore.Qt.Key_F6:
             self.layerSwitch(5)
             caught = True
-        elif e == Qt.Key_F7:
+        elif e == QtCore.Qt.Key_F7:
             self.layerSwitch(6)
             caught = True
-        elif e == Qt.Key_F8:
+        elif e == QtCore.Qt.Key_F8:
             self.layerSwitch(7)
             caught = True
-        elif e == Qt.Key_F9:
+        elif e == QtCore.Qt.Key_F9:
             self.layerSwitch(8)
             caught = True
-        elif e == Qt.Key_F10:
+        elif e == QtCore.Qt.Key_F10:
             self.layerSwitch(9)
             caught = True
-        elif e == Qt.Key_F11:
+        elif e == QtCore.Qt.Key_F11:
             self.layerSwitch(10)
             caught = True
-        elif e == Qt.Key_F12:
+        elif e == QtCore.Qt.Key_F12:
             self.layerSwitch(11)
             caught = True
-        elif e == Qt.Key_L:
+        elif e == QtCore.Qt.Key_L:
             try:
                 l_nb = int(self.prefactor)
                 self.target_layer = l_nb
@@ -373,10 +374,10 @@ class homerWidget(QGLWidget):
 
     def handleKey(self, e, m):
 
-        if e == Qt.Key_Q:
-            QCoreApplication.instance().quit()
+        if e == QtCore.Qt.Key_Q:
+            QtCore.QCoreApplication.instance().quit()
             caught = True
-        elif e == Qt.Key_V:
+        elif e == QtCore.Qt.Key_V:
             self.verbosity = not self.verbosity
             caught = True
         else:
@@ -391,13 +392,13 @@ class homerWidget(QGLWidget):
     def keyPressEvent(self, event):
         e = event.key()
         m = event.modifiers()
-        if e == Qt.Key_Return:  # repeat previous action
+        if e == QtCore.Qt.Key_Return:  # repeat previous action
             e, m, self.prefactor = self.old_e, self.old_m, self.old_prefactor
         self.old_prefactor = self.prefactor
         caught = self.handleKey(e, m)
 
         t = event.text()
-        if e != Qt.Key_Return:
+        if e != QtCore.Qt.Key_Return:
             try:
                 i = int(t)
                 self.prefactor = self.prefactor + t
@@ -412,15 +413,15 @@ class homerWidget(QGLWidget):
         return caught
 
     def mousePressEvent(self, event):
-        modifier = QApplication.keyboardModifiers()
-        if event.button() == Qt.LeftButton:
+        modifier = QtGui.QApplication.keyboardModifiers()
+        if event.button() == QtCore.Qt.LeftButton:
             self.current_point = event.posF()
             self.translate = False
             self.select = False
             self.rotate = False
-            if modifier == Qt.ShiftModifier:
+            if modifier == QtCore.Qt.ShiftModifier:
                 self.translate = True
-            elif modifier == Qt.ControlModifier:
+            elif modifier == QtCore.Qt.ControlModifier:
                 self.select = True
                 self.selection_corner1 = self.current_point
             else:
@@ -431,13 +432,13 @@ class homerWidget(QGLWidget):
         self.current_point = event.posF()
         if self.translate:
             translateX = self.offset.x()\
-                         + (self.current_point.x() - self.previous_point.x())
+                + (self.current_point.x() - self.previous_point.x())
             translateY = self.offset.y()\
-                         + (self.current_point.y() - self.previous_point.y())
-            self.offset = QPointF(translateX, translateY)
+                + (self.current_point.y() - self.previous_point.y())
+            self.offset = QtCore.QPointF(translateX, translateY)
         elif self.rotate:
-            angleY = -4*(self.current_point.x() - self.previous_point.x())/self.width()
-
+            angleY = self.current_point.x() - self.previous_point.x()
+            angleY *= -4/self.width()
             sinAngleY = np.sin(angleY)
             cosAngleY = np.cos(angleY)
             generator = np.mat([[cosAngleY, -sinAngleY, 0],
@@ -445,7 +446,8 @@ class homerWidget(QGLWidget):
                                 [0, 0, 1]])
             self.transform = generator*self.transform
 
-            angleX = 4*(self.current_point.y() - self.previous_point.y())/self.height()
+            angleX = self.current_point.y() - self.previous_point.y()
+            angleX *= 4/self.height()
 
             sinAngleX = np.sin(angleX)
             cosAngleX = np.cos(angleX)
@@ -459,87 +461,91 @@ class homerWidget(QGLWidget):
         self.update()
 
     def writeLabels(self, paint):
-        pen = QPen()
+        pen = QtGui.QPen()
 
         rlocation = np.array([15, 15])
 
-        bgcolor = QColor(0, 0, 0, 150)
+        bgcolor = QtGui.QColor(0, 0, 0, 150)
         wratio = 0.8
-        rect = QRectF(0, 0, 140, 300)
-        brush = QBrush()
+        rect = QtCore.QRectF(0, 0, 140, 300)
+        brush = QtGui.QBrush()
         brush.setColor(bgcolor)
-        brush.setStyle(Qt.SolidPattern)
+        brush.setStyle(QtCore.Qt.SolidPattern)
         paint.setBrush(brush)
         pen.setColor(bgcolor)
         paint.setPen(pen)
         paint.drawRect(rect)
 
-        activecolor = Qt.white
-        inactivecolor = Qt.gray
+        activecolor = QtCore.Qt.white
+        inactivecolor = QtCore.Qt.gray
 
         rsize = [120, 18]
 
         pen.setColor(activecolor)
         paint.setPen(pen)
-        rect = QRectF(rlocation[0], rlocation[1], rsize[0], rsize[1])
-        paint.drawText(rect, Qt.AlignLeft,
+        rect = QtCore.QRectF(rlocation[0], rlocation[1], rsize[0], rsize[1])
+        paint.drawText(rect, QtCore.Qt.AlignLeft,
                        "Frame "+str(self.frame_nb+1)+" (n p)")
         rlocation[1] = rlocation[1]+rsize[1]
         rsize = [95, 18]
         pen.setColor(activecolor)
         paint.setPen(pen)
-        rect = QRectF(rlocation[0], rlocation[1], rsize[0], rsize[1])
-        paint.drawText(rect, Qt.AlignLeft,
+        rect = QtCore.QRectF(rlocation[0], rlocation[1], rsize[0], rsize[1])
+        paint.drawText(rect, QtCore.Qt.AlignLeft,
                        "Texture "+str(self.fidelity)+" (+ -)")
 
         rlocation[1] = rlocation[1]+rsize[1]
         rsize = [100, 18]
         for i in range(self.layer_nb):
-            rect = QRectF(rlocation[0], rlocation[1]+(i+1)*rsize[1],
-                          rsize[0], rsize[1])
-            if self.layer_activity[i] is True:
+            rect = QtCore.QRectF(rlocation[0], rlocation[1]+(i+1)*rsize[1],
+                                 rsize[0], rsize[1])
+            if self.layer_activity[i]:
                 pen.setColor(activecolor)
             else:
                 pen.setColor(inactivecolor)
+
             paint.setPen(pen)
-            paint.drawText(rect, Qt.AlignLeft, self.layer_labels[i])
+            paint.drawText(rect, QtCore.Qt.AlignLeft, self.layer_labels[i])
 
         infoheight = 20
-        bgcolor = QColor(30, 30, 30, 200)
+        bgcolor = QtGui.QColor(30, 30, 30, 200)
         wratio = 0.8
         xdivide = wratio*self.width()
-        rect = QRectF(0, self.height()-infoheight+2, xdivide, infoheight+2)
-        brush = QBrush()
+        rect = QtCore.QRectF(0, self.height()-infoheight+2,
+                             xdivide, infoheight+2)
+        brush = QtGui.QBrush()
         brush.setColor(bgcolor)
-        brush.setStyle(Qt.SolidPattern)
+        brush.setStyle(QtCore.Qt.SolidPattern)
         paint.setBrush(brush)
         pen.setColor(bgcolor)
         paint.setPen(pen)
         paint.drawRect(rect)
         pen.setColor(activecolor)
         paint.setPen(pen)
-        rect = QRectF(0, self.height()-infoheight+2, xdivide-4, infoheight+2)
-        paint.drawText(rect, Qt.AlignRight, self.prefactor)
+        rect = QtCore.QRectF(0, self.height()-infoheight+2,
+                             xdivide-4, infoheight+2)
+        paint.drawText(rect, QtCore.Qt.AlignRight, self.prefactor)
 
-        rect = QRectF(xdivide, self.height()-infoheight+2,
-                      self.width(), infoheight+2)
-        bgcolor = QColor(0, 0, 0, 200)
+        rect = QtCore.QRectF(xdivide, self.height()-infoheight+2,
+                             self.width(), infoheight+2)
+        bgcolor = QtGui.QColor(0, 0, 0, 200)
         brush.setColor(bgcolor)
-        brush.setStyle(Qt.SolidPattern)
+        brush.setStyle(QtCore.Qt.SolidPattern)
         paint.setBrush(brush)
         pen.setColor(bgcolor)
         paint.setPen(pen)
         paint.drawRect(rect)
-        rect = QRectF(xdivide+4, self.height()-infoheight+2,
-                      self.width(), infoheight+2)
-        pen.setColor(QColor(220, 100, 0))
+        rect = QtCore.QRectF(xdivide+4, self.height()-infoheight+2,
+                             self.width(), infoheight+2)
+        pen.setColor(QtGui.QColor(220, 100, 0))
         paint.setPen(pen)
         if self.target_layer != "all":
-            paint.drawText(rect, Qt.AlignLeft, "Layer "+str(self.target_layer))
+            paint.drawText(rect, QtCore.Qt.AlignLeft,
+                           "Layer "+str(self.target_layer))
         else:
-            paint.drawText(rect, Qt.AlignLeft, "All layers")
+            paint.drawText(rect, QtCore.Qt.AlignLeft, "All layers")
 
-    @Slot(int)
+    @QtCore.Slot(int)
     def slaveUpdate(self, master_label):
         self.is_slave = True
         master = self.relatives[master_label]
@@ -552,19 +558,19 @@ class homerWidget(QGLWidget):
         self.update()
 
     def paintEvent(self, event):
-        paint = QPainter()
+        paint = QtGui.QPainter()
         paint.begin(self)
-        paint.setRenderHint(QPainter.Antialiasing)
+        paint.setRenderHint(QtGui.QPainter.Antialiasing)
 
         self.translation = [self.offset.x(), self.offset.y()]
 
         selection_width = self.selection_corner2.x()-self.selection_corner1.x()
         selection_height = self.selection_corner2.y()\
-                          - self.selection_corner1.y()
+            - self.selection_corner1.y()
         selection_x = self.selection_corner1.x()-0.5*self.width()
         selection_y = self.selection_corner1.y()-0.5*self.height()
-        selection_rect = QRectF(selection_x, selection_y,
-                                selection_width, selection_height)
+        selection_rect = QtCore.QRectF(selection_x, selection_y,
+                                       selection_width, selection_height)
 
         frame = self.infile.frames[self.frame_nb]
         frame.display(paint, self.transform, self.translation,
