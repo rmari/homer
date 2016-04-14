@@ -375,7 +375,7 @@ class homerWidget(QtOpenGL.QGLWidget):
     def handleKey(self, e, m):
 
         if e == QtCore.Qt.Key_Q:
-            QtCore.QCoreApplication.instance().quit()
+            QtGui.QApplication.instance().quit()
             caught = True
         elif e == QtCore.Qt.Key_V:
             self.verbosity = not self.verbosity
