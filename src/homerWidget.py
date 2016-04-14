@@ -36,7 +36,6 @@ class homerWidget(QtOpenGL.QGLWidget):
         QtOpenGL.QGLWidget.__init__(
             self, QtOpenGL.QGLFormat(QtOpenGL.QGL.SampleBuffers), parent)
         self.parent = parent
-
         self.timer = QtCore.QBasicTimer()
 
         self.fname = filename
@@ -98,12 +97,10 @@ class homerWidget(QtOpenGL.QGLWidget):
 
         self.target_layer = "all"
 
-        self.relatives = []
-
         self.verbosity = True
         self.speed = 0
         self.is_slave = False
-
+        self.update_nb = 0
         self.show()
 
     def initWindow(self):
@@ -121,20 +118,8 @@ class homerWidget(QtOpenGL.QGLWidget):
         path = os.path.dirname(os.path.abspath(__file__))
         self.setWindowIcon(QtGui.QIcon(path+'/../img/icon.png'))
 
-    def setRelatives(self, relatives, own_label):
-        self.relatives = relatives
-        self.label = own_label
-        for r in self.relatives:
-            if r != self:
-                r.updated.connect(self.slaveUpdate)
-                r.read_chunk.connect(self.slaveReadChunk)
-
     def start(self):
         self.timer.start(self.speed, self)
-
-    @QtCore.Slot()
-    def slaveReadChunk(self):
-        self.infile.read_chunk()
 
     def readChunk(self):
         new_frames = self.infile.read_chunk()
@@ -373,10 +358,14 @@ class homerWidget(QtOpenGL.QGLWidget):
         return caught
 
     def handleKey(self, e, m):
-
         if e == QtCore.Qt.Key_Q:
-            QtGui.QApplication.instance().quit()
             caught = True
+            # for an unknown reason, bad crash on Gnome 3
+            # (Gnome is made unusable, forcing logout)
+            # if Q is the very first event received.
+            # So we test for update_nb
+            if self.update_nb > 3:
+                self.close()
         elif e == QtCore.Qt.Key_V:
             self.verbosity = not self.verbosity
             caught = True
@@ -386,7 +375,6 @@ class homerWidget(QtOpenGL.QGLWidget):
                 caught = self.handlePointOfViewKey(e, m)
             if not caught:
                 caught = self.handleFrameSwitchKey(e, m)
-
         return caught
 
     def keyPressEvent(self, event):
@@ -545,18 +533,6 @@ class homerWidget(QtOpenGL.QGLWidget):
         else:
             paint.drawText(rect, QtCore.Qt.AlignLeft, "All layers")
 
-    @QtCore.Slot(int)
-    def slaveUpdate(self, master_label):
-        self.is_slave = True
-        master = self.relatives[master_label]
-
-        self.transform = master.transform
-        self.offset = master.offset
-        self.switchFrameNb(master.frame_nb)
-        self.layer_activity = master.layer_activity
-        self.fidelity = master.fidelity
-        self.update()
-
     def paintEvent(self, event):
         paint = QtGui.QPainter()
         paint.begin(self)
@@ -581,5 +557,4 @@ class homerWidget(QtOpenGL.QGLWidget):
 
         paint.end()
 
-        if len(self.relatives) and not self.is_slave:
-            self.updated.emit(self.label)
+        self.update_nb += 1

@@ -18,37 +18,27 @@
 #
 
 from __future__ import print_function
-from PySide.QtCore import *
-from PySide.QtGui import *
-from PySide.QtOpenGL import *
+from PySide.QtGui import QApplication, QIcon
 
-import sys, os
+import sys
+import os
 
 import homerWidget
 
 
 def init():
-    
-    arg_nb_min=2
-    if len(sys.argv) < arg_nb_min :
+    arg_nb_min = 2
+    if len(sys.argv) != arg_nb_min:
         print("\n   Utilisation: ", sys.argv[0], "INPUT_FILE\n")
         exit(1)
-        
-    return sys.argv[1:]
+    return sys.argv[1]
 
+app = QApplication([])
 
-
-app = QApplication([])    
-
-filenames=init()
-widgets = [ homerWidget.homerWidget(f) for f in filenames ]
+filename = init()
+widgets = homerWidget.homerWidget(filename)
 
 path = os.path.dirname(os.path.abspath(__file__))
 app.setWindowIcon(QIcon(path+'/../img/icon.png'))
-
-cnt = 0
-for w in widgets:
-    w.setRelatives(widgets, cnt)
-    cnt = cnt+1
 
 sys.exit(app.exec_())
