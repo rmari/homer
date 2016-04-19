@@ -280,28 +280,40 @@ class homerWidget(QtOpenGL.QGLWidget):
             caught = True
         elif e == QtCore.Qt.Key_Up:
             if m != QtCore.Qt.SHIFT:
-                angleX = -0.1
+                try:
+                    angleX = -np.deg2rad(float(self.prefactor))
+                except ValueError:
+                    angleX = -0.1
             else:
                 angleX = -0.5*np.pi
             self.setXRotation(angleX)
             caught = True
         elif e == QtCore.Qt.Key_Down:
             if m != QtCore.Qt.SHIFT:
-                angleX = 0.1
+                try:
+                    angleX = np.deg2rad(float(self.prefactor))
+                except ValueError:
+                    angleX = 0.1
             else:
                 angleX = 0.5*np.pi
             self.setXRotation(angleX)
             caught = True
         elif e == QtCore.Qt.Key_Left:
             if m != QtCore.Qt.SHIFT:
-                angleY = 0.1
+                try:
+                    angleY = np.deg2rad(float(self.prefactor))
+                except ValueError:
+                    angleY = 0.1
             else:
                 angleY = 0.5*np.pi
             self.setYRotation(angleY)
             caught = True
         elif e == QtCore.Qt.Key_Right:
             if m != QtCore.Qt.SHIFT:
-                angleY = -0.1
+                try:
+                    angleY = -np.deg2rad(float(self.prefactor))
+                except ValueError:
+                    angleY = -0.1
             else:
                 angleY = -0.5*np.pi
             self.setYRotation(angleY)
