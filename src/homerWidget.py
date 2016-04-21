@@ -28,9 +28,6 @@ import homerFile
 
 class homerWidget(QtOpenGL.QGLWidget):
 
-    updated = QtCore.Signal(int)
-    read_chunk = QtCore.Signal()
-
     def __init__(self, filename, parent=None):
 
         QtOpenGL.QGLWidget.__init__(
