@@ -18,7 +18,8 @@
 #
 
 from __future__ import print_function
-from PySide.QtGui import QApplication, QIcon
+# from PyQt5.QtWidgets import QApplication
+from PyQt4.QtGui import QIcon, QApplication
 
 import sys
 import os

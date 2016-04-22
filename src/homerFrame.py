@@ -16,8 +16,7 @@
 #
 
 import numpy as np
-from PySide import QtCore
-from PySide import QtGui
+from PyQt4 import QtCore, QtGui
 
 brush_fidelity = [QtCore.Qt.NoBrush, QtCore.Qt.Dense6Pattern,
                   QtCore.Qt.Dense3Pattern, QtCore.Qt.SolidPattern,
@@ -321,7 +320,6 @@ class homerFrame(object):
         # 4 order according to z coord
         ordering = np.argsort(pcalls['z'][:])
         pcalls = pcalls[ordering]
-
         return pcalls
 
     def display(self, painter, transform, translate,
@@ -347,7 +345,7 @@ class homerFrame(object):
 
         for [paintMethod, pcolor, pthickness,
              bcolor, shapeMethod, shapeArgs, z] in self.generatePainters():
-            pen.setColor(pcolor)
+            pen.setColor(QtGui.QColor(pcolor))
             pen.setWidthF(pthickness)
 
             brush.setColor(bcolor)

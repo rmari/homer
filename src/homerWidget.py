@@ -15,9 +15,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import division
-import PySide.QtCore as QtCore
-import PySide.QtGui as QtGui
-import PySide.QtOpenGL as QtOpenGL
+from PyQt4 import QtCore, QtGui, QtOpenGL
 import numpy as np
 
 import sys
@@ -120,7 +118,6 @@ class homerWidget(QtOpenGL.QGLWidget):
 
     def readChunk(self):
         new_frames = self.infile.read_chunk()
-        self.read_chunk.emit()
         return new_frames
 
     def switchFrameNb(self, new_frame_nb):
@@ -405,9 +402,7 @@ class homerWidget(QtOpenGL.QGLWidget):
 
         if caught:
             self.old_e, self.old_m = e, m
-
         self.update()
-        return caught
 
     def mousePressEvent(self, event):
         modifier = QtGui.QApplication.keyboardModifiers()
