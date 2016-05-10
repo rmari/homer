@@ -113,7 +113,7 @@ class homerWidget(QtOpenGL.QGLWidget):
         path = os.path.dirname(os.path.abspath(__file__))
         self.setWindowIcon(QtGui.QIcon(path+'/../img/icon.png'))
 
-    def start(self):
+    def start_anim(self):
         self.timer.start(self.speed, self)
 
     def readChunk(self):
@@ -188,21 +188,21 @@ class homerWidget(QtOpenGL.QGLWidget):
     def handleFrameSwitchKey(self, e, m):
         caught = False
         stop_anim = True
-        if e == QtCore.Qt.Key_N and m != QtCore.Qt.SHIFT:
+        if e == QtCore.Qt.Key_N and m != QtCore.Qt.ShiftModifier:
             try:
                 inc_nb = int(self.prefactor)
                 self.incrementFrame(inc_nb)
             except ValueError:
                 self.incrementFrame(1)
             caught = True
-        elif e == QtCore.Qt.Key_P and m != QtCore.Qt.SHIFT:
+        elif e == QtCore.Qt.Key_P and m != QtCore.Qt.ShiftModifier:
             try:
                 dec_nb = int(self.prefactor)
                 self.decrementFrame(dec_nb)
             except ValueError:
                 self.decrementFrame(1)
             caught = True
-        elif e == QtCore.Qt.Key_G and m != QtCore.Qt.SHIFT:
+        elif e == QtCore.Qt.Key_G and m != QtCore.Qt.ShiftModifier:
             try:
                 f_nb = int(self.prefactor)-1
                 self.goToFrame(f_nb)
@@ -212,27 +212,27 @@ class homerWidget(QtOpenGL.QGLWidget):
         elif e == QtCore.Qt.Key_Z:
             self.switchFrameNb(self.former_frame_nb)
             caught = True
-        elif e == QtCore.Qt.Key_N and m == QtCore.Qt.SHIFT:
+        elif e == QtCore.Qt.Key_N and m == QtCore.Qt.ShiftModifier:
             try:
                 inc_nb = int(self.prefactor)
                 self.speed = int(1000./inc_nb)  # timer timeout in msec
             except ValueError:
                 pass
             self.forward_anim = True
-            self.start()
+            self.start_anim()
             caught = True
             stop_anim = False
-        elif e == QtCore.Qt.Key_P and m == QtCore.Qt.SHIFT:
+        elif e == QtCore.Qt.Key_P and m == QtCore.Qt.ShiftModifier:
             try:
                 inc_nb = int(self.prefactor)
                 self.speed = int(1000./inc_nb)  # timer timeout in msec
             except ValueError:
                 pass
             self.forward_anim = False
-            self.start()
+            self.start_anim()
             caught = True
             stop_anim = False
-        elif e == QtCore.Qt.Key_G and m == QtCore.Qt.SHIFT:
+        elif e == QtCore.Qt.Key_G and m == QtCore.Qt.ShiftModifier:
             while self.incrementOneFrame():
                 pass
             self.update()
@@ -248,10 +248,10 @@ class homerWidget(QtOpenGL.QGLWidget):
 
     def handlePointOfViewKey(self, e, m):
         caught = False
-        if e == QtCore.Qt.Key_Tab and m != QtCore.Qt.SHIFT:
+        if e == QtCore.Qt.Key_Tab and m != QtCore.Qt.ShiftModifier:
             self.transform = self.scale*self.init_transform
             caught = True
-        elif e == QtCore.Qt.Key_Tab and m == QtCore.Qt.SHIFT:
+        elif e == QtCore.Qt.Key_Tab and m == QtCore.Qt.ShiftModifier:
             self.offset = self.init_offset
             caught = True
         elif e == QtCore.Qt.Key_Asterisk:
@@ -273,7 +273,7 @@ class homerWidget(QtOpenGL.QGLWidget):
                 self.fidelity = self.fidelity + 1
             caught = True
         elif e == QtCore.Qt.Key_Up:
-            if m != QtCore.Qt.SHIFT:
+            if m != QtCore.Qt.ShiftModifier:
                 try:
                     angleX = -np.deg2rad(float(self.prefactor))
                 except ValueError:
@@ -283,7 +283,7 @@ class homerWidget(QtOpenGL.QGLWidget):
             self.setXRotation(angleX)
             caught = True
         elif e == QtCore.Qt.Key_Down:
-            if m != QtCore.Qt.SHIFT:
+            if m != QtCore.Qt.ShiftModifier:
                 try:
                     angleX = np.deg2rad(float(self.prefactor))
                 except ValueError:
@@ -293,7 +293,7 @@ class homerWidget(QtOpenGL.QGLWidget):
             self.setXRotation(angleX)
             caught = True
         elif e == QtCore.Qt.Key_Left:
-            if m != QtCore.Qt.SHIFT:
+            if m != QtCore.Qt.ShiftModifier:
                 try:
                     angleY = np.deg2rad(float(self.prefactor))
                 except ValueError:
@@ -303,7 +303,7 @@ class homerWidget(QtOpenGL.QGLWidget):
             self.setYRotation(angleY)
             caught = True
         elif e == QtCore.Qt.Key_Right:
-            if m != QtCore.Qt.SHIFT:
+            if m != QtCore.Qt.ShiftModifier:
                 try:
                     angleY = -np.deg2rad(float(self.prefactor))
                 except ValueError:

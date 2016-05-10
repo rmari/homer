@@ -51,6 +51,7 @@ class homerFile:
         self.last_layer = 0
         self.last_color = color_palette[0]
         self.last_thickness = 0
+        self.eof = False
 
     def getBoundaries(self):
         return self.frames[0].getBoundaries()
@@ -61,19 +62,19 @@ class homerFile:
         if len(self.trailing_frame) > 0:
             in_raw_data =\
                 np.append(self.trailing_frame,
-                          np.array(self.infile.readlines(self.chunksize)))
+                          np.array(self.infile.readlines()))
         else:
-            in_raw_data = np.array(self.infile.readlines(self.chunksize))
+            in_raw_data = np.array(self.infile.readlines())
         # check eof
         if in_raw_data.shape[0] == 0:
             return False
 
         # ensure we have at least one frame
-        while not np.any(in_raw_data == b'\n'):
-            b = np.array(self.infile.readlines(self.chunksize))
-            if b.shape[0] == 0:
-                break
-            in_raw_data = np.vstack((in_raw_data, b))
+        # while not np.any(in_raw_data == b'\n'):
+        #     b = np.array(self.infile.readlines(self.chunksize))
+        #     if b.shape[0] == 0:
+        #         break
+        #     in_raw_data = np.vstack((in_raw_data, b))
 
         # framebreaks are lines with carriage return
         framebreaks = in_raw_data == b'\n'
@@ -238,13 +239,8 @@ class homerFile:
             texts_colors = np.split(texts_colors, tbreaks)
             texts_thicknesses = np.split(texts_thicknesses, tbreaks)
             texts_layers = np.split(texts_layers, tbreaks)
-        # if len(self.trailing_frame):
-        #     in_raw_data = np.vstack((self.trailing_frame, in_raw_data))
-        #     attributes = np.concatenate((self.trailing_attributes, attributes))
 
-        # now split frames
-
-        for i in range(len(framebreaks)):
+        for i in range(len(framebreaks)+1):
             obj_vals = dict()
             obj_attrs = dict()
             o = 'c'
@@ -282,6 +278,5 @@ class homerFile:
                                 'r': texts_thicknesses[i]}
 
             self.frames.append(homerFrame.homerFrame(obj_vals, obj_attrs))
-
         self.is_init = False
         return True
