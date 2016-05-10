@@ -23,8 +23,8 @@ on can translate the field of view, or add a title text.
 
 <h2> Installation </h2>
 
-Homer needs a Python 2.7 interpreter and the numpy and PySide
-packages. You can install these packages individually or get them through a Python distribution like [Anaconda](https://store.continuum.io/cshop/anaconda/) or [Enthought](https://www.enthought.com/products/epd/).
+Homer needs a Python 3 interpreter and the numpy and PyQt4
+packages. You can install these packages individually or get them through a Python distribution like [Anaconda](https://store.continuum.io/cshop/anaconda/).
 
 
 You can run Homer as follows:
@@ -69,8 +69,8 @@ User can override this default palette. Just create a file called
 `homer_palette.py" in the directory where you launch homer. In this
 file, you can define a color palette as, for example:
 ```
-from PySide.QtCore import Qt
-from PySide.QtGui import QColor
+from PyQt4.QtCore import Qt
+from PyQt4.QtGui import QColor
 
 color_palette = [ Qt.black, Qt.gray, Qcolor(200,200,200,100), ... ]
 ```
