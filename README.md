@@ -1,5 +1,8 @@
 <h1> Homer </h1>
 
+<h2> NOTE: Homer is no more maintained. Development is now focused on the (hopefully :)) better grounded [Chōchin](https://github.com/rmari/chochin).</h2>
+
+
 Version 0.4, Feb. 3, 2016
 
 ![Homer](./img/homer_1.png)
